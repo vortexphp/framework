@@ -45,6 +45,44 @@ final class Response
         return new self('', $status, ['Location' => $to]);
     }
 
+    public function with(string $key, mixed $value): self
+    {
+        Session::flash($key, $value);
+
+        return $this;
+    }
+
+    /**
+     * @param array<string, mixed> $values
+     */
+    public function withMany(array $values): self
+    {
+        foreach ($values as $key => $value) {
+            if (! is_string($key) || $key === '') {
+                continue;
+            }
+            Session::flash($key, $value);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param array<string, mixed> $errors
+     */
+    public function withErrors(array $errors, string $key = 'errors'): self
+    {
+        return $this->with($key, $errors);
+    }
+
+    /**
+     * @param array<string, mixed>|null $input
+     */
+    public function withInput(?array $input = null): self
+    {
+        return $this->with('old', $input ?? Request::all());
+    }
+
     public function header(string $name, string $value): self
     {
         $this->headers[$name] = $value;

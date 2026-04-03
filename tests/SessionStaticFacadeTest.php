@@ -64,4 +64,20 @@ final class SessionStaticFacadeTest extends TestCase
         self::assertSame('v', Session::flash('k'));
         self::assertNull(Session::flash('k'));
     }
+
+    public function testFlashManyConsumesRequestedKeys(): void
+    {
+        Session::flashPutMany([
+            'errors' => ['email' => 'invalid'],
+            'status' => 'ok',
+        ]);
+
+        $values = Session::flashMany(['errors', 'status', 'missing']);
+
+        self::assertSame(['email' => 'invalid'], $values['errors']);
+        self::assertSame('ok', $values['status']);
+        self::assertNull($values['missing']);
+        self::assertNull(Session::flash('errors'));
+        self::assertNull(Session::flash('status'));
+    }
 }

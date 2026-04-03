@@ -5,11 +5,47 @@ declare(strict_types=1);
 namespace Vortex\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Vortex\AppContext;
+use Vortex\Container;
 use Vortex\Http\Cookie;
+use Vortex\Http\NullSessionStore;
 use Vortex\Http\Response;
+use Vortex\Http\Request;
+use Vortex\Http\Session;
+use Vortex\Http\SessionManager;
 
 final class ResponseTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $container = new Container();
+        $container->instance(Container::class, $container);
+        $container->singleton(SessionManager::class, static fn (): SessionManager => SessionManager::fromInstances('null', [
+            'null' => new NullSessionStore(),
+        ]));
+        $container->singleton(Session::class, static fn (Container $c): Session => new Session($c->make(SessionManager::class)->store()));
+        Session::setInstance($container->make(Session::class));
+        AppContext::set($container);
+    }
+
+    protected function tearDown(): void
+    {
+        $refApp = new \ReflectionClass(AppContext::class);
+        $propApp = $refApp->getProperty('container');
+        $propApp->setAccessible(true);
+        $propApp->setValue(null, null);
+
+        $refSession = new \ReflectionClass(Session::class);
+        $propSession = $refSession->getProperty('instance');
+        $propSession->setAccessible(true);
+        $propSession->setValue(null, null);
+
+        Request::forgetCurrent();
+
+        parent::tearDown();
+    }
+
     public function testJsonSetsContentTypeAndBody(): void
     {
         $r = Response::json(['ok' => true], 201);
@@ -48,6 +84,23 @@ final class ResponseTest extends TestCase
         self::assertSame(301, $r->httpStatus());
         self::assertSame('', $r->body());
         self::assertSame('/here', $this->headerValue($r, 'Location'));
+    }
+
+    public function testRedirectWithFluentFlashHelpers(): void
+    {
+        Request::setCurrent(Request::make('POST', '/login', [], [
+            'email' => 'dev@example.com',
+            '_token' => 'abc',
+        ]));
+
+        Response::redirect('/login')
+            ->withErrors(['email' => 'invalid'])
+            ->withInput()
+            ->with('status', 'failed');
+
+        self::assertSame(['email' => 'invalid'], Session::flash('errors'));
+        self::assertSame(['email' => 'dev@example.com', '_token' => 'abc'], Session::flash('old'));
+        self::assertSame('failed', Session::flash('status'));
     }
 
     public function testWithSecurityHeadersDoesNotOverrideExisting(): void

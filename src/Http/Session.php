@@ -77,6 +77,38 @@ final class Session
         return func_num_args() === 1 ? $store->flashGet($key) : $store->flashPut($key, $value);
     }
 
+    /**
+     * @param list<string> $keys
+     * @return array<string, mixed>
+     */
+    public static function flashMany(array $keys): array
+    {
+        $store = self::resolved()->store;
+        $result = [];
+        foreach ($keys as $key) {
+            if (! is_string($key) || $key === '') {
+                continue;
+            }
+            $result[$key] = $store->flashGet($key);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array<string, mixed> $values
+     */
+    public static function flashPutMany(array $values): void
+    {
+        $store = self::resolved()->store;
+        foreach ($values as $key => $value) {
+            if (! is_string($key) || $key === '') {
+                continue;
+            }
+            $store->flashPut($key, $value);
+        }
+    }
+
     public static function flushAuth(): void
     {
         self::resolved()->store->flushAuth();
