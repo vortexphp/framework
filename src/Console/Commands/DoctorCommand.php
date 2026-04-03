@@ -43,10 +43,10 @@ final class DoctorCommand extends Command
 
         // PHP 8.2+
         $ok = PHP_VERSION_ID >= 80200;
-        $failed = $this->line($ok, 'PHP ' . PHP_VERSION . ' (need ^8.2)') || $failed;
+        $failed = $this->statusLine($ok, 'PHP ' . PHP_VERSION . ' (need ^8.2)') || $failed;
 
-        $failed = $this->line(extension_loaded('pdo'), 'ext-pdo loaded') || $failed;
-        $failed = $this->line(extension_loaded('mbstring'), 'ext-mbstring loaded (required by framework)') || $failed;
+        $failed = $this->statusLine(extension_loaded('pdo'), 'ext-pdo loaded') || $failed;
+        $failed = $this->statusLine(extension_loaded('mbstring'), 'ext-mbstring loaded (required by framework)') || $failed;
 
         $drivers = [];
         foreach (['pdo_sqlite', 'pdo_mysql', 'pdo_pgsql'] as $ext) {
@@ -55,61 +55,61 @@ final class DoctorCommand extends Command
             }
         }
         $driverOk = $drivers !== [];
-        $failed = $this->line($driverOk, 'PDO driver: ' . ($driverOk ? implode(', ', $drivers) : 'none (install pdo_sqlite and/or pdo_mysql / pdo_pgsql)')) || $failed;
+        $failed = $this->statusLine($driverOk, 'PDO driver: ' . ($driverOk ? implode(', ', $drivers) : 'none (install pdo_sqlite and/or pdo_mysql / pdo_pgsql)')) || $failed;
 
         $public = $base . '/public';
-        $failed = $this->line(is_dir($public), "Directory exists: public/") || $failed;
-        $failed = $this->line(is_file($public . '/index.php'), 'File exists: public/index.php') || $failed;
+        $failed = $this->statusLine(is_dir($public), "Directory exists: public/") || $failed;
+        $failed = $this->statusLine(is_file($public . '/index.php'), 'File exists: public/index.php') || $failed;
 
         $storage = $base . '/storage';
         $logs = $storage . '/logs';
         if (! is_dir($logs)) {
             @mkdir($logs, 0775, true);
         }
-        $failed = $this->line(is_dir($storage), 'Directory exists: storage/') || $failed;
-        $failed = $this->line(is_dir($logs), 'Directory exists: storage/logs/ (created if missing)') || $failed;
-        $failed = $this->line(is_writable($storage), 'Writable: storage/') || $failed;
-        $failed = $this->line(is_writable($logs), 'Writable: storage/logs/') || $failed;
+        $failed = $this->statusLine(is_dir($storage), 'Directory exists: storage/') || $failed;
+        $failed = $this->statusLine(is_dir($logs), 'Directory exists: storage/logs/ (created if missing)') || $failed;
+        $failed = $this->statusLine(is_writable($storage), 'Writable: storage/') || $failed;
+        $failed = $this->statusLine(is_writable($logs), 'Writable: storage/logs/') || $failed;
 
         $probe = $logs . '/.doctor-write-test';
         $writeOk = @file_put_contents($probe, (string) time()) !== false;
         if ($writeOk) {
             @unlink($probe);
         }
-        $failed = $this->line($writeOk, 'Can create/delete file in storage/logs/') || $failed;
+        $failed = $this->statusLine($writeOk, 'Can create/delete file in storage/logs/') || $failed;
 
         $failed = $this->checkConfiguredUploadDirectories($base, $public, $failed);
 
         $envPath = $base . '/.env';
         $envOk = is_readable($envPath);
         if ($production) {
-            $failed = $this->line($envOk, '.env readable (required with --production)') || $failed;
+            $failed = $this->statusLine($envOk, '.env readable (required with --production)') || $failed;
             if ($envOk) {
                 Env::load($envPath);
                 $debugOn = filter_var(Env::get('APP_DEBUG', '0'), FILTER_VALIDATE_BOOLEAN);
-                $failed = $this->line(! $debugOn, 'APP_DEBUG is off') || $failed;
+                $failed = $this->statusLine(! $debugOn, 'APP_DEBUG is off') || $failed;
 
                 $url = trim((string) (Env::get('APP_URL') ?? ''));
-                $failed = $this->line($url !== '', 'APP_URL is non-empty') || $failed;
+                $failed = $this->statusLine($url !== '', 'APP_URL is non-empty') || $failed;
                 $localUrls = ['http://localhost', 'https://localhost', 'http://127.0.0.1', 'https://127.0.0.1'];
                 $normalized = strtolower(rtrim($url, '/'));
                 $isLocal = in_array($normalized, $localUrls, true);
-                $failed = $this->line(! $isLocal, 'APP_URL is not localhost (use your public URL)') || $failed;
+                $failed = $this->statusLine(! $isLocal, 'APP_URL is not localhost (use your public URL)') || $failed;
 
                 $driver = strtolower((string) (Env::get('DB_DRIVER', 'sqlite')));
                 if ($driver !== 'sqlite') {
                     $db = Env::get('DB_DATABASE');
-                    $failed = $this->line(
+                    $failed = $this->statusLine(
                         $db !== null && $db !== '',
                         'DB_DATABASE is set (driver ' . $driver . ')',
                     ) || $failed;
                 }
 
                 $appKey = trim((string) (Env::get('APP_KEY') ?? ''));
-                $failed = $this->line($appKey !== '', 'APP_KEY is non-empty (Crypt / signed tokens)') || $failed;
+                $failed = $this->statusLine($appKey !== '', 'APP_KEY is non-empty (Crypt / signed tokens)') || $failed;
             }
         } else {
-            $this->line($envOk, '.env readable (optional locally; use doctor --production before deploy)', warnIfFail: false);
+            $this->statusLine($envOk, '.env readable (optional locally; use doctor --production before deploy)', warnIfFail: false);
             if (! $envOk) {
                 fwrite(STDERR, ' ' . Term::style('2', '     Tip: copy .env.example to .env') . "\n");
             }
@@ -122,10 +122,10 @@ final class DoctorCommand extends Command
 
         if ($production) {
             fwrite(STDERR, "\n " . Term::style('2', 'Build / dependencies') . "\n\n");
-            $failed = $this->line(is_file($base . '/vendor/autoload.php'), 'vendor/autoload.php (run composer install)') || $failed;
+            $failed = $this->statusLine(is_file($base . '/vendor/autoload.php'), 'vendor/autoload.php (run composer install)') || $failed;
             $css = $base . '/public/css/app.css';
             $cssOk = is_file($css) && filesize($css) > 128;
-            $failed = $this->line($cssOk, 'public/css/app.css present (npm run build:css)') || $failed;
+            $failed = $this->statusLine($cssOk, 'public/css/app.css present (npm run build:css)') || $failed;
         }
 
         fwrite(STDERR, "\n");
@@ -140,7 +140,7 @@ final class DoctorCommand extends Command
         return 0;
     }
 
-    private function line(bool $ok, string $message, bool $warnIfFail = true): bool
+    private function statusLine(bool $ok, string $message, bool $warnIfFail = true): bool
     {
         $mark = $ok ? Term::style('1;32', '✓') : ($warnIfFail ? Term::style('1;31', '✗') : Term::style('2', '·'));
         fwrite(STDERR, " {$mark}  {$message}\n");
@@ -171,20 +171,20 @@ final class DoctorCommand extends Command
             $full = FilesConfigUploadRoots::absolutePath($base, $entry['relative']);
             $label = 'files.' . $entry['profile'] . ': ' . $entry['relative'];
 
-            $failed = $this->line(is_dir($full), "{$label} — directory exists") || $failed;
+            $failed = $this->statusLine(is_dir($full), "{$label} — directory exists") || $failed;
             if (! is_dir($full)) {
                 continue;
             }
 
-            $failed = $this->line(PathHelp::isBelowBase($public, $full), "{$label} — under public/") || $failed;
-            $failed = $this->line(is_writable($full), "{$label} — writable") || $failed;
+            $failed = $this->statusLine(PathHelp::isBelowBase($public, $full), "{$label} — under public/") || $failed;
+            $failed = $this->statusLine(is_writable($full), "{$label} — writable") || $failed;
 
             $probe = $full . '/.doctor-write-test';
             $writeOk = @file_put_contents($probe, (string) time()) !== false;
             if ($writeOk) {
                 @unlink($probe);
             }
-            $failed = $this->line($writeOk, "{$label} — can create/delete test file") || $failed;
+            $failed = $this->statusLine($writeOk, "{$label} — can create/delete test file") || $failed;
         }
 
         return $failed;

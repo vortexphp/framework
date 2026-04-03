@@ -66,7 +66,7 @@ final class SmokeCommand extends Command
         $url = $base . '/health';
         [$status, $body] = $this->get($url);
         $ok = $status === 200 && str_contains($body, '"ok"');
-        $this->line($ok, "GET /health → {$status}" . ($ok ? '' : ' (expected JSON with ok)'));
+        $this->statusLine($ok, "GET /health → {$status}" . ($ok ? '' : ' (expected JSON with ok)'));
 
         return $ok;
     }
@@ -76,7 +76,7 @@ final class SmokeCommand extends Command
         $url = $base . '/';
         [$status, $body] = $this->get($url);
         $ok = $status === 200 && strlen($body) > 50;
-        $this->line($ok, "GET / → {$status}" . ($ok ? '' : ' (expected HTML body)'));
+        $this->statusLine($ok, "GET / → {$status}" . ($ok ? '' : ' (expected HTML body)'));
 
         return $ok;
     }
@@ -103,7 +103,7 @@ final class SmokeCommand extends Command
         return [$status, $body === false ? '' : (string) $body];
     }
 
-    private function line(bool $ok, string $message): void
+    private function statusLine(bool $ok, string $message): void
     {
         $mark = $ok ? Term::style('1;32', '✓') : Term::style('1;31', '✗');
         fwrite(STDERR, " {$mark}  {$message}\n");
