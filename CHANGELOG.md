@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-04-03
+
 ### Added
 
 - Optional **`config/paths.php`** — configure **`migrations`** (migration class directory) relative to the project root. **`Vortex\Support\AppPaths`** resolves it and CLI commands use the same rules.
+
+### Changed
+
+- **Breaking:** Console commands (`migrate`, `migrate:down`, `db-check`) now boot the app container directly via **`Application::boot()`**; startup container files are no longer required.
 
 ## [0.4.0] - 2026-04-03
 
@@ -89,6 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Contracts**: `Cache`, `Mailer`, `Middleware`.
 - PHPUnit test suite under `tests/`.
 
+[0.5.0]: https://github.com/vortexphp/framework/releases/tag/v0.5.0
 [0.4.0]: https://github.com/vortexphp/framework/releases/tag/v0.4.0
 [0.3.0]: https://github.com/vortexphp/framework/releases/tag/v0.3.0
 [0.2.0]: https://github.com/vortexphp/framework/releases/tag/v0.2.0
