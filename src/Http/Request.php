@@ -288,9 +288,14 @@ final class Request
 
     private function detectWantsJson(): bool
     {
-        $accept = $this->readHeader('Accept') ?? '';
+        $accept = strtolower($this->readHeader('Accept') ?? '');
+        if ($accept !== '' && str_contains($accept, 'application/json')) {
+            return true;
+        }
 
-        return str_contains($accept, 'application/json');
+        $requestedWith = strtolower($this->readHeader('X-Requested-With') ?? '');
+
+        return $requestedWith === 'xmlhttprequest';
     }
 
     private function detectSecure(): bool

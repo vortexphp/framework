@@ -62,6 +62,14 @@ final class RequestTest extends TestCase
         self::assertFalse(Request::wantsJson());
     }
 
+    public function testWantsJsonForXmlHttpRequestHeader(): void
+    {
+        $xhr = new Request('GET', '/', [], [], ['X-Requested-With' => 'XMLHttpRequest'], []);
+        Request::setCurrent($xhr);
+
+        self::assertTrue(Request::wantsJson());
+    }
+
     public function testIsSecure(): void
     {
         $on = new Request('GET', '/', [], [], [], ['HTTPS' => 'on']);
