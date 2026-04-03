@@ -18,7 +18,7 @@ final class DispatcherFactoryTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->configDir = sys_get_temp_dir() . '/pc-events-' . bin2hex(random_bytes(4));
+        $this->configDir = sys_get_temp_dir() . '/vortex -events-' . bin2hex(random_bytes(4));
         mkdir($this->configDir, 0700, true);
     }
 

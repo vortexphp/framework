@@ -7,6 +7,7 @@ namespace Vortex\Tests;
 use PHPUnit\Framework\TestCase;
 use Vortex\Config\Repository;
 use Vortex\Database\Connection;
+use Vortex\Database\DatabaseManager;
 use RuntimeException;
 
 final class ConnectionTransactionTest extends TestCase
@@ -16,19 +17,24 @@ final class ConnectionTransactionTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->configDir = sys_get_temp_dir() . '/pc-conn-tx-' . bin2hex(random_bytes(4));
+        $this->configDir = sys_get_temp_dir() . '/vortex -conn-tx-' . bin2hex(random_bytes(4));
         mkdir($this->configDir, 0700, true);
         file_put_contents(
             $this->configDir . '/database.php',
             <<<'PHP'
 <?php
 return [
-    'driver' => 'sqlite',
-    'database' => ':memory:',
-    'host' => '127.0.0.1',
-    'port' => '3306',
-    'username' => '',
-    'password' => '',
+    'default' => 'default',
+    'connections' => [
+        'default' => [
+            'driver' => 'sqlite',
+            'database' => ':memory:',
+            'host' => '127.0.0.1',
+            'port' => '3306',
+            'username' => '',
+            'password' => '',
+        ],
+    ],
 ];
 PHP
             ,
@@ -48,7 +54,7 @@ PHP
 
     public function testTransactionCommits(): void
     {
-        $c = new Connection();
+        $c = DatabaseManager::fromRepository()->connection();
         $c->execute('CREATE TABLE t (id INTEGER PRIMARY KEY, v TEXT)');
         $c->transaction(static function (Connection $db): void {
             $db->execute('INSERT INTO t (v) VALUES (?)', ['ok']);
@@ -60,7 +66,7 @@ PHP
 
     public function testTransactionRollsBackOnException(): void
     {
-        $c = new Connection();
+        $c = DatabaseManager::fromRepository()->connection();
         $c->execute('CREATE TABLE t (id INTEGER PRIMARY KEY, v TEXT)');
         $c->execute('INSERT INTO t (v) VALUES (?)', ['before']);
 
@@ -81,7 +87,7 @@ PHP
 
     public function testManualBeginCommit(): void
     {
-        $c = new Connection();
+        $c = DatabaseManager::fromRepository()->connection();
         $c->execute('CREATE TABLE t (id INTEGER PRIMARY KEY, v TEXT)');
         $c->beginTransaction();
         $c->execute('INSERT INTO t (v) VALUES (?)', ['x']);
@@ -93,7 +99,7 @@ PHP
 
     public function testManualRollBack(): void
     {
-        $c = new Connection();
+        $c = DatabaseManager::fromRepository()->connection();
         $c->execute('CREATE TABLE t (id INTEGER PRIMARY KEY, v TEXT)');
         $c->beginTransaction();
         $c->execute('INSERT INTO t (v) VALUES (?)', ['x']);

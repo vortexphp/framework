@@ -7,6 +7,7 @@ namespace Vortex\Tests;
 use PHPUnit\Framework\TestCase;
 use Vortex\AppContext;
 use Vortex\Cache\Cache;
+use Vortex\Cache\CacheManager;
 use Vortex\Cache\FileCache;
 use Vortex\Container;
 use Vortex\Contracts\Cache as CacheContract;
@@ -18,10 +19,14 @@ final class CacheStaticFacadeTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->dir = sys_get_temp_dir() . '/pc-cache-facade-' . bin2hex(random_bytes(4));
+        $this->dir = sys_get_temp_dir() . '/vortex -cache-facade-' . bin2hex(random_bytes(4));
         $container = new Container();
         $container->instance(Container::class, $container);
-        $container->singleton(CacheContract::class, fn (): FileCache => new FileCache($this->dir, 'f:'));
+        $manager = CacheManager::fromInstances('file', [
+            'file' => new FileCache($this->dir, 'f:'),
+        ]);
+        $container->singleton(CacheManager::class, static fn (): CacheManager => $manager);
+        $container->singleton(CacheContract::class, static fn (Container $c): CacheContract => $c->make(CacheManager::class)->store());
         AppContext::set($container);
     }
 

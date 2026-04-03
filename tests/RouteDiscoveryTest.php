@@ -137,7 +137,7 @@ PHP,
 
     private function tempProjectRoot(): string
     {
-        $base = sys_get_temp_dir() . '/pc_route_discovery_' . bin2hex(random_bytes(8));
+        $base = sys_get_temp_dir() . '/vortex _route_discovery_' . bin2hex(random_bytes(8));
         if (is_dir($base)) {
             $this->removeTree($base);
         }

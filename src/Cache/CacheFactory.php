@@ -4,25 +4,13 @@ declare(strict_types=1);
 
 namespace Vortex\Cache;
 
-use InvalidArgumentException;
-use Vortex\Config\Repository;
-use Vortex\Contracts\Cache;
+use Vortex\Contracts\Cache as CacheContract;
 
+/** Resolves the default {@see CacheContract} from {@see CacheManager}. */
 final class CacheFactory
 {
-    public static function make(string $basePath): Cache
+    public static function make(string $basePath): CacheContract
     {
-        $driver = strtolower(trim((string) Repository::get('cache.driver', 'file')));
-        if ($driver === 'null') {
-            return new NullCache();
-        }
-        if ($driver !== 'file') {
-            throw new InvalidArgumentException("Unsupported cache driver [{$driver}]. Use file or null.");
-        }
-
-        return new FileCache(
-            (string) Repository::get('cache.path', rtrim($basePath, '/') . '/storage/cache/data'),
-            (string) Repository::get('cache.prefix', 'vortex:'),
-        );
+        return CacheManager::fromRepository($basePath)->store();
     }
 }

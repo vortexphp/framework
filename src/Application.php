@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace Vortex;
 
-use Vortex\Cache\CacheFactory;
+use Vortex\Cache\CacheManager;
 use Vortex\Config\Repository;
-use Vortex\Contracts\Cache;
+use Vortex\Contracts\Cache as CacheContract;
 use Vortex\Contracts\Mailer;
 use Vortex\Database\Connection;
+use Vortex\Database\DatabaseManager;
 use Vortex\Events\Dispatcher;
 use Vortex\Events\DispatcherFactory;
 use Vortex\Files\Storage;
 use Vortex\Mail\MailFactory;
 use Vortex\Http\Cookie;
 use Vortex\Http\Request;
+use Vortex\Http\Session;
+use Vortex\Http\SessionManager;
 use Vortex\Routing\RouteDiscovery;
 use Vortex\Routing\Router;
 use Vortex\Support\Log;
@@ -39,10 +42,15 @@ final class Application
         $container->instance(Container::class, $container);
         $container->singleton(Repository::class, static fn (): Repository => new Repository($basePath . '/config'));
         Repository::setInstance($container->make(Repository::class));
-        $container->singleton(Connection::class, static fn (): Connection => new Connection());
-        $container->singleton(Cache::class, static fn (): Cache => CacheFactory::make($basePath));
+        $container->singleton(DatabaseManager::class, static fn (): DatabaseManager => DatabaseManager::fromRepository());
+        $container->singleton(Connection::class, static fn (Container $c): Connection => $c->make(DatabaseManager::class)->connection());
+        $container->singleton(CacheManager::class, static fn (): CacheManager => CacheManager::fromRepository($basePath));
+        $container->singleton(CacheContract::class, static fn (Container $c): CacheContract => $c->make(CacheManager::class)->store());
         $container->singleton(Dispatcher::class, static fn (Container $c): Dispatcher => DispatcherFactory::make($c));
         $container->singleton(Mailer::class, static fn (): Mailer => MailFactory::make($basePath));
+        $container->singleton(SessionManager::class, static fn (): SessionManager => SessionManager::fromRepository());
+        $container->singleton(Session::class, static fn (Container $c): Session => new Session($c->make(SessionManager::class)->store()));
+        Session::setInstance($container->make(Session::class));
         $container->singleton(Factory::class, static function () use ($basePath): Factory {
             $debug = (bool) Repository::get('app.debug', false);
 

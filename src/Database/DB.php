@@ -9,18 +9,28 @@ use PDOStatement;
 use Vortex\AppContext;
 
 /**
- * Static access to the singleton {@see Connection} (same instance as constructor injection and {@see Model::connection()}).
+ * Static access to the default {@see Connection} (same instance as constructor injection and {@see Model::connection()}).
+ * Use {@see self::connection()} with a name for non-default connections from {@code config/database.php}.
  */
 final class DB
 {
-    private static function connection(): Connection
+    private static function defaultConnection(): Connection
     {
         return AppContext::container()->make(Connection::class);
     }
 
+    public static function connection(?string $name = null): Connection
+    {
+        if ($name !== null) {
+            return AppContext::container()->make(DatabaseManager::class)->connection($name);
+        }
+
+        return self::defaultConnection();
+    }
+
     public static function pdo(): PDO
     {
-        return self::connection()->pdo();
+        return self::defaultConnection()->pdo();
     }
 
     /**
@@ -28,7 +38,7 @@ final class DB
      */
     public static function query(string $sql, array $bindings = []): PDOStatement
     {
-        return self::connection()->query($sql, $bindings);
+        return self::defaultConnection()->query($sql, $bindings);
     }
 
     /**
@@ -37,7 +47,7 @@ final class DB
      */
     public static function select(string $sql, array $bindings = []): array
     {
-        return self::connection()->select($sql, $bindings);
+        return self::defaultConnection()->select($sql, $bindings);
     }
 
     /**
@@ -45,7 +55,7 @@ final class DB
      */
     public static function selectOne(string $sql, array $bindings = []): ?array
     {
-        return self::connection()->selectOne($sql, $bindings);
+        return self::defaultConnection()->selectOne($sql, $bindings);
     }
 
     /**
@@ -53,32 +63,32 @@ final class DB
      */
     public static function execute(string $sql, array $bindings = []): int
     {
-        return self::connection()->execute($sql, $bindings);
+        return self::defaultConnection()->execute($sql, $bindings);
     }
 
     public static function lastInsertId(): string
     {
-        return self::connection()->lastInsertId();
+        return self::defaultConnection()->lastInsertId();
     }
 
     public static function beginTransaction(): void
     {
-        self::connection()->beginTransaction();
+        self::defaultConnection()->beginTransaction();
     }
 
     public static function commit(): void
     {
-        self::connection()->commit();
+        self::defaultConnection()->commit();
     }
 
     public static function rollBack(): void
     {
-        self::connection()->rollBack();
+        self::defaultConnection()->rollBack();
     }
 
     public static function inTransaction(): bool
     {
-        return self::connection()->inTransaction();
+        return self::defaultConnection()->inTransaction();
     }
 
     /**
@@ -88,6 +98,6 @@ final class DB
      */
     public static function transaction(callable $callback): mixed
     {
-        return self::connection()->transaction($callback);
+        return self::defaultConnection()->transaction($callback);
     }
 }

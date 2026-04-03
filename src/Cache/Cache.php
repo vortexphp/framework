@@ -8,33 +8,38 @@ use Vortex\AppContext;
 use Vortex\Contracts\Cache as CacheContract;
 
 /**
- * Static access to the singleton {@see CacheContract} (same instance as constructor injection).
+ * Static access to cache stores (same instances as constructor injection of {@see CacheContract} for the default store).
  */
 final class Cache
 {
-    private static function store(): CacheContract
+    public static function store(?string $name = null): CacheContract
     {
-        return AppContext::container()->make(CacheContract::class);
+        return AppContext::container()->make(CacheManager::class)->store($name);
+    }
+
+    private static function defaultStore(): CacheContract
+    {
+        return self::store();
     }
 
     public static function get(string $key, mixed $default = null): mixed
     {
-        return self::store()->get($key, $default);
+        return self::defaultStore()->get($key, $default);
     }
 
     public static function set(string $key, mixed $value, ?int $ttlSeconds = null): void
     {
-        self::store()->set($key, $value, $ttlSeconds);
+        self::defaultStore()->set($key, $value, $ttlSeconds);
     }
 
     public static function forget(string $key): void
     {
-        self::store()->forget($key);
+        self::defaultStore()->forget($key);
     }
 
     public static function clear(): void
     {
-        self::store()->clear();
+        self::defaultStore()->clear();
     }
 
     /**
@@ -44,6 +49,6 @@ final class Cache
      */
     public static function remember(string $key, ?int $ttlSeconds, callable $callback): mixed
     {
-        return self::store()->remember($key, $ttlSeconds, $callback);
+        return self::defaultStore()->remember($key, $ttlSeconds, $callback);
     }
 }

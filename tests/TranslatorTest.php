@@ -17,7 +17,7 @@ final class TranslatorTest extends TestCase
 
     public function testDotKeysAndPlaceholders(): void
     {
-        $dir = sys_get_temp_dir() . '/pc-lang-' . bin2hex(random_bytes(4));
+        $dir = sys_get_temp_dir() . '/vortex -lang-' . bin2hex(random_bytes(4));
         mkdir($dir, 0700, true);
         file_put_contents(
             $dir . '/en.php',
@@ -36,7 +36,7 @@ final class TranslatorTest extends TestCase
 
     public function testFallsBackWhenKeyMissing(): void
     {
-        $dir = sys_get_temp_dir() . '/pc-lang-' . bin2hex(random_bytes(4));
+        $dir = sys_get_temp_dir() . '/vortex -lang-' . bin2hex(random_bytes(4));
         mkdir($dir, 0700, true);
         file_put_contents($dir . '/en.php', "<?php\nreturn ['a' => ['b' => 'EN']];\n");
         file_put_contents($dir . '/fr.php', "<?php\nreturn [];\n");
@@ -54,7 +54,7 @@ final class TranslatorTest extends TestCase
 
     public function testSetLocaleRejectsUnknown(): void
     {
-        $dir = sys_get_temp_dir() . '/pc-lang-' . bin2hex(random_bytes(4));
+        $dir = sys_get_temp_dir() . '/vortex -lang-' . bin2hex(random_bytes(4));
         mkdir($dir, 0700, true);
         file_put_contents($dir . '/en.php', "<?php\nreturn ['k' => 'v'];\n");
 

@@ -18,7 +18,7 @@ final class CacheFactoryTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->configDir = sys_get_temp_dir() . '/pc-cache-factory-' . bin2hex(random_bytes(4));
+        $this->configDir = sys_get_temp_dir() . '/vortex -cache-factory-' . bin2hex(random_bytes(4));
         mkdir($this->configDir, 0700, true);
     }
 
@@ -48,7 +48,7 @@ final class CacheFactoryTest extends TestCase
 
     public function testFileDriver(): void
     {
-        $path = sys_get_temp_dir() . '/pc-cf-data-' . bin2hex(random_bytes(4));
+        $path = sys_get_temp_dir() . '/vortex -cf-data-' . bin2hex(random_bytes(4));
         $this->writeCachePhp(
             "<?php\nreturn ['driver' => 'file', 'path' => " . var_export($path, true) . ", 'prefix' => 'x:'];",
         );
@@ -68,11 +68,12 @@ final class CacheFactoryTest extends TestCase
         }
     }
 
-    public function testUnknownDriverThrows(): void
+    public function testUnknownLegacyDriverThrows(): void
     {
         $this->writeCachePhp("<?php\nreturn ['driver' => 'redis', 'path' => '/tmp', 'prefix' => ''];");
         Repository::setInstance(new Repository($this->configDir));
         $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupported cache driver');
         CacheFactory::make('/tmp');
     }
 }

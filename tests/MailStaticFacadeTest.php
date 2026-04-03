@@ -20,7 +20,7 @@ final class MailStaticFacadeTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->base = sys_get_temp_dir() . '/pc-mail-bus-' . bin2hex(random_bytes(4));
+        $this->base = sys_get_temp_dir() . '/vortex -mail-bus-' . bin2hex(random_bytes(4));
         mkdir($this->base, 0700, true);
         $configDir = $this->base . '/config';
         mkdir($configDir, 0700, true);

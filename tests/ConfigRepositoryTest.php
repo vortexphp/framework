@@ -17,7 +17,7 @@ final class ConfigRepositoryTest extends TestCase
 
     public function testLoadsPhpFilesAndDotPaths(): void
     {
-        $dir = sys_get_temp_dir() . '/pc-repo-' . bin2hex(random_bytes(4));
+        $dir = sys_get_temp_dir() . '/vortex -repo-' . bin2hex(random_bytes(4));
         mkdir($dir, 0700, true);
         file_put_contents(
             $dir . '/app.php',

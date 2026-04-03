@@ -11,7 +11,7 @@ final class EnvTest extends TestCase
 {
     public function testLoadParsesQuotedValues(): void
     {
-        $path = sys_get_temp_dir() . '/pc-env-' . bin2hex(random_bytes(4));
+        $path = sys_get_temp_dir() . '/vortex -env-' . bin2hex(random_bytes(4));
         file_put_contents(
             $path,
             "FOO_BAR=hello\n# comment\nEMPTY=\nQUOTED=\"say \\\"hi\\\"\"\n",

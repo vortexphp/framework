@@ -63,7 +63,7 @@ final class EngineSupportTest extends TestCase
 
     public function testPathHelpIsBelowBase(): void
     {
-        $base = sys_get_temp_dir() . '/pc_path_' . bin2hex(random_bytes(4));
+        $base = sys_get_temp_dir() . '/vortex _path_' . bin2hex(random_bytes(4));
         $sub = $base . '/sub';
         self::assertTrue(mkdir($base, 0777, true));
         self::assertTrue(mkdir($sub, 0777, true));

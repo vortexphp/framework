@@ -37,17 +37,19 @@ final class Csrf
     private function issueToken(): string
     {
         Session::start();
-        if (! isset($_SESSION[self::SESSION_KEY]) || ! is_string($_SESSION[self::SESSION_KEY])) {
-            $_SESSION[self::SESSION_KEY] = bin2hex(random_bytes(32));
+        $token = Session::get(self::SESSION_KEY);
+        if (! is_string($token) || $token === '') {
+            $token = bin2hex(random_bytes(32));
+            Session::put(self::SESSION_KEY, $token);
         }
 
-        return $_SESSION[self::SESSION_KEY];
+        return $token;
     }
 
     private function checkRequest(): bool
     {
         Session::start();
-        $expected = $_SESSION[self::SESSION_KEY] ?? '';
+        $expected = Session::get(self::SESSION_KEY, '');
         if (! is_string($expected) || $expected === '') {
             return false;
         }
