@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-04-03
+
+### Added
+
+- Fluent validation rule builder **`Vortex\Validation\Rule`** with inline per-rule message support; **`Validator::make()`** now accepts rule objects.
+- Fluent response/session flash helpers: **`Response::with()`**, **`withMany()`**, **`withErrors()`**, **`withInput()`**, and session batch helpers **`Session::flashMany()`** / **`flashPutMany()`**.
+- Request-aware response shortcuts: **`Response::error()`**, **`notFound()`**, **`forbidden()`**, and **`unauthorized()`** that auto-select HTML or JSON output.
+
+### Changed
+
+- **`Request::wantsJson()`** now treats **`X-Requested-With: XMLHttpRequest`** as JSON-preferring requests.
+- **Breaking:** **`composer.lock`** is no longer tracked in the repository and is now ignored.
+
 ## [0.6.0] - 2026-04-03
 
 ### Added
@@ -112,6 +125,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Contracts**: `Cache`, `Mailer`, `Middleware`.
 - PHPUnit test suite under `tests/`.
 
+[0.7.0]: https://github.com/vortexphp/framework/releases/tag/v0.7.0
 [0.6.0]: https://github.com/vortexphp/framework/releases/tag/v0.6.0
 [0.5.0]: https://github.com/vortexphp/framework/releases/tag/v0.5.0
 [0.4.0]: https://github.com/vortexphp/framework/releases/tag/v0.4.0
