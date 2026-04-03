@@ -8,7 +8,7 @@ use Closure;
 use RuntimeException;
 
 /**
- * Static entry point for route files. The bootstrap binds the active {@see Router}
+ * Static entry point for route files. {@see \Vortex\Application::boot()} binds the active {@see Router}
  * with {@see self::useRouter()} before {@see RouteDiscovery::loadHttpRoutes()} runs—same idea as a
  * facade, without a global service locator for the rest of the app.
  */
@@ -58,7 +58,7 @@ final class Route
     {
         if (self::$router === null) {
             throw new RuntimeException(
-                'Route::get() (or post/add) was called before Route::useRouter(). Load routes only from bootstrap.',
+                'Route::get() (or post/add) was called before Route::useRouter() (e.g. during Application::boot() route discovery).',
             );
         }
 

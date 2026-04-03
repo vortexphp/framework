@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Vortex\I18n\Translator;
 
 /**
- * Translate a line (dot key). Requires {@see Translator::setInstance()} from bootstrap.
+ * Translate a line (dot key). Requires {@see Translator::setInstance()} during {@see \Vortex\Application::boot()}.
  *
  * @param array<string, string|int|float> $replace
  */

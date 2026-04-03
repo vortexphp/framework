@@ -26,14 +26,14 @@ final class MigrateCommand implements Command
 
     public function description(): string
     {
-        return 'Run pending database migration classes (database/migrations/*.php).';
+        return 'Run pending database migration classes (db/migrations/*.php).';
     }
 
     public function run(Input $input): int
     {
-        $bootstrap = $this->basePath . '/bootstrap/app.php';
-        if (! is_file($bootstrap)) {
-            fwrite(STDERR, Term::style('1;31', 'Missing bootstrap/app.php') . "\n");
+        $startup = $this->basePath . '/startup/app.php';
+        if (! is_file($startup)) {
+            fwrite(STDERR, Term::style('1;31', 'Missing startup/app.php') . "\n");
 
             return 1;
         }
@@ -42,7 +42,7 @@ final class MigrateCommand implements Command
 
         try {
             /** @var Container $container */
-            $container = require $bootstrap;
+            $container = require $startup;
             $migrator = new SchemaMigrator($this->basePath, $container->make(Connection::class));
             $ran = $migrator->up();
             fwrite(STDERR, Term::style('1;32', 'OK') . ' — applied ' . $ran . " migration(s)\n");

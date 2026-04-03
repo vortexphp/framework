@@ -40,7 +40,7 @@ final class Repository
     private static function resolved(): self
     {
         if (self::$instance === null) {
-            throw new \RuntimeException('Repository is not initialized; call Repository::setInstance() from bootstrap.');
+            throw new \RuntimeException('Repository is not initialized; call Repository::setInstance() during Application::boot().');
         }
 
         return self::$instance;

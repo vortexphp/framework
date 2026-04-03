@@ -9,7 +9,7 @@ use RuntimeException;
 use Throwable;
 
 /**
- * File logger for **`storage/logs/app.log`**. Call {@see setBasePath()} once during bootstrap
+ * File logger for **`storage/logs/app.log`**. Call {@see setBasePath()} once during {@see \Vortex\Application::boot()}
  * (before {@see exception()}, {@see info()}, etc.).
  */
 final class Log

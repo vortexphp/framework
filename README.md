@@ -15,6 +15,7 @@ Requires **PHP 8.2+**, **ext-mbstring**, **ext-pdo**, and **Twig 3**. For SMTP w
 The framework expects a **base path** (your app root) with at least:
 
 - `config/` — configuration read by `Vortex\Config\Repository`
+- `startup/app.php` — must `return` the `Vortex\Container` instance (used by `php vortex migrate`, `migrate:down`, `db-check`)
 - `app/Routes/*.php` — HTTP route files (`require`d in order; register via `Vortex\Routing\Route`; optional `->name('key')` + `route('key', $params)`)
 - `app/Routes/*Console.php` — console route files (return `callable(ConsoleApplication): void`)
 - `assets/views/` — Twig templates (used by `Vortex\Application::boot()`)

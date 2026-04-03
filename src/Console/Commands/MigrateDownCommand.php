@@ -31,9 +31,9 @@ final class MigrateDownCommand implements Command
 
     public function run(Input $input): int
     {
-        $bootstrap = $this->basePath . '/bootstrap/app.php';
-        if (! is_file($bootstrap)) {
-            fwrite(STDERR, Term::style('1;31', 'Missing bootstrap/app.php') . "\n");
+        $startup = $this->basePath . '/startup/app.php';
+        if (! is_file($startup)) {
+            fwrite(STDERR, Term::style('1;31', 'Missing startup/app.php') . "\n");
 
             return 1;
         }
@@ -42,7 +42,7 @@ final class MigrateDownCommand implements Command
 
         try {
             /** @var Container $container */
-            $container = require $bootstrap;
+            $container = require $startup;
             $migrator = new SchemaMigrator($this->basePath, $container->make(Connection::class));
             $rolledBack = $migrator->down();
             fwrite(STDERR, Term::style('1;32', 'OK') . ' — rolled back ' . $rolledBack . " migration(s)\n");

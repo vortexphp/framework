@@ -6,7 +6,7 @@ use Vortex\AppContext;
 use Vortex\Routing\Router;
 
 /**
- * Path for a named HTTP route (leading slash). Requires a bootstrapped application.
+ * Path for a named HTTP route (leading slash). Requires {@see \Vortex\Application::boot()} to have run.
  *
  * @param array<string, string|int|float> $params
  */

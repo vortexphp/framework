@@ -77,9 +77,9 @@ class SchemaMigrator
      */
     private function discoverMigrations(): array
     {
-        $dir = $this->basePath . '/database/migrations';
+        $dir = $this->basePath . '/db/migrations';
         if (! is_dir($dir)) {
-            throw new InvalidArgumentException('Missing database/migrations directory.');
+            throw new InvalidArgumentException('Missing db/migrations directory.');
         }
 
         $paths = glob($dir . '/*.php') ?: [];

@@ -31,7 +31,7 @@ final class Session
     private static function resolved(): self
     {
         if (self::$instance === null) {
-            throw new RuntimeException('Session is not initialized; call Session::setInstance() from bootstrap.');
+            throw new RuntimeException('Session is not initialized; call Session::setInstance() during Application::boot().');
         }
 
         return self::$instance;

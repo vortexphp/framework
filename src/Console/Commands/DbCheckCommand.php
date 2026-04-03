@@ -28,15 +28,15 @@ final class DbCheckCommand implements Command
 
     public function description(): string
     {
-        return 'Run SELECT 1 through the app database connection (uses bootstrap + .env).';
+        return 'Run SELECT 1 through the app database connection (uses startup/app.php + .env).';
     }
 
     public function run(Input $input): int
     {
         $base = $this->basePath;
-        $bootstrap = $base . '/bootstrap/app.php';
-        if (! is_file($bootstrap)) {
-            fwrite(STDERR, Term::style('1;31', 'Missing bootstrap/app.php') . "\n");
+        $startup = $base . '/startup/app.php';
+        if (! is_file($startup)) {
+            fwrite(STDERR, Term::style('1;31', 'Missing startup/app.php') . "\n");
 
             return 1;
         }
@@ -45,7 +45,7 @@ final class DbCheckCommand implements Command
 
         try {
             /** @var Container $container */
-            $container = require $bootstrap;
+            $container = require $startup;
             $connection = $container->make(Connection::class);
             $connection->selectOne('SELECT 1 AS ok');
         } catch (Throwable $e) {

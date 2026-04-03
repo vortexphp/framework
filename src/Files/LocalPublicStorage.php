@@ -34,7 +34,7 @@ final class LocalPublicStorage
     private static function resolved(): self
     {
         if (self::$instance === null) {
-            throw new \RuntimeException('LocalPublicStorage is not initialized; call LocalPublicStorage::setInstance() from bootstrap.');
+            throw new \RuntimeException('LocalPublicStorage is not initialized; call LocalPublicStorage::setInstance() during Application::boot().');
         }
 
         return self::$instance;

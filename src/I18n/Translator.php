@@ -35,7 +35,7 @@ final class Translator
     private static function resolved(): self
     {
         if (self::$instance === null) {
-            throw new \RuntimeException('Translator is not initialized; call Translator::setInstance() from bootstrap.');
+            throw new \RuntimeException('Translator is not initialized; call Translator::setInstance() during Application::boot().');
         }
 
         return self::$instance;

@@ -130,7 +130,7 @@ final class Storage
         }
 
         if (self::$basePath === null || self::$basePath === '') {
-            throw new RuntimeException('Storage::setBasePath() must be called from bootstrap.');
+            throw new RuntimeException('Storage::setBasePath() must be called during Application::boot().');
         }
 
         if (self::$manager === null) {

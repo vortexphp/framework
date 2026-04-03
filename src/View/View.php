@@ -26,7 +26,7 @@ final class View
     private static function engine(): Factory
     {
         if (self::$factory === null) {
-            throw new \RuntimeException('View is not configured; call View::useFactory() from bootstrap.');
+            throw new \RuntimeException('View is not configured; call View::useFactory() during Application::boot().');
         }
 
         return self::$factory;

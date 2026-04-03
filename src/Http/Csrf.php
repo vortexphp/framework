@@ -18,7 +18,7 @@ final class Csrf
     private static function resolved(): self
     {
         if (self::$instance === null) {
-            throw new \RuntimeException('Csrf is not initialized; call Csrf::setInstance() from bootstrap.');
+            throw new \RuntimeException('Csrf is not initialized; call Csrf::setInstance() during Application::boot().');
         }
 
         return self::$instance;
