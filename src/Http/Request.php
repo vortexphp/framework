@@ -130,14 +130,56 @@ final class Request
         return self::current()->detectSecure();
     }
 
+    /**
+     * Normalize a path or URI path segment the same way as {@see capture()} (leading slash, trim trailing slash except root).
+     */
+    public static function normalizePath(string $path): string
+    {
+        $path = '/' . trim($path, '/');
+        if ($path !== '/' && str_ends_with($path, '/')) {
+            return rtrim($path, '/');
+        }
+
+        return $path;
+    }
+
+    /**
+     * Build a synthetic request (e.g. PHPUnit). Does not read superglobals.
+     *
+     * @param array<string, string> $query
+     * @param array<string, mixed> $body
+     * @param array<string, string> $headers
+     * @param array<string, mixed> $server
+     * @param array<string, UploadedFile> $files
+     */
+    public static function make(
+        string $method,
+        string $path,
+        array $query = [],
+        array $body = [],
+        array $headers = [],
+        array $server = [],
+        array $files = [],
+    ): self {
+        $method = strtoupper($method);
+        $path = self::normalizePath($path === '' ? '/' : $path);
+
+        $server = array_merge([
+            'REQUEST_METHOD' => $method,
+            'REQUEST_URI' => $path,
+            'HTTP_HOST' => 'localhost',
+            'SERVER_NAME' => 'localhost',
+            'SERVER_PORT' => '80',
+        ], $server);
+
+        return new self($method, $path, $query, $body, $headers, $server, $files);
+    }
+
     public static function capture(): self
     {
         $uri = $_SERVER['REQUEST_URI'] ?? '/';
-        $path = parse_url($uri, PHP_URL_PATH) ?: '/';
-        $path = '/' . trim($path, '/');
-        if ($path !== '/' && str_ends_with($path, '/')) {
-            $path = rtrim($path, '/');
-        }
+        $rawPath = parse_url($uri, PHP_URL_PATH);
+        $path = self::normalizePath(is_string($rawPath) && $rawPath !== '' ? $rawPath : '/');
 
         $headers = [];
         foreach ($_SERVER as $key => $value) {

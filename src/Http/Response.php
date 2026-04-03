@@ -70,6 +70,14 @@ final class Response
     }
 
     /**
+     * @return array<string, string|string[]>
+     */
+    public function headers(): array
+    {
+        return $this->headers;
+    }
+
+    /**
      * Apply common security headers when not already set.
      */
     public function withSecurityHeaders(): self

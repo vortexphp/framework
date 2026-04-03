@@ -12,7 +12,6 @@ use Vortex\Container;
 use Vortex\Http\Response;
 use Vortex\Routing\RouteDiscovery;
 use Vortex\Routing\Router;
-use RuntimeException;
 
 final class RouteDiscoveryTest extends TestCase
 {
@@ -29,9 +28,7 @@ final class RouteDiscoveryTest extends TestCase
 declare(strict_types=1);
 use Vortex\Http\Response;
 use Vortex\Routing\Route;
-return static function (): void {
-    Route::get('/zed', static fn (): Response => Response::make('zed'));
-};
+Route::get('/zed', static fn (): Response => Response::make('zed'));
 PHP,
         );
         file_put_contents(
@@ -41,9 +38,7 @@ PHP,
 declare(strict_types=1);
 use Vortex\Http\Response;
 use Vortex\Routing\Route;
-return static function (): void {
-    Route::get('/alpha', static fn (): Response => Response::make('alpha'));
-};
+Route::get('/alpha', static fn (): Response => Response::make('alpha'));
 PHP,
         );
         file_put_contents(
@@ -52,9 +47,7 @@ PHP,
 <?php
 declare(strict_types=1);
 use Vortex\Routing\Route;
-return static function (): void {
-    throw new \RuntimeException('HTTP loader must not require *Console.php files');
-};
+throw new \RuntimeException('HTTP loader must not require *Console.php files');
 PHP,
         );
 
@@ -114,19 +107,29 @@ PHP,
         }
     }
 
-    public function testNonCallableHttpFileThrows(): void
+    public function testHttpRouteFileMayReturnUnusedValue(): void
     {
         $base = $this->tempProjectRoot();
         $routes = $base . '/app/Routes';
         mkdir($routes, 0777, true);
-        file_put_contents($routes . '/Bad.php', "<?php\nreturn 1;\n");
+        file_put_contents(
+            $routes . '/Bad.php',
+            <<<'PHP'
+<?php
+declare(strict_types=1);
+use Vortex\Http\Response;
+use Vortex\Routing\Route;
+Route::get('/ok', static fn (): Response => Response::make('ok'));
+return 1;
+PHP,
+        );
 
         try {
             $c = new Container();
             $c->instance(Container::class, $c);
             $router = new Router($c);
-            $this->expectException(RuntimeException::class);
             RouteDiscovery::loadHttpRoutes($router, $base);
+            self::assertNotNull($router->match('GET', '/ok'));
         } finally {
             $this->removeTree($base);
         }

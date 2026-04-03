@@ -15,7 +15,7 @@ Requires **PHP 8.2+**, **ext-mbstring**, **ext-pdo**, and **Twig 3**. For SMTP w
 The framework expects a **base path** (your app root) with at least:
 
 - `config/` — configuration read by `Vortex\Config\Repository`
-- `app/Routes/*.php` — HTTP route files (return `callable(): void` and register routes via `Vortex\Routing\Route`; optional `->name('key')` + `route('key', $params)`)
+- `app/Routes/*.php` — HTTP route files (`require`d in order; register via `Vortex\Routing\Route`; optional `->name('key')` + `route('key', $params)`)
 - `app/Routes/*Console.php` — console route files (return `callable(ConsoleApplication): void`)
 - `assets/views/` — Twig templates (used by `Vortex\Application::boot()`)
 - `storage/cache/twig/` — optional Twig cache when `app.debug` is false
@@ -36,6 +36,8 @@ $app->run(); // or use Http\Kernel with global middleware from config
 ```
 
 Use the `Vortex\` namespace for framework types. See the test suite under `tests/` for concrete usage patterns.
+
+**Testing HTTP in-process:** `Kernel::handle(Request::make('GET', '/path'))` returns a `Response` without sending output; register `ErrorRenderer` on the container when using the full error stack (see `tests/KernelHandleTest.php`).
 
 ## Changelog
 

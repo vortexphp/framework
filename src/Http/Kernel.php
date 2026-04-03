@@ -19,7 +19,16 @@ final class Kernel
     public function send(): void
     {
         TrustProxies::apply();
-        $request = Request::capture();
+        $this->handle(Request::capture())->send();
+    }
+
+    /**
+     * Run the HTTP pipeline (router, global middleware, security headers, CSP) and return the
+     * response without sending it. Use with {@see Request::make()} in tests; for browser requests
+     * prefer {@see send()} so {@see TrustProxies::apply()} runs before {@see Request::capture()}.
+     */
+    public function handle(Request $request): Response
+    {
         Request::setCurrent($request);
 
         try {
@@ -36,6 +45,7 @@ final class Kernel
         if (is_string($csp) && trim($csp) !== '') {
             $response->header('Content-Security-Policy', trim($csp));
         }
-        $response->send();
+
+        return $response;
     }
 }

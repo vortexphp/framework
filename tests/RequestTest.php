@@ -86,4 +86,23 @@ final class RequestTest extends TestCase
         self::assertSame($upload, Request::file('avatar'));
         self::assertNull(Request::file('missing'));
     }
+
+    public function testNormalizePath(): void
+    {
+        self::assertSame('/', Request::normalizePath('/'));
+        self::assertSame('/blog', Request::normalizePath('blog'));
+        self::assertSame('/blog', Request::normalizePath('/blog/'));
+    }
+
+    public function testMakeBuildsRequestWithDefaults(): void
+    {
+        $r = Request::make('get', 'items', ['page' => '2'], ['x' => 'y'], ['Accept' => 'text/html']);
+
+        self::assertSame('GET', $r->method);
+        self::assertSame('/items', $r->path);
+        self::assertSame(['page' => '2'], $r->query);
+        self::assertSame(['x' => 'y'], $r->body);
+        self::assertSame('GET', $r->server['REQUEST_METHOD']);
+        self::assertSame('/items', $r->server['REQUEST_URI']);
+    }
 }

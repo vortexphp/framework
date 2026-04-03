@@ -15,8 +15,8 @@ final class RouteDiscovery
     }
 
     /**
-     * Load every `app/Routes/*.php` that is not named `*Console.php`. Each file must return
-     * `callable(): void` and register routes via {@see Route} (the active router is set from the `$router` argument).
+     * Load every `app/Routes/*.php` that is not named `*Console.php`. Each file is {@see require}d
+     * in sorted order; register routes with {@see Route} (the active router is set before the first file runs).
      */
     public static function loadHttpRoutes(Router $router, string $basePath): void
     {
@@ -28,14 +28,7 @@ final class RouteDiscovery
         }
 
         foreach (self::httpRouteFiles($dir) as $file) {
-            /** @var mixed $register */
-            $register = require $file;
-            if (! is_callable($register)) {
-                throw new RuntimeException(
-                    sprintf('HTTP route file %s must return a callable(): void.', $file),
-                );
-            }
-            $register();
+            require $file;
         }
     }
 
