@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-04-03
+
 ### Added
 
 - **`php vortex doctor`** — when **`config/files.php`** exists, checks each upload profile’s **`directory`**: exists under **`public/`**, writable, create/delete probe. **`FilesConfigUploadRoots`** parses the config shape.
@@ -62,5 +64,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Contracts**: `Cache`, `Mailer`, `Middleware`.
 - PHPUnit test suite under `tests/`.
 
+[0.2.0]: https://github.com/vortexphp/framework/releases/tag/v0.2.0
 [0.1.0]: https://github.com/vortexphp/framework/releases/tag/v0.1.0
 [0.0.1]: https://github.com/vortexphp/framework/releases/tag/v0.0.1

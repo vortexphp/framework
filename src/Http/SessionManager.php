@@ -80,7 +80,7 @@ final class SessionManager
             'stores' => [
                 'native' => [
                     'driver' => 'native',
-                    'name' => 'pc_session',
+                    'name' => 'vortex_session',
                     'lifetime' => 7200,
                     'secure' => false,
                     'samesite' => 'Lax',
