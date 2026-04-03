@@ -24,7 +24,7 @@ final class DoctorCommand implements Command
 
     public function description(): string
     {
-        return 'Environment checks (checklist §1). Use --production for §2: .env, APP_DEBUG, APP_URL, vendor, CSS.';
+        return 'Environment checks: PHP, ext-pdo, ext-mbstring, PDO driver, public/, storage/. Use --production for .env, APP_DEBUG, APP_URL, APP_KEY, vendor, CSS.';
     }
 
     public function run(Input $input): int
@@ -43,6 +43,7 @@ final class DoctorCommand implements Command
         $failed = $this->line($ok, 'PHP ' . PHP_VERSION . ' (need ^8.2)') || $failed;
 
         $failed = $this->line(extension_loaded('pdo'), 'ext-pdo loaded') || $failed;
+        $failed = $this->line(extension_loaded('mbstring'), 'ext-mbstring loaded (required by framework)') || $failed;
 
         $drivers = [];
         foreach (['pdo_sqlite', 'pdo_mysql', 'pdo_pgsql'] as $ext) {
@@ -98,6 +99,9 @@ final class DoctorCommand implements Command
                         'DB_DATABASE is set (driver ' . $driver . ')',
                     ) || $failed;
                 }
+
+                $appKey = trim((string) (Env::get('APP_KEY') ?? ''));
+                $failed = $this->line($appKey !== '', 'APP_KEY is non-empty (Crypt / signed tokens)') || $failed;
             }
         } else {
             $this->line($envOk, '.env readable (optional locally; use doctor --production before deploy)', warnIfFail: false);
