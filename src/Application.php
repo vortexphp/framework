@@ -11,6 +11,7 @@ use Vortex\Contracts\Mailer;
 use Vortex\Database\Connection;
 use Vortex\Events\Dispatcher;
 use Vortex\Events\DispatcherFactory;
+use Vortex\Files\Storage;
 use Vortex\Mail\MailFactory;
 use Vortex\Http\Cookie;
 use Vortex\Http\Request;
@@ -32,6 +33,7 @@ final class Application
     {
         $basePath = rtrim($basePath, '/');
         Log::setBasePath($basePath);
+        Storage::setBasePath($basePath);
 
         $container = new Container();
         $container->instance(Container::class, $container);

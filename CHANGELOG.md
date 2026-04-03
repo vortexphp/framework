@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`php vortex doctor`** — when **`config/files.php`** exists, checks each upload profile’s **`directory`**: exists under **`public/`**, writable, create/delete probe. **`FilesConfigUploadRoots`** parses the config shape.
 - **`Log::setBasePath()`** at bootstrap; **`Log::info`**, **`warning`**, **`error`**, **`debug`**, **`notice`**, **`critical`**, **`alert`**, **`emergency`**, **`log($level, …)`** with optional JSON **`$context`**; same **`storage/logs/app.log`** as exceptions.
 - **`Cookie`** value object (**`Set-Cookie`** via **`Response::cookie()`** or **`Cookie::queue()`** + **`Cookie::flushQueued()`** in **`Kernel`** / **`Application::run()`**), **`Request::cookie()`** / **`cookies()`**, **`Cookie::parseRequestHeader()`** (quoted values, **`SameSite`** helper shared with **`Session`**).
+- **`Files\Storage`** façade: **`disk($name)`** returns **`Filesystem`** drivers from **`config/storage.php`** (**`local`**, **`local_public`**, **`null`**); default disk for **`put`/`get`/…**; **`storeUpload`** / **`publicRoot`** use **`upload_disk`** / **`public_disk`**. **`Storage::setBasePath($basePath)`** at bootstrap (**`Application::boot`** and app bootstrap).
 
 ### Changed
 
