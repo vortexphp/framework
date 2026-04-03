@@ -30,7 +30,7 @@ final class KernelHandleTest extends TestCase
     {
         $app = Application::boot($this->fixtureBase);
         $container = $app->container();
-        $container->singleton(ErrorRenderer::class, static fn (): ErrorRenderer => new ErrorRenderer($this->fixtureBase));
+        $container->singleton(ErrorRenderer::class, static fn (): ErrorRenderer => new ErrorRenderer());
 
         $kernel = new Kernel($container);
         $response = $kernel->handle(Request::make('GET', '/t'));
@@ -43,7 +43,7 @@ final class KernelHandleTest extends TestCase
     {
         $app = Application::boot($this->fixtureBase);
         $container = $app->container();
-        $container->singleton(ErrorRenderer::class, static fn (): ErrorRenderer => new ErrorRenderer($this->fixtureBase));
+        $container->singleton(ErrorRenderer::class, static fn (): ErrorRenderer => new ErrorRenderer());
 
         $kernel = new Kernel($container);
         $response = $kernel->handle(Request::make('GET', '/t'));

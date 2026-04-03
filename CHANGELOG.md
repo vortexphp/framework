@@ -7,30 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Breaking
-
-- **`QueryBuilder::paginate()`** returns **`Vortex\Pagination\Paginator`** instead of an array.
-
 ### Added
 
-- **`Paginator`** (**`withBasePath`**, **`urlForPage`**, **`hasPages`**, **`onFirstPage`**, **`onLastPage`**).
+- **`php vortex doctor`** — when **`config/files.php`** exists, checks each upload profile’s **`directory`**: exists under **`public/`**, writable, create/delete probe. **`FilesConfigUploadRoots`** parses the config shape.
+- **`Log::setBasePath()`** at bootstrap; **`Log::info`**, **`warning`**, **`error`**, **`debug`**, **`notice`**, **`critical`**, **`alert`**, **`emergency`**, **`log($level, …)`** with optional JSON **`$context`**; same **`storage/logs/app.log`** as exceptions.
+- **`Cookie`** value object (**`Set-Cookie`** via **`Response::cookie()`** or **`Cookie::queue()`** + **`Cookie::flushQueued()`** in **`Kernel`** / **`Application::run()`**), **`Request::cookie()`** / **`cookies()`**, **`Cookie::parseRequestHeader()`** (quoted values, **`SameSite`** helper shared with **`Session`**).
+
+### Changed
+
+- **Breaking:** `QueryBuilder::paginate()` returns `Vortex\Pagination\Paginator` instead of an array. Use `$paginator->items` and the same public count fields (`total`, `page`, `per_page`, `last_page`). For page links, call `withBasePath()` (e.g. with `route('name')`) then `urlForPage($n)`; helpers `hasPages()`, `onFirstPage()`, and `onLastPage()` are available for templates.
+- **Breaking:** **`Log::exception(Throwable $e)`** only — project root comes from **`Log::setBasePath()`** (**`Application::boot()`** and app bootstrap call it). **`ErrorRenderer`** has no constructor parameters.
 
 ## [0.1.0] - 2026-04-03
 
 ### Breaking
 
-- **HTTP route files** (`app/Routes/*.php` except `*Console.php`) are **`require`d** and must register routes at the top level with **`Route::get` / `post` / `add`** — no **`return static function (): void { … }`** wrapper. Console route files still **`return callable(ConsoleApplication): void`**.
+- **HTTP route files** (`app/Routes/*.php` except `*Console.php`) are **required** at discovery time and must register routes at the top level with `Route::get` / `post` / `add` — no `return static function (): void { … }` wrapper. Console route files still `return callable(ConsoleApplication): void`.
 
 ### Added
 
-- **Routing**: named routes (**`Router::name`**, **`Router::path`**, **`Route::name()`**), global **`route()`** helper and Twig **`route()`**, **`Router::interpolatePattern()`**.
-- **HTTP testing**: **`Kernel::handle(Request)`**, **`Request::make()`**, **`Request::normalizePath()`**, **`Response::headers()`**.
-- **Rate limiting**: **`RateLimiter`**, **`Middleware\Throttle`** (cache-backed fixed window), **`config/throttle.php`** pattern in apps.
-- **`php vortex doctor`**: requires **`ext-mbstring`**; **`doctor --production`** requires non-empty **`APP_KEY`**.
+- **Cache-backed rate limiting and stricter doctor** — `RateLimiter`, `Middleware\Throttle` (fixed window); `php vortex doctor` requires `ext-mbstring`, and production checks require non-empty `APP_KEY`.
+- **Named routes and URL generation** — `Router::name`, `Router::path`, `Route::name()`, global `route()`, Twig `route()`, `Router::interpolatePattern()`.
+- **In-process HTTP handling and route loading** — `Kernel::handle(Request)`, `Request::make()` / `normalizePath()`, `Response::headers()` for tests; HTTP route files are loaded via `require` (see Breaking). Fixture app and `KernelHandleTest` in the framework test suite.
 
 ### Changed
 
-- **`Kernel::send()`** applies **`TrustProxies`**, captures the request, then delegates to **`handle()`** before **`send()`** on the response.
+- `Kernel::send()` applies `TrustProxies`, builds the request, delegates to `handle()`, then sends the response.
 
 ## [0.0.1] - 2026-04-03
 

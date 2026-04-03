@@ -12,6 +12,7 @@ final class Request
 
     /**
      * @param array<string, UploadedFile> $files
+     * @param array<string, string> $cookies Parsed {@code Cookie} header (see {@see Cookie::parseRequestHeader()}).
      */
     public function __construct(
         public readonly string $method,
@@ -25,6 +26,7 @@ final class Request
         /** @var array<string, mixed> */
         public readonly array $server,
         public readonly array $files = [],
+        public readonly array $cookies = [],
     ) {
     }
 
@@ -115,6 +117,16 @@ final class Request
         return self::current()->lookupFile($key);
     }
 
+    public static function cookie(string $name, ?string $default = null): ?string
+    {
+        return self::current()->readCookie($name, $default);
+    }
+
+    public static function cookies(): array
+    {
+        return self::current()->cookies;
+    }
+
     public static function header(string $name, ?string $default = null): ?string
     {
         return self::current()->readHeader($name, $default);
@@ -151,6 +163,7 @@ final class Request
      * @param array<string, string> $headers
      * @param array<string, mixed> $server
      * @param array<string, UploadedFile> $files
+     * @param array<string, string> $cookies
      */
     public static function make(
         string $method,
@@ -160,6 +173,7 @@ final class Request
         array $headers = [],
         array $server = [],
         array $files = [],
+        array $cookies = [],
     ): self {
         $method = strtoupper($method);
         $path = self::normalizePath($path === '' ? '/' : $path);
@@ -172,7 +186,7 @@ final class Request
             'SERVER_PORT' => '80',
         ], $server);
 
-        return new self($method, $path, $query, $body, $headers, $server, $files);
+        return new self($method, $path, $query, $body, $headers, $server, $files, $cookies);
     }
 
     public static function capture(): self
@@ -218,6 +232,11 @@ final class Request
             );
         }
 
+        $cookieLine = $headers['Cookie'] ?? '';
+        $cookies = is_string($cookieLine) && $cookieLine !== ''
+            ? Cookie::parseRequestHeader($cookieLine)
+            : [];
+
         return new self(
             $method,
             $path,
@@ -226,6 +245,7 @@ final class Request
             $headers,
             $_SERVER,
             $files,
+            $cookies,
         );
     }
 
@@ -255,6 +275,15 @@ final class Request
         $key = str_replace(' ', '-', ucwords(strtolower($key)));
 
         return $this->headers[$key] ?? $default;
+    }
+
+    private function readCookie(string $name, ?string $default = null): ?string
+    {
+        if (! array_key_exists($name, $this->cookies)) {
+            return $default;
+        }
+
+        return $this->cookies[$name];
     }
 
     private function detectWantsJson(): bool

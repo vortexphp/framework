@@ -12,9 +12,11 @@ use Vortex\Database\Connection;
 use Vortex\Events\Dispatcher;
 use Vortex\Events\DispatcherFactory;
 use Vortex\Mail\MailFactory;
+use Vortex\Http\Cookie;
 use Vortex\Http\Request;
 use Vortex\Routing\RouteDiscovery;
 use Vortex\Routing\Router;
+use Vortex\Support\Log;
 use Vortex\View\Factory;
 use Vortex\View\View;
 
@@ -29,6 +31,7 @@ final class Application
     public static function boot(string $basePath): self
     {
         $basePath = rtrim($basePath, '/');
+        Log::setBasePath($basePath);
 
         $container = new Container();
         $container->instance(Container::class, $container);
@@ -68,6 +71,7 @@ final class Application
         $request = Request::capture();
         Request::setCurrent($request);
         $response = $this->container->make(Router::class)->dispatch($request, $globalMiddleware);
+        Cookie::flushQueued($response);
         $response->send();
     }
 

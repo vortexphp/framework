@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vortex\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Vortex\Http\Cookie;
 use Vortex\Http\Response;
 
 final class ResponseTest extends TestCase
@@ -55,6 +56,23 @@ final class ResponseTest extends TestCase
 
         self::assertSame('DENY', $this->headerValue($r, 'X-Frame-Options'));
         self::assertSame('nosniff', $this->headerValue($r, 'X-Content-Type-Options'));
+    }
+
+    public function testCookieAppendsSetCookie(): void
+    {
+        $r = Response::html('')
+            ->cookie(new Cookie('a', '1'))
+            ->cookie(new Cookie('b', '2'));
+
+        $ref = new \ReflectionClass($r);
+        $prop = $ref->getProperty('headers');
+        /** @var array<string, string|string[]> $headers */
+        $headers = $prop->getValue($r);
+        $sc = $headers['Set-Cookie'] ?? null;
+        self::assertIsArray($sc);
+        self::assertCount(2, $sc);
+        self::assertStringStartsWith('a=1', (string) $sc[0]);
+        self::assertStringStartsWith('b=2', (string) $sc[1]);
     }
 
     /**

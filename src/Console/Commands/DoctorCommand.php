@@ -9,6 +9,8 @@ use Vortex\Console\Input;
 use Vortex\Console\Term;
 use Vortex\Crypto\SecurityHelp;
 use Vortex\Support\Env;
+use Vortex\Support\FilesConfigUploadRoots;
+use Vortex\Support\PathHelp;
 
 final class DoctorCommand implements Command
 {
@@ -24,7 +26,7 @@ final class DoctorCommand implements Command
 
     public function description(): string
     {
-        return 'Environment checks: PHP, ext-pdo, ext-mbstring, PDO driver, public/, storage/. Use --production for .env, APP_DEBUG, APP_URL, APP_KEY, vendor, CSS.';
+        return 'Environment checks: PHP, ext-pdo, ext-mbstring, PDO driver, public/, storage/, config/files.php upload dirs. Use --production for .env, APP_DEBUG, APP_URL, APP_KEY, vendor, CSS.';
     }
 
     public function run(Input $input): int
@@ -74,6 +76,8 @@ final class DoctorCommand implements Command
             @unlink($probe);
         }
         $failed = $this->line($writeOk, 'Can create/delete file in storage/logs/') || $failed;
+
+        $failed = $this->checkConfiguredUploadDirectories($base, $public, $failed);
 
         $envPath = $base . '/.env';
         $envOk = is_readable($envPath);
@@ -141,5 +145,47 @@ final class DoctorCommand implements Command
         fwrite(STDERR, " {$mark}  {$message}\n");
 
         return ! $ok && $warnIfFail;
+    }
+
+    private function checkConfiguredUploadDirectories(string $base, string $public, bool $failed): bool
+    {
+        $filesConfig = $base . '/config/files.php';
+        if (! is_file($filesConfig)) {
+            return $failed;
+        }
+
+        $config = require $filesConfig;
+        if (! is_array($config)) {
+            return $failed;
+        }
+
+        $entries = FilesConfigUploadRoots::collect($config);
+        if ($entries === []) {
+            return $failed;
+        }
+
+        fwrite(STDERR, "\n " . Term::style('2', 'Upload directories (config/files.php)') . "\n\n");
+
+        foreach ($entries as $entry) {
+            $full = FilesConfigUploadRoots::absolutePath($base, $entry['relative']);
+            $label = 'files.' . $entry['profile'] . ': ' . $entry['relative'];
+
+            $failed = $this->line(is_dir($full), "{$label} — directory exists") || $failed;
+            if (! is_dir($full)) {
+                continue;
+            }
+
+            $failed = $this->line(PathHelp::isBelowBase($public, $full), "{$label} — under public/") || $failed;
+            $failed = $this->line(is_writable($full), "{$label} — writable") || $failed;
+
+            $probe = $full . '/.doctor-write-test';
+            $writeOk = @file_put_contents($probe, (string) time()) !== false;
+            if ($writeOk) {
+                @unlink($probe);
+            }
+            $failed = $this->line($writeOk, "{$label} — can create/delete test file") || $failed;
+        }
+
+        return $failed;
     }
 }

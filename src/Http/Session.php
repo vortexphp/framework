@@ -6,6 +6,10 @@ namespace Vortex\Http;
 
 use Vortex\Config\Repository;
 
+/**
+ * Server-side session storage ({@code $_SESSION}). The session id is issued as an HTTP cookie by PHP’s session
+ * extension ({@see session_set_cookie_params()}); use {@see Cookie} only for separate application cookies.
+ */
 final class Session
 {
     private static ?self $instance = null;
@@ -88,11 +92,6 @@ final class Session
         $lifetime = (int) Repository::get('session.lifetime', 0);
         $secure = (bool) Repository::get('session.secure', false);
         $samesite = (string) Repository::get('session.samesite', 'Lax');
-        $sameSiteEnum = match (strtolower($samesite)) {
-            'none' => 'None',
-            'strict' => 'Strict',
-            default => 'Lax',
-        };
 
         session_name($name);
         session_set_cookie_params([
@@ -101,7 +100,7 @@ final class Session
             'domain' => '',
             'secure' => $secure,
             'httponly' => true,
-            'samesite' => $sameSiteEnum,
+            'samesite' => Cookie::normalizedSameSite($samesite),
         ]);
 
         session_start();

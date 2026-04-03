@@ -105,4 +105,15 @@ final class RequestTest extends TestCase
         self::assertSame('GET', $r->server['REQUEST_METHOD']);
         self::assertSame('/items', $r->server['REQUEST_URI']);
     }
+
+    public function testCookieFromMake(): void
+    {
+        $r = Request::make('GET', '/', [], [], [], [], [], ['theme' => 'dark']);
+        Request::setCurrent($r);
+
+        self::assertSame('dark', Request::cookie('theme'));
+        self::assertNull(Request::cookie('missing'));
+        self::assertSame('x', Request::cookie('missing', 'x'));
+        self::assertSame(['theme' => 'dark'], Request::cookies());
+    }
 }

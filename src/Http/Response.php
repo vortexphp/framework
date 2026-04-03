@@ -52,6 +52,24 @@ final class Response
         return $this;
     }
 
+    /**
+     * Append a {@code Set-Cookie} header (multiple cookies are allowed per response).
+     */
+    public function cookie(Cookie $cookie): self
+    {
+        $line = $cookie->toHeaderValue();
+        $existing = $this->headers['Set-Cookie'] ?? null;
+        if ($existing === null) {
+            $this->headers['Set-Cookie'] = $line;
+        } elseif (is_array($existing)) {
+            $this->headers['Set-Cookie'] = [...$existing, $line];
+        } else {
+            $this->headers['Set-Cookie'] = [$existing, $line];
+        }
+
+        return $this;
+    }
+
     public function status(int $code): self
     {
         $this->status = $code;

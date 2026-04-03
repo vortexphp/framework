@@ -11,11 +11,6 @@ use Throwable;
 
 final class ErrorRenderer
 {
-    public function __construct(
-        private readonly string $basePath,
-    ) {
-    }
-
     public function notFound(): Response
     {
         if (Request::wantsJson()) {
@@ -42,7 +37,7 @@ final class ErrorRenderer
 
     public function exception(Throwable $e): Response
     {
-        Log::exception($e, $this->basePath);
+        Log::exception($e);
 
         $debug = (bool) Repository::get('app.debug', false);
 

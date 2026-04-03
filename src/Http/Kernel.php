@@ -46,6 +46,8 @@ final class Kernel
             $response->header('Content-Security-Policy', trim($csp));
         }
 
+        Cookie::flushQueued($response);
+
         return $response;
     }
 }
