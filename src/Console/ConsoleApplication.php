@@ -6,6 +6,7 @@ namespace Vortex\Console;
 
 use Vortex\Console\Commands\DbCheckCommand;
 use Vortex\Console\Commands\MigrateCommand;
+use Vortex\Console\Commands\MigrateDownCommand;
 use Vortex\Console\Commands\DoctorCommand;
 use Vortex\Console\Commands\ServeCommand;
 use Vortex\Console\Commands\SmokeCommand;
@@ -30,6 +31,7 @@ final class ConsoleApplication
         $app->register(new SmokeCommand());
         $app->register(new DbCheckCommand($basePath));
         $app->register(new MigrateCommand($basePath));
+        $app->register(new MigrateDownCommand($basePath));
 
         RouteDiscovery::loadConsoleRoutes($app, $basePath);
 
