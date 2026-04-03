@@ -10,6 +10,8 @@ use Vortex\AppContext;
 #[\AllowDynamicProperties]
 abstract class Model
 {
+    protected static ?string $table = null;
+
     /** @var list<string> */
     protected static array $fillable = [];
 
@@ -27,6 +29,10 @@ abstract class Model
 
     public static function table(): string
     {
+        if (static::$table !== null && static::$table !== '') {
+            return static::$table;
+        }
+
         $class = static::class;
         $pos = strrpos($class, '\\');
         $base = $pos === false ? $class : substr($class, $pos + 1);
@@ -162,6 +168,80 @@ abstract class Model
     public static function deleteId(int $id): void
     {
         static::connection()->execute('DELETE FROM ' . static::table() . ' WHERE id = ?', [$id]);
+    }
+
+    /**
+     * Resolve an inverse one-to-many relation.
+     *
+     * @template TRelated of Model
+     * @param class-string<TRelated> $relatedClass
+     * @return TRelated|null
+     */
+    protected function belongsTo(string $relatedClass, string $foreignKey, string $ownerKey = 'id'): ?Model
+    {
+        $foreignId = $this->{$foreignKey} ?? null;
+        if ($foreignId === null || $foreignId === '') {
+            return null;
+        }
+
+        /** @var TRelated|null $related */
+        $related = $relatedClass::query()->where($ownerKey, $foreignId)->first();
+
+        return $related;
+    }
+
+    /**
+     * Resolve a one-to-many relation.
+     *
+     * @template TRelated of Model
+     * @param class-string<TRelated> $relatedClass
+     * @return list<TRelated>
+     */
+    protected function hasMany(string $relatedClass, string $foreignKey, string $localKey = 'id'): array
+    {
+        $localId = $this->{$localKey} ?? null;
+        if ($localId === null || $localId === '') {
+            return [];
+        }
+
+        /** @var list<TRelated> $related */
+        $related = $relatedClass::query()->where($foreignKey, $localId)->get();
+
+        return $related;
+    }
+
+    /**
+     * Resolve a many-to-many relation through a pivot table.
+     *
+     * @template TRelated of Model
+     * @param class-string<TRelated> $relatedClass
+     * @return list<TRelated>
+     */
+    protected function belongsToMany(
+        string $relatedClass,
+        string $pivotTable,
+        string $foreignPivotKey,
+        string $relatedPivotKey,
+        string $parentKey = 'id',
+        string $relatedKey = 'id',
+    ): array {
+        $parentId = $this->{$parentKey} ?? null;
+        if ($parentId === null || $parentId === '') {
+            return [];
+        }
+
+        $sql = 'SELECT r.*'
+            . ' FROM ' . $relatedClass::table() . ' r'
+            . ' INNER JOIN ' . $pivotTable . ' p ON p.' . $relatedPivotKey . ' = r.' . $relatedKey
+            . ' WHERE p.' . $foreignPivotKey . ' = ?'
+            . ' ORDER BY p.id ASC';
+        $rows = static::connection()->select($sql, [$parentId]);
+        $out = [];
+        foreach ($rows as $row) {
+            $out[] = $relatedClass::fromRow($row);
+        }
+
+        return $out;
     }
 
     public function save(): void

@@ -16,10 +16,23 @@ final class QueryBuilder
     /** @var class-string<Model> */
     private string $modelClass;
 
-    /** @var list<array{sql: string, bindings: list<mixed>}> */
+    /** @var list<array{boolean: 'AND'|'OR', sql: string, bindings: list<mixed>}> */
     private array $wheres = [];
 
-    private ?string $orderClause = null;
+    /** @var list<array{type: 'INNER'|'LEFT', table: string, first: string, operator: string, second: string}> */
+    private array $joins = [];
+
+    /** @var list<string> */
+    private array $groupByColumns = [];
+
+    /** @var list<string> */
+    private array $selectColumns = ['*'];
+
+    /** @var list<string> */
+    private array $withRelations = [];
+
+    /** @var list<string> */
+    private array $orderClauses = [];
 
     private ?int $limit = null;
 
@@ -36,20 +49,105 @@ final class QueryBuilder
     public function __clone(): void
     {
         $this->wheres = array_values(array_map(
-            static fn (array $w): array => ['sql' => $w['sql'], 'bindings' => [...$w['bindings']]],
+            static fn (array $w): array => [
+                'boolean' => $w['boolean'],
+                'sql' => $w['sql'],
+                'bindings' => [...$w['bindings']],
+            ],
             $this->wheres,
         ));
+        $this->joins = array_values(array_map(
+            static fn (array $join): array => [
+                'type' => $join['type'],
+                'table' => $join['table'],
+                'first' => $join['first'],
+                'operator' => $join['operator'],
+                'second' => $join['second'],
+            ],
+            $this->joins,
+        ));
+        $this->groupByColumns = [...$this->groupByColumns];
+        $this->selectColumns = [...$this->selectColumns];
+        $this->withRelations = [...$this->withRelations];
+        $this->orderClauses = [...$this->orderClauses];
+    }
+
+    /**
+     * @param string|list<string> $columns
+     */
+    public function select(string|array $columns): self
+    {
+        $cols = is_array($columns) ? $columns : [$columns];
+        $cols = array_values(array_filter($cols, static fn (string $value): bool => $value !== ''));
+        $this->selectColumns = $cols === [] ? ['*'] : $cols;
+
+        return $this;
+    }
+
+    /**
+     * @param string|list<string> $relations
+     */
+    public function with(string|array $relations): self
+    {
+        $rels = is_array($relations) ? $relations : [$relations];
+        foreach ($rels as $relation) {
+            if ($relation === '' || in_array($relation, $this->withRelations, true)) {
+                continue;
+            }
+            $this->withRelations[] = $relation;
+        }
+
+        return $this;
     }
 
     public function where(string $column, mixed $operatorOrValue, mixed $value = null): self
     {
         if (func_num_args() === 2) {
-            $this->wheres[] = ['sql' => "{$column} = ?", 'bindings' => [$operatorOrValue]];
-        } else {
-            $this->wheres[] = ['sql' => "{$column} {$operatorOrValue} ?", 'bindings' => [$value]];
+            return $this->addWhere('AND', "{$column} = ?", [$operatorOrValue]);
         }
 
-        return $this;
+        return $this->addWhere('AND', "{$column} {$operatorOrValue} ?", [$value]);
+    }
+
+    public function orWhere(string $column, mixed $operatorOrValue, mixed $value = null): self
+    {
+        if (func_num_args() === 2) {
+            return $this->addWhere('OR', "{$column} = ?", [$operatorOrValue]);
+        }
+
+        return $this->addWhere('OR', "{$column} {$operatorOrValue} ?", [$value]);
+    }
+
+    /**
+     * @param list<mixed> $bindings
+     */
+    public function whereRaw(string $sql, array $bindings = []): self
+    {
+        return $this->addWhere('AND', $sql, $bindings);
+    }
+
+    /**
+     * @param list<mixed> $bindings
+     */
+    public function orWhereRaw(string $sql, array $bindings = []): self
+    {
+        return $this->addWhere('OR', $sql, $bindings);
+    }
+
+    /**
+     * @param callable(self): void $callback
+     */
+    public function whereGroup(callable $callback): self
+    {
+        return $this->addGroupedWhere('AND', $callback);
+    }
+
+    /**
+     * @param callable(self): void $callback
+     */
+    public function orWhereGroup(callable $callback): self
+    {
+        return $this->addGroupedWhere('OR', $callback);
     }
 
     /**
@@ -58,27 +156,79 @@ final class QueryBuilder
     public function whereIn(string $column, array $values): self
     {
         if ($values === []) {
-            $this->wheres[] = ['sql' => '0 = 1', 'bindings' => []];
-
-            return $this;
+            return $this->addWhere('AND', '0 = 1', []);
         }
 
         $placeholders = implode(', ', array_fill(0, count($values), '?'));
-        $this->wheres[] = ['sql' => "{$column} IN ({$placeholders})", 'bindings' => array_values($values)];
+        return $this->addWhere('AND', "{$column} IN ({$placeholders})", array_values($values));
+    }
 
-        return $this;
+    /**
+     * @param list<mixed> $values
+     */
+    public function orWhereIn(string $column, array $values): self
+    {
+        if ($values === []) {
+            return $this->addWhere('OR', '0 = 1', []);
+        } else {
+            $placeholders = implode(', ', array_fill(0, count($values), '?'));
+            return $this->addWhere('OR', "{$column} IN ({$placeholders})", array_values($values));
+        }
     }
 
     public function whereNull(string $column): self
     {
-        $this->wheres[] = ['sql' => "{$column} IS NULL", 'bindings' => []];
+        return $this->addWhere('AND', "{$column} IS NULL", []);
+    }
 
-        return $this;
+    public function orWhereNull(string $column): self
+    {
+        return $this->addWhere('OR', "{$column} IS NULL", []);
     }
 
     public function whereNotNull(string $column): self
     {
-        $this->wheres[] = ['sql' => "{$column} IS NOT NULL", 'bindings' => []];
+        return $this->addWhere('AND', "{$column} IS NOT NULL", []);
+    }
+
+    public function join(string $table, string $first, string $operator, string $second): self
+    {
+        $this->joins[] = [
+            'type' => 'INNER',
+            'table' => $table,
+            'first' => $first,
+            'operator' => $operator,
+            'second' => $second,
+        ];
+
+        return $this;
+    }
+
+    public function leftJoin(string $table, string $first, string $operator, string $second): self
+    {
+        $this->joins[] = [
+            'type' => 'LEFT',
+            'table' => $table,
+            'first' => $first,
+            'operator' => $operator,
+            'second' => $second,
+        ];
+
+        return $this;
+    }
+
+    /**
+     * @param string|list<string> $columns
+     */
+    public function groupBy(string|array $columns): self
+    {
+        $cols = is_array($columns) ? $columns : [$columns];
+        foreach ($cols as $column) {
+            if ($column === '') {
+                continue;
+            }
+            $this->groupByColumns[] = $column;
+        }
 
         return $this;
     }
@@ -86,7 +236,7 @@ final class QueryBuilder
     public function orderBy(string $column, string $direction = 'ASC'): self
     {
         $dir = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
-        $this->orderClause = "{$column} {$dir}";
+        $this->orderClauses[] = "{$column} {$dir}";
 
         return $this;
     }
@@ -113,7 +263,7 @@ final class QueryBuilder
     /**
      * @return array{0: string, 1: list<mixed>}
      */
-    private function compileWhere(): array
+    private function compileWhere(bool $withKeyword = true): array
     {
         if ($this->wheres === []) {
             return ['', []];
@@ -121,21 +271,105 @@ final class QueryBuilder
 
         $parts = [];
         $bindings = [];
-        foreach ($this->wheres as $w) {
-            $parts[] = $w['sql'];
+        foreach ($this->wheres as $index => $w) {
+            $prefix = $index === 0 ? '' : (' ' . $w['boolean'] . ' ');
+            $parts[] = $prefix . $w['sql'];
             foreach ($w['bindings'] as $b) {
                 $bindings[] = $b;
             }
         }
 
-        return [' WHERE ' . implode(' AND ', $parts), $bindings];
+        $where = implode('', $parts);
+        if ($withKeyword) {
+            return [' WHERE ' . $where, $bindings];
+        }
+
+        return [$where, $bindings];
+    }
+
+    private function compileJoin(): string
+    {
+        if ($this->joins === []) {
+            return '';
+        }
+
+        $parts = [];
+        foreach ($this->joins as $join) {
+            $parts[] = $join['type']
+                . ' JOIN ' . $join['table']
+                . ' ON ' . $join['first'] . ' ' . $join['operator'] . ' ' . $join['second'];
+        }
+
+        return ' ' . implode(' ', $parts);
+    }
+
+    private function compileGroupBy(): string
+    {
+        if ($this->groupByColumns === []) {
+            return '';
+        }
+
+        return ' GROUP BY ' . implode(', ', $this->groupByColumns);
+    }
+
+    private function compileOrderBy(): string
+    {
+        if ($this->orderClauses === []) {
+            return '';
+        }
+
+        return ' ORDER BY ' . implode(', ', $this->orderClauses);
+    }
+
+    private function compileLimitOffset(): string
+    {
+        $sql = '';
+        if ($this->limit !== null) {
+            $sql .= ' LIMIT ' . $this->limit;
+        }
+        if ($this->offset !== null) {
+            $sql .= ' OFFSET ' . $this->offset;
+        }
+
+        return $sql;
+    }
+
+    /**
+     * @param list<mixed> $bindings
+     */
+    private function addWhere(string $boolean, string $sql, array $bindings): self
+    {
+        $this->wheres[] = [
+            'boolean' => $boolean === 'OR' ? 'OR' : 'AND',
+            'sql' => $sql,
+            'bindings' => $bindings,
+        ];
+
+        return $this;
+    }
+
+    /**
+     * @param callable(self): void $callback
+     */
+    private function addGroupedWhere(string $boolean, callable $callback): self
+    {
+        $nested = new self($this->modelClass);
+        $callback($nested);
+        [$nestedSql, $nestedBindings] = $nested->compileWhere(false);
+        if ($nestedSql === '') {
+            return $this;
+        }
+
+        return $this->addWhere($boolean, '(' . $nestedSql . ')', $nestedBindings);
     }
 
     public function count(): int
     {
         $modelClass = $this->modelClass;
         [$whereSql, $bindings] = $this->compileWhere();
-        $sql = 'SELECT COUNT(*) AS n FROM ' . $modelClass::table() . $whereSql;
+        $sql = 'SELECT COUNT(*) AS n FROM ' . $modelClass::table()
+            . $this->compileJoin()
+            . $whereSql;
         $row = $modelClass::connection()->selectOne($sql, $bindings);
 
         return (int) ($row['n'] ?? 0);
@@ -145,10 +379,49 @@ final class QueryBuilder
     {
         $modelClass = $this->modelClass;
         [$whereSql, $bindings] = $this->compileWhere();
-        $sql = 'SELECT 1 AS x FROM ' . $modelClass::table() . $whereSql . ' LIMIT 1';
+        $sql = 'SELECT 1 AS x FROM ' . $modelClass::table()
+            . $this->compileJoin()
+            . $whereSql
+            . ' LIMIT 1';
         $row = $modelClass::connection()->selectOne($sql, $bindings);
 
         return $row !== null;
+    }
+
+    /**
+     * @return list<mixed>
+     */
+    public function pluck(string $column): array
+    {
+        $modelClass = $this->modelClass;
+        [$whereSql, $bindings] = $this->compileWhere();
+        $sql = 'SELECT ' . $column . ' FROM ' . $modelClass::table()
+            . $this->compileJoin()
+            . $whereSql
+            . $this->compileGroupBy()
+            . $this->compileOrderBy()
+            . $this->compileLimitOffset();
+
+        $rows = $modelClass::connection()->select($sql, $bindings);
+        $out = [];
+        foreach ($rows as $row) {
+            $out[] = $row[$column] ?? null;
+        }
+
+        return $out;
+    }
+
+    public function value(string $column): mixed
+    {
+        $savedLimit = $this->limit;
+        $savedOffset = $this->offset;
+        $this->limit = 1;
+        $this->offset = null;
+        $values = $this->pluck($column);
+        $this->limit = $savedLimit;
+        $this->offset = $savedOffset;
+
+        return $values[0] ?? null;
     }
 
     /**
@@ -170,33 +443,50 @@ final class QueryBuilder
     }
 
     /**
+     * @return list<array<string, mixed>>
+     */
+    public function getRaw(): array
+    {
+        $modelClass = $this->modelClass;
+        $sql = 'SELECT ' . implode(', ', $this->selectColumns) . ' FROM ' . $modelClass::table()
+            . $this->compileJoin();
+        [$whereSql, $bindings] = $this->compileWhere();
+        $sql .= $whereSql
+            . $this->compileGroupBy()
+            . $this->compileOrderBy()
+            . $this->compileLimitOffset();
+
+        return $modelClass::connection()->select($sql, $bindings);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function firstRaw(): ?array
+    {
+        $savedLimit = $this->limit;
+        $savedOffset = $this->offset;
+        $this->limit = 1;
+        $this->offset = null;
+        $rows = $this->getRaw();
+        $this->limit = $savedLimit;
+        $this->offset = $savedOffset;
+
+        return $rows[0] ?? null;
+    }
+
+    /**
      * @return list<Model>
      */
     public function get(): array
     {
         $modelClass = $this->modelClass;
-        $sql = 'SELECT * FROM ' . $modelClass::table();
-        $bindings = [];
-        [$whereSql, $whereBindings] = $this->compileWhere();
-        $sql .= $whereSql;
-        foreach ($whereBindings as $b) {
-            $bindings[] = $b;
-        }
-        if ($this->orderClause !== null) {
-            $sql .= ' ORDER BY ' . $this->orderClause;
-        }
-        if ($this->limit !== null) {
-            $sql .= ' LIMIT ' . $this->limit;
-        }
-        if ($this->offset !== null) {
-            $sql .= ' OFFSET ' . $this->offset;
-        }
-
-        $rows = $modelClass::connection()->select($sql, $bindings);
+        $rows = $this->getRaw();
         $out = [];
         foreach ($rows as $row) {
             $out[] = $modelClass::fromRow($row);
         }
+        $this->eagerLoad($out);
 
         return $out;
     }
@@ -212,5 +502,57 @@ final class QueryBuilder
         $this->offset = $savedOffset;
 
         return $rows[0] ?? null;
+    }
+
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    public function update(array $attributes): int
+    {
+        if ($attributes === []) {
+            return 0;
+        }
+
+        $modelClass = $this->modelClass;
+        $columns = array_keys($attributes);
+        $setSql = implode(', ', array_map(static fn (string $column): string => $column . ' = ?', $columns));
+        [$whereSql, $whereBindings] = $this->compileWhere();
+        $sql = 'UPDATE ' . $modelClass::table()
+            . ' SET ' . $setSql
+            . $whereSql;
+        $bindings = array_values($attributes);
+        foreach ($whereBindings as $binding) {
+            $bindings[] = $binding;
+        }
+
+        return $modelClass::connection()->execute($sql, $bindings);
+    }
+
+    public function delete(): int
+    {
+        $modelClass = $this->modelClass;
+        [$whereSql, $bindings] = $this->compileWhere();
+        $sql = 'DELETE FROM ' . $modelClass::table() . $whereSql;
+
+        return $modelClass::connection()->execute($sql, $bindings);
+    }
+
+    /**
+     * @param list<Model> $models
+     */
+    private function eagerLoad(array $models): void
+    {
+        if ($models === [] || $this->withRelations === []) {
+            return;
+        }
+
+        foreach ($models as $model) {
+            foreach ($this->withRelations as $relation) {
+                if (!method_exists($model, $relation)) {
+                    continue;
+                }
+                $model->{$relation} = $model->{$relation}();
+            }
+        }
     }
 }
