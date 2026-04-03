@@ -6,6 +6,7 @@ namespace Vortex\Tests;
 
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
+use Vortex\Validation\Rule;
 use Vortex\Validation\Validator;
 
 final class ValidatorTest extends TestCase
@@ -84,5 +85,42 @@ final class ValidatorTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         Validator::make(['a' => '1'], ['a' => 'bogus']);
+    }
+
+    public function testRuleBuilderSyntaxWorks(): void
+    {
+        $r = Validator::make(
+            ['name' => 'John', 'email' => 'john@example.com', 'password' => 'secret12', 'password_confirmation' => 'secret12'],
+            [
+                'name' => Rule::required()->string()->max(120),
+                'email' => Rule::required()->email()->max(255),
+                'password' => Rule::required()->min(8)->confirmed(),
+            ],
+        );
+
+        self::assertFalse($r->failed());
+    }
+
+    public function testRuleBuilderCanProvideInlineMessages(): void
+    {
+        $r = Validator::make(
+            ['email' => 'not-an-email'],
+            ['email' => Rule::required('Need email')->email('Email format invalid')],
+        );
+
+        self::assertTrue($r->failed());
+        self::assertSame('Email format invalid', $r->errors()['email'] ?? null);
+    }
+
+    public function testExplicitMessagesOverrideInlineRuleMessages(): void
+    {
+        $r = Validator::make(
+            ['email' => 'not-an-email'],
+            ['email' => Rule::required('Need email')->email('Inline message')],
+            ['email.email' => 'From make() messages'],
+        );
+
+        self::assertTrue($r->failed());
+        self::assertSame('From make() messages', $r->errors()['email'] ?? null);
     }
 }

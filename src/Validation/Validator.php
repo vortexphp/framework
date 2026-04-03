@@ -6,6 +6,7 @@ namespace Vortex\Validation;
 
 /**
  * Pipe-delimited rules per field, e.g. {@code 'email' => 'required|email|max:255'}.
+ * You may also pass a {@see Rule} builder instance per field.
  *
  * Supported: {@code required}, {@code nullable}, {@code email}, {@code string}, {@code min:n}, {@code max:n}, {@code confirmed}.
  */
@@ -13,7 +14,7 @@ final class Validator
 {
     /**
      * @param array<string, mixed>         $data
-     * @param array<string, string>        $rules
+     * @param array<string, string|Rule>   $rules
      * @param array<string, string>        $messages keys {@code field.rule} or {@code rule} fallback
      * @param array<string, string>        $attributes display names for {@code :attribute}
      */
@@ -24,8 +25,18 @@ final class Validator
         array $attributes = [],
     ): ValidationResult {
         $errors = [];
+        $effectiveMessages = $messages;
 
         foreach ($rules as $field => $ruleLine) {
+            if ($ruleLine instanceof Rule) {
+                foreach ($ruleLine->messages() as $rule => $message) {
+                    $key = $field . '.' . $rule;
+                    if (! array_key_exists($key, $effectiveMessages)) {
+                        $effectiveMessages[$key] = $message;
+                    }
+                }
+            }
+
             $list = self::parseRules((string) $ruleLine);
             $value = $data[$field] ?? null;
             $nullable = in_array('nullable', $list, true);
@@ -39,7 +50,7 @@ final class Validator
                     continue;
                 }
 
-                $message = self::check($field, $value, $rule, $data, $messages, $attributes);
+                $message = self::check($field, $value, $rule, $data, $effectiveMessages, $attributes);
                 if ($message !== null) {
                     $errorField = str_starts_with($rule, 'confirmed') ? $field . '_confirmation' : $field;
                     $errors[$errorField] = $message;
