@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-04-03
+
+### Added
+
+- **Class-based database migrations** — `database/migrations/*.php` classes with `id()`, `up()`, and `down()`; **`SchemaMigrator`** and **`Vortex\Database\Schema`** (`Schema`, `Blueprint`, `ColumnDefinition`, `Migration`); **`php vortex migrate`** and **`migrate:down`** (rollback last batch); state in **`vortex_migrations`**.
+- **`Database\Schema\Schema`** fluent builder with Laravel-like columns (`id`, `string`, `text`, `integer`, `boolean`, `timestamp`, `timestamps`, `foreignId`, `index`, `unique`).
+- **`mockery/mockery`** as a dev dependency; **`MockeryIntegrationTest`** exercises container wiring with mocks.
+- **`Application::boot()`** loads **`.env`** via **`Env::load`**, registers **`Csrf`**, **`LocalPublicStorage`**, **`Translator`**, and **`ErrorRenderer`**, shares **`appName`** into Twig, and accepts an optional **`?callable $configure(Container, string $basePath)`** after defaults (before route discovery).
+
+### Changed
+
+- **Breaking:** Database migrations are class-based (see Added). Older ad-hoc migration formats are not supported by **`migrate`**.
+
 ## [0.2.0] - 2026-04-03
 
 ### Added
@@ -16,11 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`Cookie`** value object (**`Set-Cookie`** via **`Response::cookie()`** or **`Cookie::queue()`** + **`Cookie::flushQueued()`** in **`Kernel`** / **`Application::run()`**), **`Request::cookie()`** / **`cookies()`**, **`Cookie::parseRequestHeader()`** (quoted values, **`SameSite`** helper shared with **`Session`**).
 - **`Files\Storage`** façade: **`disk($name)`** returns **`Filesystem`** drivers from **`config/storage.php`** (**`local`**, **`local_public`**, **`null`**); default disk for **`put`/`get`/…**; **`storeUpload`** / **`publicRoot`** use **`upload_disk`** / **`public_disk`**. **`Storage::setBasePath($basePath)`** at bootstrap (**`Application::boot`** and app bootstrap).
 - **`Support\Benchmark`** static stopwatch helper with named timers: **`start`**, **`has`**, **`elapsedNs`**, **`elapsedMs`**, **`elapsedSeconds`**, **`measure`**, **`forget`**.
-- **`Database\Schema\Schema`** fluent migration builder with Laravel-like columns (`id`, `string`, `text`, `integer`, `boolean`, `timestamp`, `timestamps`, `foreignId`, `index`, `unique`) over class migrations.
 
 ### Changed
 
-- **Breaking:** Database migrations are class-based. `migrate` now runs `database/migrations/*.php` migration classes (with `id()`, `up()`, `down()`) tracked in `vortex_migrations`; new `migrate:down` rolls back the last batch.
 - **Breaking:** Database is multi-connection: **`config/database.php`** uses **`default`** and **`connections.{name}.driver`** (sqlite, mysql, pgsql). **`Vortex\Database\DatabaseManager`** is registered in the container; **`Connection`** is constructed with a **`PDO`** from the manager; **`DB::connection(?string)`** selects a connection. Env: **`DB_CONNECTION`** (default connection name, default `default`).
 - **Breaking:** Cache is multi-store: **`config/cache.php`** uses **`default`** and **`stores.{name}.driver`** (like storage disks). **`Vortex\Cache\CacheManager`** is registered in the container; **`Cache::store(?string)`** selects a store; **`CacheFactory::make()`** returns the default store via the manager. Env: **`CACHE_STORE`** (default store name), **`CACHE_DRIVER`** only used when **`CACHE_STORE`** is unset.
 - **Breaking:** Session is multi-store: **`config/session.php`** uses **`default`** and **`stores.{name}.driver`** (`native`, `null`). **`Vortex\Http\SessionManager`** is registered in the container; **`Session`** facade uses the default store; **`Session::store(?string)`** selects a store; **`Csrf`** now reads/writes through the `Session` facade. Env: **`SESSION_STORE`** controls default store name.
@@ -66,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Contracts**: `Cache`, `Mailer`, `Middleware`.
 - PHPUnit test suite under `tests/`.
 
+[0.3.0]: https://github.com/vortexphp/framework/releases/tag/v0.3.0
 [0.2.0]: https://github.com/vortexphp/framework/releases/tag/v0.2.0
 [0.1.0]: https://github.com/vortexphp/framework/releases/tag/v0.1.0
 [0.0.1]: https://github.com/vortexphp/framework/releases/tag/v0.0.1

@@ -31,7 +31,7 @@ require __DIR__ . '/vendor/autoload.php';
 
 use Vortex\Application;
 
-$app = Application::boot(__DIR__);
+$app = Application::boot(__DIR__); // loads `.env`, registers core services; optional 2nd arg: ?callable $configure(Container, $basePath)
 $app->run(); // or use Http\Kernel with global middleware from config
 ```
 

@@ -12,14 +12,19 @@ use Vortex\Database\Connection;
 use Vortex\Database\DatabaseManager;
 use Vortex\Events\Dispatcher;
 use Vortex\Events\DispatcherFactory;
+use Vortex\Files\LocalPublicStorage;
 use Vortex\Files\Storage;
-use Vortex\Mail\MailFactory;
+use Vortex\Http\Csrf;
+use Vortex\Http\ErrorRenderer;
 use Vortex\Http\Cookie;
 use Vortex\Http\Request;
 use Vortex\Http\Session;
 use Vortex\Http\SessionManager;
+use Vortex\I18n\Translator;
+use Vortex\Mail\MailFactory;
 use Vortex\Routing\RouteDiscovery;
 use Vortex\Routing\Router;
+use Vortex\Support\Env;
 use Vortex\Support\Log;
 use Vortex\View\Factory;
 use Vortex\View\View;
@@ -32,11 +37,15 @@ final class Application
     ) {
     }
 
-    public static function boot(string $basePath): self
+    /**
+     * @param null|callable(Container, string): void $configure
+     */
+    public static function boot(string $basePath, ?callable $configure = null): self
     {
         $basePath = rtrim($basePath, '/');
         Log::setBasePath($basePath);
         Storage::setBasePath($basePath);
+        Env::load($basePath . '/.env');
 
         $container = new Container();
         $container->instance(Container::class, $container);
@@ -51,6 +60,28 @@ final class Application
         $container->singleton(SessionManager::class, static fn (): SessionManager => SessionManager::fromRepository());
         $container->singleton(Session::class, static fn (Container $c): Session => new Session($c->make(SessionManager::class)->store()));
         Session::setInstance($container->make(Session::class));
+        $container->singleton(Csrf::class, static fn (): Csrf => new Csrf());
+        Csrf::setInstance($container->make(Csrf::class));
+        $container->singleton(LocalPublicStorage::class, static function () use ($basePath): LocalPublicStorage {
+            return new LocalPublicStorage($basePath . '/public');
+        });
+        LocalPublicStorage::setInstance($container->make(LocalPublicStorage::class));
+        $container->singleton(Translator::class, static function () use ($basePath): Translator {
+            $supported = Repository::get('app.locales', ['en', 'bg']);
+            if (! is_array($supported)) {
+                $supported = ['en', 'bg'];
+            }
+            /** @var list<string> $supported */
+            $supported = array_values(array_filter(array_map(strval(...), $supported)));
+
+            return new Translator(
+                $basePath . '/lang',
+                (string) Repository::get('app.locale', 'en'),
+                (string) Repository::get('app.fallback_locale', 'en'),
+                $supported,
+            );
+        });
+        Translator::setInstance($container->make(Translator::class));
         $container->singleton(Factory::class, static function () use ($basePath): Factory {
             $debug = (bool) Repository::get('app.debug', false);
 
@@ -62,8 +93,14 @@ final class Application
         });
 
         View::useFactory($container->make(Factory::class));
+        View::share('appName', (string) Repository::get('app.name', 'App'));
 
         $container->singleton(Router::class, Router::class);
+        $container->singleton(ErrorRenderer::class, static fn (): ErrorRenderer => new ErrorRenderer());
+
+        if ($configure !== null) {
+            $configure($container, $basePath);
+        }
 
         AppContext::set($container);
 
