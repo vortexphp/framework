@@ -8,6 +8,9 @@ use InvalidArgumentException;
 use Vortex\Http\Response;
 use Vortex\View\Twig\AppTwigExtension;
 use Twig\Environment;
+use Twig\Extension\ExtensionInterface;
+use Twig\TwigFilter;
+use Twig\TwigFunction;
 use Twig\Loader\FilesystemLoader;
 
 /**
@@ -17,6 +20,15 @@ final class Factory
 {
     /** @var array<string, mixed> */
     private array $shared = [];
+
+    /** @var list<ExtensionInterface> */
+    private array $extensions = [];
+
+    /** @var list<TwigFilter> */
+    private array $filters = [];
+
+    /** @var list<TwigFunction> */
+    private array $functions = [];
 
     private ?Environment $twig = null;
 
@@ -30,6 +42,39 @@ final class Factory
     public function share(string $key, mixed $value): void
     {
         $this->shared[$key] = $value;
+    }
+
+    public function addExtension(ExtensionInterface $extension): void
+    {
+        if ($this->twig !== null) {
+            $this->twig->addExtension($extension);
+
+            return;
+        }
+
+        $this->extensions[] = $extension;
+    }
+
+    public function addFilter(TwigFilter $filter): void
+    {
+        if ($this->twig !== null) {
+            $this->twig->addFilter($filter);
+
+            return;
+        }
+
+        $this->filters[] = $filter;
+    }
+
+    public function addFunction(TwigFunction $function): void
+    {
+        if ($this->twig !== null) {
+            $this->twig->addFunction($function);
+
+            return;
+        }
+
+        $this->functions[] = $function;
     }
 
     /**
@@ -81,6 +126,15 @@ final class Factory
         }
 
         $this->twig->addExtension(new AppTwigExtension());
+        foreach ($this->extensions as $extension) {
+            $this->twig->addExtension($extension);
+        }
+        foreach ($this->filters as $filter) {
+            $this->twig->addFilter($filter);
+        }
+        foreach ($this->functions as $function) {
+            $this->twig->addFunction($function);
+        }
 
         return $this->twig;
     }
