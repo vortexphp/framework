@@ -40,6 +40,47 @@ final class Response
         return new self($body, $status, ['Content-Type' => 'application/json; charset=utf-8']);
     }
 
+    /**
+     * Return an error response in HTML or JSON based on current request expectations.
+     *
+     * @param array<string, mixed> $jsonPayload
+     */
+    public static function error(int $status, string $message, array $jsonPayload = []): self
+    {
+        if (self::expectsJson()) {
+            return self::json(array_merge([
+                'ok' => false,
+                'message' => $message,
+            ], $jsonPayload), $status);
+        }
+
+        return self::html($message, $status);
+    }
+
+    /**
+     * @param array<string, mixed> $jsonPayload
+     */
+    public static function notFound(string $message = 'Not Found', array $jsonPayload = []): self
+    {
+        return self::error(404, $message, $jsonPayload);
+    }
+
+    /**
+     * @param array<string, mixed> $jsonPayload
+     */
+    public static function forbidden(string $message = 'Forbidden', array $jsonPayload = []): self
+    {
+        return self::error(403, $message, $jsonPayload);
+    }
+
+    /**
+     * @param array<string, mixed> $jsonPayload
+     */
+    public static function unauthorized(string $message = 'Unauthorized', array $jsonPayload = []): self
+    {
+        return self::error(401, $message, $jsonPayload);
+    }
+
     public static function redirect(string $to, int $status = 302): self
     {
         return new self('', $status, ['Location' => $to]);
@@ -165,5 +206,14 @@ final class Response
             }
         }
         echo $this->content;
+    }
+
+    private static function expectsJson(): bool
+    {
+        try {
+            return Request::wantsJson();
+        } catch (\RuntimeException) {
+            return false;
+        }
     }
 }

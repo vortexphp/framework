@@ -103,6 +103,26 @@ final class ResponseTest extends TestCase
         self::assertSame('failed', Session::flash('status'));
     }
 
+    public function testNotFoundReturnsHtmlWhenRequestDoesNotExpectJson(): void
+    {
+        Request::setCurrent(Request::make('GET', '/missing', [], [], ['Accept' => 'text/html']));
+        $r = Response::notFound();
+
+        self::assertSame(404, $r->httpStatus());
+        self::assertSame('Not Found', $r->body());
+        self::assertSame('text/html; charset=utf-8', $this->headerValue($r, 'Content-Type'));
+    }
+
+    public function testNotFoundReturnsJsonWhenRequestExpectsJson(): void
+    {
+        Request::setCurrent(Request::make('GET', '/missing', [], [], ['Accept' => 'application/json']));
+        $r = Response::notFound();
+
+        self::assertSame(404, $r->httpStatus());
+        self::assertSame('{"ok":false,"message":"Not Found"}', $r->body());
+        self::assertSame('application/json; charset=utf-8', $this->headerValue($r, 'Content-Type'));
+    }
+
     public function testWithSecurityHeadersDoesNotOverrideExisting(): void
     {
         $r = Response::make('', 200, ['X-Frame-Options' => 'DENY'])->withSecurityHeaders();
