@@ -31,32 +31,36 @@ final class SmokeCommand extends Command
         $base = rtrim($base, '/');
 
         if (! filter_var($base, FILTER_VALIDATE_URL)) {
-            fwrite(STDERR, Term::style('1;31', 'Invalid base URL:') . ' ' . $base . "\n");
+            $this->error('Invalid base URL: ' . $base);
 
             return 1;
         }
 
         if (! filter_var((string) ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOLEAN)) {
-            fwrite(STDERR, Term::style('1;31', 'allow_url_fopen is disabled; enable it or use curl in CI.') . "\n");
+            $this->error('allow_url_fopen is disabled; enable it or use curl in CI.');
 
             return 1;
         }
 
-        fwrite(STDERR, "\n " . Term::style('1;36', 'Smoke') . Term::style('2', ' — ') . $base . "\n\n");
+        $this->line();
+        $this->line(' ' . Term::style('1;36', 'Smoke') . Term::style('2', ' — ') . $base);
+        $this->line();
 
         $failed = false;
         $failed = ! $this->checkHealth($base) || $failed;
         $failed = ! $this->checkHome($base) || $failed;
 
-        fwrite(STDERR, "\n");
+        $this->line();
 
         if ($failed) {
-            fwrite(STDERR, Term::style('1;31', 'Smoke checks failed.') . "\n\n");
+            $this->error('Smoke checks failed.');
+            $this->line();
 
             return 1;
         }
 
-        fwrite(STDERR, Term::style('1;32', 'Smoke checks passed.') . "\n\n");
+        $this->info('Smoke checks passed.');
+        $this->line();
 
         return 0;
     }
@@ -106,6 +110,6 @@ final class SmokeCommand extends Command
     private function statusLine(bool $ok, string $message): void
     {
         $mark = $ok ? Term::style('1;32', '✓') : Term::style('1;31', '✗');
-        fwrite(STDERR, " {$mark}  {$message}\n");
+        $this->line(" {$mark}  {$message}");
     }
 }
