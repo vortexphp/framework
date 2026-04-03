@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Vortex\Console\Commands;
 
+use Vortex\Application;
 use Vortex\Console\Command;
 use Vortex\Console\Input;
 use Vortex\Console\Term;
-use Vortex\Container;
 use Vortex\Database\Connection;
 use Vortex\Database\Schema\SchemaMigrator;
+use Vortex\Support\AppPaths;
 use Throwable;
 
 final class MigrateCommand implements Command
@@ -26,23 +27,23 @@ final class MigrateCommand implements Command
 
     public function description(): string
     {
-        return 'Run pending database migration classes (db/migrations/*.php).';
+        return 'Run pending migration classes (directory from config/paths.php migrations key, default db/migrations/*.php).';
     }
 
     public function run(Input $input): int
     {
-        $startup = $this->basePath . '/startup/app.php';
-        if (! is_file($startup)) {
-            fwrite(STDERR, Term::style('1;31', 'Missing startup/app.php') . "\n");
+        require_once $this->basePath . '/vendor/autoload.php';
+
+        try {
+            $paths = AppPaths::forBase($this->basePath);
+        } catch (\InvalidArgumentException $e) {
+            fwrite(STDERR, Term::style('1;31', 'Invalid config/paths.php:') . ' ' . $e->getMessage() . "\n");
 
             return 1;
         }
 
-        require_once $this->basePath . '/vendor/autoload.php';
-
         try {
-            /** @var Container $container */
-            $container = require $startup;
+            $container = Application::boot($this->basePath)->container();
             $migrator = new SchemaMigrator($this->basePath, $container->make(Connection::class));
             $ran = $migrator->up();
             fwrite(STDERR, Term::style('1;32', 'OK') . ' — applied ' . $ran . " migration(s)\n");

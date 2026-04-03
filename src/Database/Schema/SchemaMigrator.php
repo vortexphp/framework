@@ -7,13 +7,18 @@ namespace Vortex\Database\Schema;
 use InvalidArgumentException;
 use RuntimeException;
 use Vortex\Database\Connection;
+use Vortex\Support\AppPaths;
 
 class SchemaMigrator
 {
+    private readonly AppPaths $paths;
+
     public function __construct(
         private readonly string $basePath,
         private readonly Connection $db,
+        ?AppPaths $paths = null,
     ) {
+        $this->paths = $paths ?? AppPaths::forBase($basePath);
     }
 
     public function up(): int
@@ -77,9 +82,9 @@ class SchemaMigrator
      */
     private function discoverMigrations(): array
     {
-        $dir = $this->basePath . '/db/migrations';
+        $dir = $this->paths->migrationsDirectory($this->basePath);
         if (! is_dir($dir)) {
-            throw new InvalidArgumentException('Missing db/migrations directory.');
+            throw new InvalidArgumentException('Missing migrations directory: ' . $dir);
         }
 
         $paths = glob($dir . '/*.php') ?: [];

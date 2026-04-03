@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Optional **`config/paths.php`** — configure **`migrations`** (migration class directory) relative to the project root. **`Vortex\Support\AppPaths`** resolves it and CLI commands use the same rules.
+
 ## [0.4.0] - 2026-04-03
 
 ### Changed

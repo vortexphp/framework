@@ -75,4 +75,47 @@ PHP);
         self::assertNull($db->selectOne("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'posts'"));
         self::assertSame(0, $migrator->down());
     }
+
+    public function testCustomMigrationsDirectoryFromPathsConfig(): void
+    {
+        $base = sys_get_temp_dir() . '/vortex-migrator-paths-' . bin2hex(random_bytes(4));
+        mkdir($base . '/config', 0700, true);
+        file_put_contents(
+            $base . '/config/paths.php',
+            "<?php\n\ndeclare(strict_types=1);\n\nreturn ['migrations' => 'alt/migrations'];\n",
+        );
+        mkdir($base . '/alt/migrations', 0700, true);
+        try {
+            file_put_contents($base . '/alt/migrations/001_x.php', <<<'PHP'
+<?php
+use Vortex\Database\Connection;
+use Vortex\Database\Schema\Migration;
+
+return new class implements Migration {
+    public function id(): string { return '001_x'; }
+    public function up(Connection $db): void { $db->pdo()->exec('CREATE TABLE x (id INTEGER PRIMARY KEY)'); }
+    public function down(Connection $db): void { $db->pdo()->exec('DROP TABLE x'); }
+};
+PHP);
+
+            $pdo = new PDO('sqlite::memory:', null, null, [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            ]);
+            $db = new Connection($pdo);
+            $migrator = new SchemaMigrator($base, $db);
+
+            self::assertSame(1, $migrator->up());
+            self::assertNotNull($db->selectOne("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'x'"));
+        } finally {
+            foreach (glob($base . '/alt/migrations/*.php') ?: [] as $f) {
+                unlink($f);
+            }
+            @rmdir($base . '/alt/migrations');
+            @rmdir($base . '/alt');
+            unlink($base . '/config/paths.php');
+            @rmdir($base . '/config');
+            @rmdir($base);
+        }
+    }
 }
