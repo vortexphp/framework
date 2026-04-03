@@ -1,0 +1,141 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Vortex\Console\Commands;
+
+use Vortex\Console\Command;
+use Vortex\Console\Input;
+use Vortex\Console\Term;
+use Vortex\Crypto\SecurityHelp;
+use Vortex\Support\Env;
+
+final class DoctorCommand implements Command
+{
+    public function __construct(
+        private readonly string $basePath,
+    ) {
+    }
+
+    public function name(): string
+    {
+        return 'doctor';
+    }
+
+    public function description(): string
+    {
+        return 'Environment checks (checklist §1). Use --production for §2: .env, APP_DEBUG, APP_URL, vendor, CSS.';
+    }
+
+    public function run(Input $input): int
+    {
+        $base = $this->basePath;
+        $failed = false;
+        $production = in_array('--production', $input->tokens(), true);
+
+        $title = $production
+            ? Term::style('2', ' — §1 hosting') . ' + ' . Term::style('1;33', '§2 production')
+            : Term::style('2', ' — checklist §1');
+        fwrite(STDERR, "\n " . Term::style('1;36', 'Vortex doctor') . $title . "\n\n");
+
+        // PHP 8.2+
+        $ok = PHP_VERSION_ID >= 80200;
+        $failed = $this->line($ok, 'PHP ' . PHP_VERSION . ' (need ^8.2)') || $failed;
+
+        $failed = $this->line(extension_loaded('pdo'), 'ext-pdo loaded') || $failed;
+
+        $drivers = [];
+        foreach (['pdo_sqlite', 'pdo_mysql', 'pdo_pgsql'] as $ext) {
+            if (extension_loaded($ext)) {
+                $drivers[] = $ext;
+            }
+        }
+        $driverOk = $drivers !== [];
+        $failed = $this->line($driverOk, 'PDO driver: ' . ($driverOk ? implode(', ', $drivers) : 'none (install pdo_sqlite and/or pdo_mysql / pdo_pgsql)')) || $failed;
+
+        $public = $base . '/public';
+        $failed = $this->line(is_dir($public), "Directory exists: public/") || $failed;
+        $failed = $this->line(is_file($public . '/index.php'), 'File exists: public/index.php') || $failed;
+
+        $storage = $base . '/storage';
+        $logs = $storage . '/logs';
+        if (! is_dir($logs)) {
+            @mkdir($logs, 0775, true);
+        }
+        $failed = $this->line(is_dir($storage), 'Directory exists: storage/') || $failed;
+        $failed = $this->line(is_dir($logs), 'Directory exists: storage/logs/ (created if missing)') || $failed;
+        $failed = $this->line(is_writable($storage), 'Writable: storage/') || $failed;
+        $failed = $this->line(is_writable($logs), 'Writable: storage/logs/') || $failed;
+
+        $probe = $logs . '/.doctor-write-test';
+        $writeOk = @file_put_contents($probe, (string) time()) !== false;
+        if ($writeOk) {
+            @unlink($probe);
+        }
+        $failed = $this->line($writeOk, 'Can create/delete file in storage/logs/') || $failed;
+
+        $envPath = $base . '/.env';
+        $envOk = is_readable($envPath);
+        if ($production) {
+            $failed = $this->line($envOk, '.env readable (required with --production)') || $failed;
+            if ($envOk) {
+                Env::load($envPath);
+                $debugOn = filter_var(Env::get('APP_DEBUG', '0'), FILTER_VALIDATE_BOOLEAN);
+                $failed = $this->line(! $debugOn, 'APP_DEBUG is off') || $failed;
+
+                $url = trim((string) (Env::get('APP_URL') ?? ''));
+                $failed = $this->line($url !== '', 'APP_URL is non-empty') || $failed;
+                $localUrls = ['http://localhost', 'https://localhost', 'http://127.0.0.1', 'https://127.0.0.1'];
+                $normalized = strtolower(rtrim($url, '/'));
+                $isLocal = in_array($normalized, $localUrls, true);
+                $failed = $this->line(! $isLocal, 'APP_URL is not localhost (use your public URL)') || $failed;
+
+                $driver = strtolower((string) (Env::get('DB_DRIVER', 'sqlite')));
+                if ($driver !== 'sqlite') {
+                    $db = Env::get('DB_DATABASE');
+                    $failed = $this->line(
+                        $db !== null && $db !== '',
+                        'DB_DATABASE is set (driver ' . $driver . ')',
+                    ) || $failed;
+                }
+            }
+        } else {
+            $this->line($envOk, '.env readable (optional locally; use doctor --production before deploy)', warnIfFail: false);
+            if (! $envOk) {
+                fwrite(STDERR, ' ' . Term::style('2', '     Tip: copy .env.example to .env') . "\n");
+            }
+        }
+
+        fwrite(STDERR, "\n " . Term::style('2', 'Crypto (Password vs Crypt)') . "\n\n");
+        foreach (SecurityHelp::namespaceGuide() as $line) {
+            fwrite(STDERR, ' ' . Term::style('2', '· ') . $line . "\n");
+        }
+
+        if ($production) {
+            fwrite(STDERR, "\n " . Term::style('2', 'Build / dependencies') . "\n\n");
+            $failed = $this->line(is_file($base . '/vendor/autoload.php'), 'vendor/autoload.php (run composer install)') || $failed;
+            $css = $base . '/public/css/app.css';
+            $cssOk = is_file($css) && filesize($css) > 128;
+            $failed = $this->line($cssOk, 'public/css/app.css present (npm run build:css)') || $failed;
+        }
+
+        fwrite(STDERR, "\n");
+        if ($failed) {
+            fwrite(STDERR, Term::style('1;31', 'Some checks failed.') . "\n\n");
+
+            return 1;
+        }
+
+        fwrite(STDERR, Term::style('1;32', 'All required checks passed.') . "\n\n");
+
+        return 0;
+    }
+
+    private function line(bool $ok, string $message, bool $warnIfFail = true): bool
+    {
+        $mark = $ok ? Term::style('1;32', '✓') : ($warnIfFail ? Term::style('1;31', '✗') : Term::style('2', '·'));
+        fwrite(STDERR, " {$mark}  {$message}\n");
+
+        return ! $ok && $warnIfFail;
+    }
+}

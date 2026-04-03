@@ -1,0 +1,40 @@
+{
+    "name": "vortex/framework",
+    "description": "Lightweight PHP application stack (app/, engine/, config, assets)",
+    "license": "MIT",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "php": "^8.2",
+        "ext-mbstring": "*",
+        "ext-pdo": "*",
+        "twig/twig": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Vortex\\": "src/"
+        },
+        "files": [
+            "src/I18n/helpers.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Vortex\\Tests\\": "tests/"
+        }
+    },
+    "suggest": {
+        "ext-openssl": "SMTP STARTTLS / ssl:// (MAIL_ENCRYPTION tls or ssl)"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "scripts": {
+        "install:prod": "@composer install --no-dev --optimize-autoloader",
+        "validate-project": "composer validate --no-check-publish",
+        "test": "phpunit"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.0"
+    }
+}
