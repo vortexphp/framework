@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-04-03
+
+### Added
+
+- Model relation helpers in **`Vortex\Database\Model`**: **`belongsTo`**, **`hasMany`**, and **`belongsToMany`**.
+- Query builder feature expansion in **`Vortex\Database\QueryBuilder`**: **`select`**, **`with`** (eager loading), joins, grouped/or where clauses, **`pluck`**, **`value`**, bulk **`update`**, **`delete`**, and raw result methods.
+- Configurable Twig extension registration via **`app.twig_extensions`** in app config; extensions are injected through **`Vortex\View\Factory`**.
+- Twig function **`benchmark_ms()`** for reading named benchmark timings in views.
+
+### Changed
+
+- **Breaking:** Migration classes now extend abstract **`Vortex\Database\Schema\Migration`** and implement parameterless **`up()`**/**`down()`** methods.
+- **Breaking:** Migration IDs are now resolved from migration filenames instead of **`Migration::id()`**.
+- Schema builder now exposes static entrypoints (**`Schema::create`**, **`Schema::table`**, **`Schema::dropIfExists`**) with connection scoping handled by the migrator.
+- Console command execution flow is unified under the base **`Vortex\Console\Command`** lifecycle.
+- Default model table-name resolution now pluralizes snake_case model names; explicit **`protected static ?string $table`** overrides are supported.
+
 ## [0.5.0] - 2026-04-03
 
 ### Added
@@ -95,6 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Contracts**: `Cache`, `Mailer`, `Middleware`.
 - PHPUnit test suite under `tests/`.
 
+[0.6.0]: https://github.com/vortexphp/framework/releases/tag/v0.6.0
 [0.5.0]: https://github.com/vortexphp/framework/releases/tag/v0.5.0
 [0.4.0]: https://github.com/vortexphp/framework/releases/tag/v0.4.0
 [0.3.0]: https://github.com/vortexphp/framework/releases/tag/v0.3.0
