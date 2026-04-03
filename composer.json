@@ -15,7 +15,8 @@
             "Vortex\\": "src/"
         },
         "files": [
-            "src/I18n/helpers.php"
+            "src/I18n/helpers.php",
+            "src/Routing/helpers.php"
         ]
     },
     "autoload-dev": {

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Vortex\Routing;
 
 use Closure;
+use InvalidArgumentException;
+use RuntimeException;
 use Vortex\Container;
 use Vortex\Http\ErrorRenderer;
 use Vortex\Http\Request;
@@ -13,8 +15,13 @@ use Throwable;
 
 final class Router
 {
-    /** @var list<array{methods: list<string>, pattern: string, regex: string, paramNames: list<string>, action: mixed, middleware: list<string>}> */
+    /**
+     * @var list<array{methods: list<string>, pattern: string, regex: string, paramNames: list<string>, action: mixed, middleware: list<string>, name: ?string}>
+     */
     private array $routes = [];
+
+    /** @var array<string, int> name => index in $routes */
+    private array $named = [];
 
     public function __construct(
         private readonly Container $container,
@@ -45,9 +52,84 @@ final class Router
             'paramNames' => $paramNames,
             'action' => $action,
             'middleware' => $middleware,
+            'name' => null,
         ];
 
         return $this;
+    }
+
+    /**
+     * Assign a unique name to the route registered most recently. Call immediately after
+     * {@see add} / {@see get} / {@see post} (or at the end of a chain).
+     */
+    public function name(string $name): self
+    {
+        if ($this->routes === []) {
+            throw new RuntimeException('Cannot name a route: none registered yet.');
+        }
+        if (isset($this->named[$name])) {
+            throw new RuntimeException(sprintf('Duplicate route name "%s".', $name));
+        }
+
+        $i = count($this->routes) - 1;
+        if ($this->routes[$i]['name'] !== null) {
+            throw new RuntimeException(
+                'The latest route already has a name; register another route before calling name() again.',
+            );
+        }
+
+        $this->routes[$i]['name'] = $name;
+        $this->named[$name] = $i;
+
+        return $this;
+    }
+
+    /**
+     * Build a path (leading slash, no query string) for a named route.
+     *
+     * @param array<string, string|int|float> $params placeholder name => value ({@code {slug}} / {@code {path...}})
+     */
+    public function path(string $name, array $params = []): string
+    {
+        if (! isset($this->named[$name])) {
+            throw new InvalidArgumentException(sprintf('Route name "%s" is not registered.', $name));
+        }
+
+        $pattern = $this->routes[$this->named[$name]]['pattern'];
+
+        return self::interpolatePattern($pattern, $params);
+    }
+
+    /**
+     * @param array<string, string|int|float> $params
+     */
+    public static function interpolatePattern(string $pattern, array $params): string
+    {
+        $result = '';
+        $offset = 0;
+        while (preg_match('/\{([a-zA-Z_][a-zA-Z0-9_]*)(\.\.\.)?\}/', $pattern, $m, PREG_OFFSET_CAPTURE, $offset) === 1) {
+            $full = $m[0][0];
+            $start = $m[0][1];
+            $paramName = $m[1][0];
+            $greedy = ($m[2][0] ?? '') === '...';
+
+            $result .= substr($pattern, $offset, $start - $offset);
+
+            if (! array_key_exists($paramName, $params)) {
+                throw new InvalidArgumentException(
+                    sprintf('Missing value for route parameter "%s" when building URL.', $paramName),
+                );
+            }
+
+            $value = (string) $params[$paramName];
+            $result .= $greedy ? $value : rawurlencode($value);
+
+            $offset = $start + strlen($full);
+        }
+
+        $result .= substr($pattern, $offset);
+
+        return $result;
     }
 
     public function get(string $pattern, Closure|array $action, array $middleware = []): self

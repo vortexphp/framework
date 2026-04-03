@@ -34,6 +34,9 @@ final class AppTwigExtension extends AbstractExtension
             new TwigFunction('url_query', static function (string $path, array $query = []): string {
                 return UrlHelp::withQuery($path, $query);
             }),
+            new TwigFunction('route', static function (string $name, array $params = []): string {
+                return \route($name, $params);
+            }),
             new TwigFunction('server_now', static fn (): string => date('Y-m-d H:i:s')),
             new TwigFunction('session_flash', static function (string $key): mixed {
                 return Session::flash($key);

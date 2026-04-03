@@ -49,6 +49,11 @@ final class Route
         return self::router()->add($methods, $pattern, $action, $middleware);
     }
 
+    public static function name(string $name): Router
+    {
+        return self::router()->name($name);
+    }
+
     private static function router(): Router
     {
         if (self::$router === null) {
