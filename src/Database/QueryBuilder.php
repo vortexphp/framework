@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Vortex\Database;
 
+use Vortex\Pagination\Paginator;
+
 /**
  * Single-table SELECT builder (Laravel-like chaining, no external ORM).
  *
@@ -150,15 +152,9 @@ final class QueryBuilder
     }
 
     /**
-     * @return array{
-     *     items: list<Model>,
-     *     total: int,
-     *     page: int,
-     *     per_page: int,
-     *     last_page: int
-     * }
+     * @return Paginator rows in {@see Paginator::$items} are instances of this builder’s model
      */
-    public function paginate(int $page, int $perPage = 15): array
+    public function paginate(int $page, int $perPage = 15): Paginator
     {
         $page = max(1, $page);
         $perPage = max(1, min(100, $perPage));
@@ -167,15 +163,10 @@ final class QueryBuilder
         $offset = ($page - 1) * $perPage;
 
         $clone = clone $this;
+        /** @var list<Model> $items */
         $items = $clone->offset($offset)->limit($perPage)->get();
 
-        return [
-            'items' => $items,
-            'total' => $total,
-            'page' => $page,
-            'per_page' => $perPage,
-            'last_page' => $lastPage,
-        ];
+        return new Paginator($items, $total, $page, $perPage, $lastPage);
     }
 
     /**
