@@ -12,11 +12,12 @@ use Vortex\Support\Env;
 use Vortex\Support\FilesConfigUploadRoots;
 use Vortex\Support\PathHelp;
 
-final class DoctorCommand implements Command
+final class DoctorCommand extends Command
 {
     public function __construct(
         private readonly string $basePath,
     ) {
+        parent::__construct($basePath);
     }
 
     public function name(): string
@@ -29,7 +30,7 @@ final class DoctorCommand implements Command
         return 'Environment checks: PHP, ext-pdo, ext-mbstring, PDO driver, public/, storage/, config/files.php upload dirs. Use --production for .env, APP_DEBUG, APP_URL, APP_KEY, vendor, CSS.';
     }
 
-    public function run(Input $input): int
+    protected function execute(Input $input): int
     {
         $base = $this->basePath;
         $failed = false;

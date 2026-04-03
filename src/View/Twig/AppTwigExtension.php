@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vortex\View\Twig;
 
 use Vortex\Http\Session;
+use Vortex\Support\Benchmark;
 use Vortex\Support\HtmlHelp;
 use Vortex\Support\UrlHelp;
 use Twig\Extension\AbstractExtension;
@@ -38,6 +39,13 @@ final class AppTwigExtension extends AbstractExtension
                 return \route($name, $params);
             }),
             new TwigFunction('server_now', static fn (): string => date('Y-m-d H:i:s')),
+            new TwigFunction('benchmark_ms', static function (string $name = 'request', int $precision = 2): float {
+                if (! Benchmark::has($name)) {
+                    return 0.0;
+                }
+
+                return Benchmark::elapsedMs($name, $precision);
+            }),
             new TwigFunction('session_flash', static function (string $key): mixed {
                 return Session::flash($key);
             }),

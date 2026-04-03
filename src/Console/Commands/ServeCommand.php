@@ -8,11 +8,12 @@ use Vortex\Console\Command;
 use Vortex\Console\Input;
 use Vortex\Console\Term;
 
-final class ServeCommand implements Command
+final class ServeCommand extends Command
 {
     public function __construct(
         private readonly string $basePath,
     ) {
+        parent::__construct($basePath);
     }
 
     public function name(): string
@@ -27,7 +28,7 @@ final class ServeCommand implements Command
             . '[--host=HOST] [--port=PORT] or [HOST] [PORT].';
     }
 
-    public function run(Input $input): int
+    protected function execute(Input $input): int
     {
         $host = '127.0.0.1';
         $port = 8080;

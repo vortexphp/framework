@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Vortex\Console\Commands;
 
 use Throwable;
-use Vortex\Application;
 use Vortex\Console\Command;
 use Vortex\Console\Input;
 use Vortex\Console\Term;
@@ -13,11 +12,12 @@ use Vortex\Database\Connection;
 use Vortex\Database\Schema\SchemaMigrator;
 use Vortex\Support\AppPaths;
 
-final class MigrateDownCommand implements Command
+final class MigrateDownCommand extends Command
 {
     public function __construct(
         private readonly string $basePath,
     ) {
+        parent::__construct($basePath);
     }
 
     public function name(): string
@@ -30,10 +30,8 @@ final class MigrateDownCommand implements Command
         return 'Rollback the last migration batch.';
     }
 
-    public function run(Input $input): int
+    protected function execute(Input $input): int
     {
-        require_once $this->basePath . '/vendor/autoload.php';
-
         try {
             $paths = AppPaths::forBase($this->basePath);
         } catch (\InvalidArgumentException $e) {
@@ -43,7 +41,7 @@ final class MigrateDownCommand implements Command
         }
 
         try {
-            $container = Application::boot($this->basePath)->container();
+            $container = $this->app()->container();
             $migrator = new SchemaMigrator($this->basePath, $container->make(Connection::class));
             $rolledBack = $migrator->down();
             fwrite(STDERR, Term::style('1;32', 'OK') . ' — rolled back ' . $rolledBack . " migration(s)\n");
@@ -54,5 +52,10 @@ final class MigrateDownCommand implements Command
         }
 
         return 0;
+    }
+
+    protected function shouldBootApplication(): bool
+    {
+        return true;
     }
 }

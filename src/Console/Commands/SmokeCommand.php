@@ -12,7 +12,7 @@ use Vortex\Support\Env;
 /**
  * HTTP smoke checks for CI or post-deploy (§4 / §8). Uses allow_url_fopen HTTP stream.
  */
-final class SmokeCommand implements Command
+final class SmokeCommand extends Command
 {
     public function name(): string
     {
@@ -24,7 +24,7 @@ final class SmokeCommand implements Command
         return 'GET /health and / on a base URL (arg or APP_URL or http://127.0.0.1:8080). Needs allow_url_fopen.';
     }
 
-    public function run(Input $input): int
+    protected function execute(Input $input): int
     {
         $tokens = $input->tokens();
         $base = isset($tokens[0]) ? (string) $tokens[0] : (string) (Env::get('APP_URL') ?? 'http://127.0.0.1:8080');

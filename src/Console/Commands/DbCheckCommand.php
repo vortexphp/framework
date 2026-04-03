@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Vortex\Console\Commands;
 
-use Vortex\Application;
 use Vortex\Console\Command;
 use Vortex\Console\Input;
 use Vortex\Console\Term;
@@ -15,11 +14,12 @@ use Throwable;
 /**
  * Verifies PDO connectivity using config from .env / config/database.php (checklist §6).
  */
-final class DbCheckCommand implements Command
+final class DbCheckCommand extends Command
 {
     public function __construct(
         private readonly string $basePath,
     ) {
+        parent::__construct($basePath);
     }
 
     public function name(): string
@@ -32,11 +32,9 @@ final class DbCheckCommand implements Command
         return 'Run SELECT 1 through the app database connection (.env + config/database.php).';
     }
 
-    public function run(Input $input): int
+    protected function execute(Input $input): int
     {
         $base = $this->basePath;
-
-        require_once $base . '/vendor/autoload.php';
 
         try {
             $paths = AppPaths::forBase($base);
@@ -47,7 +45,7 @@ final class DbCheckCommand implements Command
         }
 
         try {
-            $container = Application::boot($base)->container();
+            $container = $this->app()->container();
             $connection = $container->make(Connection::class);
             $connection->selectOne('SELECT 1 AS ok');
         } catch (Throwable $e) {
@@ -59,5 +57,10 @@ final class DbCheckCommand implements Command
         fwrite(STDERR, Term::style('1;32', 'Database connection OK') . " (SELECT 1)\n");
 
         return 0;
+    }
+
+    protected function shouldBootApplication(): bool
+    {
+        return true;
     }
 }

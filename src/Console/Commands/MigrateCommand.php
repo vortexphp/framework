@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Vortex\Console\Commands;
 
-use Vortex\Application;
 use Vortex\Console\Command;
 use Vortex\Console\Input;
 use Vortex\Console\Term;
@@ -13,11 +12,12 @@ use Vortex\Database\Schema\SchemaMigrator;
 use Vortex\Support\AppPaths;
 use Throwable;
 
-final class MigrateCommand implements Command
+final class MigrateCommand extends Command
 {
     public function __construct(
         private readonly string $basePath,
     ) {
+        parent::__construct($basePath);
     }
 
     public function name(): string
@@ -30,10 +30,8 @@ final class MigrateCommand implements Command
         return 'Run pending migration classes (directory from config/paths.php migrations key, default db/migrations/*.php).';
     }
 
-    public function run(Input $input): int
+    protected function execute(Input $input): int
     {
-        require_once $this->basePath . '/vendor/autoload.php';
-
         try {
             $paths = AppPaths::forBase($this->basePath);
         } catch (\InvalidArgumentException $e) {
@@ -43,7 +41,7 @@ final class MigrateCommand implements Command
         }
 
         try {
-            $container = Application::boot($this->basePath)->container();
+            $container = $this->app()->container();
             $migrator = new SchemaMigrator($this->basePath, $container->make(Connection::class));
             $ran = $migrator->up();
             fwrite(STDERR, Term::style('1;32', 'OK') . ' — applied ' . $ran . " migration(s)\n");
@@ -54,5 +52,10 @@ final class MigrateCommand implements Command
         }
 
         return 0;
+    }
+
+    protected function shouldBootApplication(): bool
+    {
+        return true;
     }
 }
