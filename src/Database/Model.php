@@ -32,6 +32,19 @@ abstract class Model
         $base = $pos === false ? $class : substr($class, $pos + 1);
         $snake = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $base) ?? $base);
 
+        return self::pluralizeSnake($snake);
+    }
+
+    private static function pluralizeSnake(string $snake): string
+    {
+        if ($snake !== '' && preg_match('/[^aeiou]y$/', $snake) === 1) {
+            return substr($snake, 0, -1) . 'ies';
+        }
+
+        if (preg_match('/(s|x|z|ch|sh)$/', $snake) === 1) {
+            return $snake . 'es';
+        }
+
         return $snake . 's';
     }
 
