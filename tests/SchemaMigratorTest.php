@@ -7,6 +7,7 @@ namespace Vortex\Tests;
 use PDO;
 use PHPUnit\Framework\TestCase;
 use Vortex\Database\Connection;
+use Vortex\Database\Schema\Migration;
 use Vortex\Database\Schema\SchemaMigrator;
 
 final class SchemaMigratorTest extends TestCase
@@ -40,10 +41,9 @@ final class SchemaMigratorTest extends TestCase
 use Vortex\Database\Connection;
 use Vortex\Database\Schema\Migration;
 
-return new class implements Migration {
-    public function id(): string { return '001_create_users'; }
-    public function up(Connection $db): void { $db->pdo()->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)'); }
-    public function down(Connection $db): void { $db->pdo()->exec('DROP TABLE users'); }
+return new class extends Migration {
+    public function up(): void { Vortex\Database\Schema\Schema::create('users', static function ($table): void { $table->id(); $table->string('name'); }); }
+    public function down(): void { Vortex\Database\Schema\Schema::dropIfExists('users'); }
 };
 PHP);
         file_put_contents($this->base . '/db/migrations/002_create_posts.php', <<<'PHP'
@@ -51,10 +51,9 @@ PHP);
 use Vortex\Database\Connection;
 use Vortex\Database\Schema\Migration;
 
-return new class implements Migration {
-    public function id(): string { return '002_create_posts'; }
-    public function up(Connection $db): void { $db->pdo()->exec('CREATE TABLE posts (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL)'); }
-    public function down(Connection $db): void { $db->pdo()->exec('DROP TABLE posts'); }
+return new class extends Migration {
+    public function up(): void { Vortex\Database\Schema\Schema::create('posts', static function ($table): void { $table->id(); $table->integer('user_id'); }); }
+    public function down(): void { Vortex\Database\Schema\Schema::dropIfExists('posts'); }
 };
 PHP);
 
@@ -91,10 +90,9 @@ PHP);
 use Vortex\Database\Connection;
 use Vortex\Database\Schema\Migration;
 
-return new class implements Migration {
-    public function id(): string { return '001_x'; }
-    public function up(Connection $db): void { $db->pdo()->exec('CREATE TABLE x (id INTEGER PRIMARY KEY)'); }
-    public function down(Connection $db): void { $db->pdo()->exec('DROP TABLE x'); }
+return new class extends Migration {
+    public function up(): void { Vortex\Database\Schema\Schema::create('x', static function ($table): void { $table->id(); }); }
+    public function down(): void { Vortex\Database\Schema\Schema::dropIfExists('x'); }
 };
 PHP);
 

@@ -34,11 +34,16 @@ class SchemaMigrator
                 continue;
             }
             $this->db->transaction(function (Connection $db) use ($migration, $id, $batch): void {
-                $migration->up($db);
-                $db->execute(
-                    'INSERT INTO vortex_migrations (id, batch, applied_at) VALUES (?, ?, ?)',
-                    [$id, $batch, gmdate('Y-m-d H:i:s')],
-                );
+                Schema::usingConnection($db);
+                try {
+                    $migration->up();
+                    $db->execute(
+                        'INSERT INTO vortex_migrations (id, batch, applied_at) VALUES (?, ?, ?)',
+                        [$id, $batch, gmdate('Y-m-d H:i:s')],
+                    );
+                } finally {
+                    Schema::clearConnectionResolver();
+                }
             });
             ++$ran;
         }
@@ -68,8 +73,13 @@ class SchemaMigrator
             }
             $migration = $migrations[$id];
             $this->db->transaction(function (Connection $db) use ($migration, $id): void {
-                $migration->down($db);
-                $db->execute('DELETE FROM vortex_migrations WHERE id = ?', [$id]);
+                Schema::usingConnection($db);
+                try {
+                    $migration->down();
+                    $db->execute('DELETE FROM vortex_migrations WHERE id = ?', [$id]);
+                } finally {
+                    Schema::clearConnectionResolver();
+                }
             });
             ++$rolledBack;
         }
@@ -96,9 +106,9 @@ class SchemaMigrator
             if (! $migration instanceof Migration) {
                 throw new InvalidArgumentException('Migration file must return a Migration instance: ' . $path);
             }
-            $id = trim($migration->id());
+            $id = trim(pathinfo($path, PATHINFO_FILENAME));
             if ($id === '') {
-                throw new InvalidArgumentException('Migration id must not be empty: ' . $path);
+                throw new InvalidArgumentException('Migration filename must not be empty: ' . $path);
             }
             if (isset($migrations[$id])) {
                 throw new InvalidArgumentException('Duplicate migration id [' . $id . '] in ' . $path);

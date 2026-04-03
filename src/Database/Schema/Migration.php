@@ -4,13 +4,9 @@ declare(strict_types=1);
 
 namespace Vortex\Database\Schema;
 
-use Vortex\Database\Connection;
-
-interface Migration
+abstract class Migration
 {
-    public function id(): string;
+    abstract public function up(): void;
 
-    public function up(Connection $db): void;
-
-    public function down(Connection $db): void;
+    abstract public function down(): void;
 }

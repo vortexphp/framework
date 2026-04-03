@@ -28,6 +28,7 @@ use Vortex\Support\Env;
 use Vortex\Support\Log;
 use Vortex\View\Factory;
 use Vortex\View\View;
+use Twig\Extension\ExtensionInterface;
 
 final class Application
 {
@@ -84,12 +85,29 @@ final class Application
         Translator::setInstance($container->make(Translator::class));
         $container->singleton(Factory::class, static function () use ($basePath): Factory {
             $debug = (bool) Repository::get('app.debug', false);
-
-            return new Factory(
+            $factory = new Factory(
                 $basePath . '/assets/views',
                 $debug,
                 $debug ? null : $basePath . '/storage/cache/twig',
             );
+
+            $configuredExtensions = Repository::get('app.twig_extensions', []);
+            if (is_array($configuredExtensions)) {
+                foreach ($configuredExtensions as $extensionClass) {
+                    if (! is_string($extensionClass) || $extensionClass === '' || ! class_exists($extensionClass)) {
+                        continue;
+                    }
+
+                    $extension = new $extensionClass();
+                    if (! $extension instanceof ExtensionInterface) {
+                        continue;
+                    }
+
+                    $factory->addExtension($extension);
+                }
+            }
+
+            return $factory;
         });
 
         View::useFactory($container->make(Factory::class));

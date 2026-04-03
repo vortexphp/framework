@@ -7,23 +7,69 @@ namespace Vortex\Database\Schema;
 use InvalidArgumentException;
 use RuntimeException;
 use Vortex\Database\Connection;
+use Vortex\Database\DB;
 
 final class Schema
 {
+    /**
+     * @var null|callable(): Connection
+     */
+    private static $connectionResolver = null;
+
     private function __construct(
         private readonly Connection $db,
     ) {
     }
 
-    public static function connection(Connection $db): self
+    public static function usingConnection(Connection $db): void
     {
-        return new self($db);
+        self::$connectionResolver = static fn (): Connection => $db;
+    }
+
+    public static function clearConnectionResolver(): void
+    {
+        self::$connectionResolver = null;
     }
 
     /**
      * @param callable(Blueprint): void $callback
      */
-    public function create(string $table, callable $callback): void
+    public static function create(string $table, callable $callback): void
+    {
+        (new self(self::resolveConnection()))->createInternal($table, $callback);
+    }
+
+    /**
+     * @param callable(Blueprint): void $callback
+     */
+    public static function table(string $table, callable $callback): void
+    {
+        (new self(self::resolveConnection()))->tableInternal($table, $callback);
+    }
+
+    public static function dropIfExists(string $table): void
+    {
+        (new self(self::resolveConnection()))->dropIfExistsInternal($table);
+    }
+
+    private static function resolveConnection(): Connection
+    {
+        if (self::$connectionResolver !== null) {
+            $connection = (self::$connectionResolver)();
+            if (! $connection instanceof Connection) {
+                throw new RuntimeException('Schema connection resolver must return a Connection instance.');
+            }
+
+            return $connection;
+        }
+
+        return DB::connection();
+    }
+
+    /**
+     * @param callable(Blueprint): void $callback
+     */
+    private function createInternal(string $table, callable $callback): void
     {
         $blueprint = new Blueprint($table, true);
         $callback($blueprint);
@@ -37,7 +83,7 @@ final class Schema
     /**
      * @param callable(Blueprint): void $callback
      */
-    public function table(string $table, callable $callback): void
+    private function tableInternal(string $table, callable $callback): void
     {
         $blueprint = new Blueprint($table, false);
         $callback($blueprint);
@@ -50,7 +96,7 @@ final class Schema
         }
     }
 
-    public function dropIfExists(string $table): void
+    private function dropIfExistsInternal(string $table): void
     {
         $this->db->pdo()->exec('DROP TABLE IF EXISTS ' . $this->quoteIdent($table));
     }

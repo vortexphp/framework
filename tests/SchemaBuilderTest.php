@@ -22,18 +22,23 @@ final class SchemaBuilderTest extends TestCase
         ]);
         $pdo->exec('PRAGMA foreign_keys = ON');
         $this->db = new Connection($pdo);
+        Schema::usingConnection($this->db);
+    }
+
+    protected function tearDown(): void
+    {
+        Schema::clearConnectionResolver();
+        parent::tearDown();
     }
 
     public function testCreateWithColumnsIndexesAndForeignKeys(): void
     {
-        $schema = Schema::connection($this->db);
-
-        $schema->create('users', static function ($table): void {
+        Schema::create('users', static function ($table): void {
             $table->id();
             $table->string('email')->unique();
         });
 
-        $schema->create('posts', static function ($table): void {
+        Schema::create('posts', static function ($table): void {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete()->index('idx_posts_user_id');
             $table->string('slug')->unique();
@@ -57,13 +62,12 @@ final class SchemaBuilderTest extends TestCase
 
     public function testTableAddColumnAndDropIfExists(): void
     {
-        $schema = Schema::connection($this->db);
-        $schema->create('users', static function ($table): void {
+        Schema::create('users', static function ($table): void {
             $table->id();
             $table->string('name');
         });
 
-        $schema->table('users', static function ($table): void {
+        Schema::table('users', static function ($table): void {
             $table->string('email')->nullable()->index('idx_users_email');
         });
 
@@ -71,7 +75,7 @@ final class SchemaBuilderTest extends TestCase
         $names = array_values(array_map(static fn (array $row): string => (string) $row['name'], $columns));
         self::assertSame(['id', 'name', 'email'], $names);
 
-        $schema->dropIfExists('users');
+        Schema::dropIfExists('users');
         self::assertNull($this->db->selectOne("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'users'"));
     }
 }
