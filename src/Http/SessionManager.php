@@ -10,7 +10,7 @@ use Vortex\Config\Repository;
 /**
  * Named session stores from {@code config/session.php}. Drivers are resolved lazily per store.
  */
-final class SessionManager
+class SessionManager
 {
     /** @var array<string, SessionStore> */
     private array $resolved = [];

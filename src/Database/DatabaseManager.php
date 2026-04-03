@@ -11,7 +11,7 @@ use Vortex\Config\Repository;
 /**
  * Named PDO connections from {@code config/database.php}. Drivers are resolved lazily per connection.
  */
-final class DatabaseManager
+class DatabaseManager
 {
     /** @var array<string, Connection> */
     private array $resolved = [];

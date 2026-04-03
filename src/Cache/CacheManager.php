@@ -11,7 +11,7 @@ use Vortex\Contracts\Cache as CacheContract;
 /**
  * Named cache stores from {@code config/cache.php}. Drivers are resolved lazily per store.
  */
-final class CacheManager
+class CacheManager
 {
     /** @var array<string, CacheContract> */
     private array $resolved = [];

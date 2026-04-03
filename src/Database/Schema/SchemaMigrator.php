@@ -8,7 +8,7 @@ use InvalidArgumentException;
 use RuntimeException;
 use Vortex\Database\Connection;
 
-final class SchemaMigrator
+class SchemaMigrator
 {
     public function __construct(
         private readonly string $basePath,

@@ -7,7 +7,7 @@ namespace Vortex\Database;
 use PDO;
 use PDOStatement;
 
-final class Connection
+class Connection
 {
     public function __construct(private readonly PDO $pdo)
     {
