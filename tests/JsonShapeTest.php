@@ -49,4 +49,63 @@ final class JsonShapeTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         JsonShape::validate(['x' => 1], ['x' => 'uuid']);
     }
+
+    public function testNestedObjectValidatesWithDotPaths(): void
+    {
+        $ok = JsonShape::validate(
+            ['user' => ['name' => 'Ada', 'age' => 30]],
+            [
+                'user' => JsonShape::object([
+                    'name' => 'string',
+                    'age' => 'int',
+                ]),
+            ],
+        );
+        self::assertFalse($ok->failed());
+
+        $bad = JsonShape::validate(
+            ['user' => ['name' => 1]],
+            ['user' => JsonShape::object(['name' => 'string'])],
+        );
+        self::assertTrue($bad->failed());
+        self::assertNotNull($bad->first('user.name'));
+    }
+
+    public function testNestedObjectRejectsNonObjectValue(): void
+    {
+        $r = JsonShape::validate(
+            ['user' => [1, 2]],
+            ['user' => JsonShape::object(['x' => 'string'])],
+        );
+        self::assertTrue($r->failed());
+        self::assertStringContainsString('object', (string) $r->first('user'));
+    }
+
+    public function testOptionalNestedObject(): void
+    {
+        self::assertFalse(JsonShape::validate([], [
+            'meta' => JsonShape::object(['k' => 'string'], optional: true),
+        ])->failed());
+
+        self::assertFalse(JsonShape::validate(['meta' => null], [
+            'meta' => JsonShape::object(['k' => 'string'], optional: true),
+        ])->failed());
+    }
+
+    public function testDeeplyNestedObject(): void
+    {
+        $data = ['a' => ['b' => ['c' => 'ok']]];
+        $shape = [
+            'a' => JsonShape::object([
+                'b' => JsonShape::object(['c' => 'string']),
+            ]),
+        ];
+        self::assertFalse(JsonShape::validate($data, $shape)->failed());
+    }
+
+    public function testRawArrayShapeSpecThrows(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        JsonShape::validate([], ['x' => ['y' => 'string']]);
+    }
 }

@@ -44,7 +44,7 @@ On a **`Request`** instance, **`validationResponse($rules, $messages = [], $attr
 
 ## JSON body shape (decoded array)
 
-**`JsonShape::validate($body, $shape)`** in **`Vortex\Support`** checks required keys and primitive/list/object **`types`** for API JSON (not a full JSON Schema). **`$request->bodyShapeResponse($shape)`** returns **`Response::validationFailed()`** or **`null`**.
+**`JsonShape::validate($body, $shape)`** in **`Vortex\Support`** checks required keys and primitive/list/object **`types`** for API JSON (not a full JSON Schema). Use **`JsonShape::object([...], optional: bool)`** for nested objects (dot-path errors, e.g. **`user.email`**). **`$request->bodyShapeResponse($shape)`** returns **`Response::validationFailed()`** or **`null`**.
 
 ## API versioning helpers
 

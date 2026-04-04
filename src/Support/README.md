@@ -79,6 +79,10 @@ $json = JsonHelp::encode(['ok' => true]);
 $data = JsonHelp::tryDecodeArray($json); // ['ok' => true]
 
 $result = JsonShape::validate($data, ['ok' => 'bool']);
+$user = JsonShape::validate(
+    ['user' => ['name' => 'Ada']],
+    ['user' => JsonShape::object(['name' => 'string'])],
+);
 ```
 
 ## Other helpers
