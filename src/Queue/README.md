@@ -20,6 +20,22 @@ CREATE TABLE jobs (
 
 For MySQL, use `INT` / `BIGINT` and `AUTO_INCREMENT` instead of `INTEGER PRIMARY KEY AUTOINCREMENT`.
 
+## Failed jobs table
+
+When a job exceeds `queue.tries`, the worker deletes it from `jobs` and inserts a row into the failed store (if enabled). Suggested schema:
+
+```sql
+CREATE TABLE failed_jobs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    queue VARCHAR(255) NOT NULL,
+    payload TEXT NOT NULL,
+    exception TEXT NOT NULL,
+    failed_at INTEGER NOT NULL
+);
+```
+
+Set `queue.failed_jobs_table` to `''` (empty string) in `config/queue.php` to skip recording (failures are only logged).
+
 ## Config (`config` repository)
 
 | Key | Default | Purpose |
@@ -29,6 +45,7 @@ For MySQL, use `INT` / `BIGINT` and `AUTO_INCREMENT` instead of `INTEGER PRIMARY
 | `queue.tries` | `3` | After this many failures the row is deleted and the error is logged. |
 | `queue.stale_reserve_seconds` | `300` | If a worker dies while holding a job, reclaim the row after this many seconds. |
 | `queue.idle_sleep_ms` | `1000` | When `queue:work` is polling and the queue is empty, sleep this long between attempts. |
+| `queue.failed_jobs_table` | `failed_jobs` | Table for permanent failures; use `false` or `''` to disable {@see \Vortex\Queue\FailedJobStore::record()}. |
 
 ## Pushing jobs
 
@@ -63,6 +80,9 @@ Jobs are stored with PHP `serialize()`. Workers use `unserialize(..., ['allowed_
 php vortex queue:work              # poll forever
 php vortex queue:work once         # process at most one job, then exit
 php vortex queue:work emails once  # named queue + single pass
+php vortex queue:failed            # list recent failures (optional limit token)
+php vortex queue:retry 3          # re-enqueue failed job #3
+php vortex queue:retry all        # re-enqueue every stored failure
 ```
 
 The command boots the full application (same database config as HTTP).

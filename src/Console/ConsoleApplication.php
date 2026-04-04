@@ -8,6 +8,8 @@ use Vortex\Console\Commands\DbCheckCommand;
 use Vortex\Console\Commands\MigrateCommand;
 use Vortex\Console\Commands\DoctorCommand;
 use Vortex\Console\Commands\MigrateDownCommand;
+use Vortex\Console\Commands\QueueFailedCommand;
+use Vortex\Console\Commands\QueueRetryCommand;
 use Vortex\Console\Commands\QueueWorkCommand;
 use Vortex\Console\Commands\ServeCommand;
 use Vortex\Console\Commands\SmokeCommand;
@@ -34,6 +36,8 @@ final class ConsoleApplication
         $app->register(new MigrateCommand($basePath));
         $app->register(new MigrateDownCommand($basePath));
         $app->register(new QueueWorkCommand($basePath));
+        $app->register(new QueueFailedCommand($basePath));
+        $app->register(new QueueRetryCommand($basePath));
 
         RouteDiscovery::loadConsoleRoutes($app, $basePath);
 

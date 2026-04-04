@@ -30,12 +30,19 @@ final class DatabaseQueue
 
     public function push(string $queue, Job $job, int $delaySeconds = 0): void
     {
-        $payload = serialize($job);
+        $this->pushSerialized($queue, serialize($job), $delaySeconds);
+    }
+
+    /**
+     * Enqueue an already-serialized job payload (e.g. replay from {@see FailedJobStore}).
+     */
+    public function pushSerialized(string $queue, string $serializedPayload, int $delaySeconds = 0): void
+    {
         $now = time();
         $availableAt = $now + max(0, $delaySeconds);
         $this->db->execute(
             "INSERT INTO {$this->tableSql} (queue, payload, attempts, reserved_at, available_at, created_at) VALUES (?, ?, 0, NULL, ?, ?)",
-            [$queue, $payload, $availableAt, $now],
+            [$queue, $serializedPayload, $availableAt, $now],
         );
     }
 

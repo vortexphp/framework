@@ -11,6 +11,7 @@ use Vortex\Console\Input;
 use Vortex\Console\Term;
 use Vortex\Queue\Contracts\Job;
 use Vortex\Queue\DatabaseQueue;
+use Vortex\Queue\FailedJobStore;
 use Vortex\Queue\Queue;
 use Vortex\Support\Log;
 
@@ -53,6 +54,8 @@ final class QueueWorkCommand extends Command
         $container = $this->app()->container();
         /** @var DatabaseQueue $driver */
         $driver = $container->make(DatabaseQueue::class);
+        /** @var FailedJobStore $failedJobs */
+        $failedJobs = $container->make(FailedJobStore::class);
 
         $maxTries = (int) Repository::get('queue.tries', 3);
         $maxTries = max(1, $maxTries);
@@ -91,6 +94,13 @@ final class QueueWorkCommand extends Command
                 $attempts = $reserved->attempts + 1;
                 if ($attempts >= $maxTries) {
                     $driver->delete($reserved->id);
+                    if ($failedJobs->isRecording()) {
+                        try {
+                            $failedJobs->record($queue, $reserved->payload, $e);
+                        } catch (Throwable $storeError) {
+                            Log::error('Could not record failed job: ' . $storeError->getMessage());
+                        }
+                    }
                     fwrite(
                         STDERR,
                         Term::style('1;31', 'Permanent failure') . " job #{$reserved->id} after {$maxTries} attempt(s): {$e->getMessage()}\n",

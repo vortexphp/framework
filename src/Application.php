@@ -23,6 +23,7 @@ use Vortex\Http\SessionManager;
 use Vortex\I18n\Translator;
 use Vortex\Mail\MailFactory;
 use Vortex\Queue\DatabaseQueue;
+use Vortex\Queue\FailedJobStore;
 use Vortex\Routing\RouteDiscovery;
 use Vortex\Routing\Router;
 use Vortex\Support\Env;
@@ -62,6 +63,14 @@ final class Application
                 $c->make(Connection::class),
                 is_string($table) && $table !== '' ? $table : 'jobs',
             );
+        });
+        $container->singleton(FailedJobStore::class, static function (Container $c): FailedJobStore {
+            $t = Repository::get('queue.failed_jobs_table', 'failed_jobs');
+            if ($t === false || $t === '' || $t === null) {
+                return new FailedJobStore($c->make(Connection::class), '');
+            }
+
+            return new FailedJobStore($c->make(Connection::class), is_string($t) ? $t : 'failed_jobs');
         });
         $container->singleton(CacheManager::class, static fn (): CacheManager => CacheManager::fromRepository($basePath));
         $container->singleton(CacheContract::class, static fn (Container $c): CacheContract => $c->make(CacheManager::class)->store());

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Queue:** `Vortex\Queue\Contracts\Job`, `DatabaseQueue` (SQL table + reservation / stale reclaim), static `Vortex\Queue\Queue::push()`, and CLI **`queue:work`** (`once` token and optional queue name). Config: `queue.table`, `queue.default`, `queue.tries`, `queue.stale_reserve_seconds`, `queue.idle_sleep_ms`.
+- **Queue:** `Vortex\Queue\Contracts\Job`, `DatabaseQueue` (SQL table + reservation / stale reclaim), static `Vortex\Queue\Queue::push()`, `DatabaseQueue::pushSerialized()`, CLI **`queue:work`**, **`queue:failed`**, **`queue:retry`**, and **`FailedJobStore`** (permanent failures recorded when `queue.failed_jobs_table` is set; empty string disables recording). Config: `queue.table`, `queue.default`, `queue.tries`, `queue.stale_reserve_seconds`, `queue.idle_sleep_ms`, `queue.failed_jobs_table`.
 - **`Vortex\Auth\Auth`** session facade: `loginUsingId`, `login` (`Authenticatable`), `logout`, `check`, `guest`, `id`, `user` with optional `resolveUserUsing` callback; `login` / `loginUsingId` accept `$remember` to set a signed remember cookie; `logout` clears the remember cookie.
 - **`Vortex\Auth\Gate`** — `define()`, `policy()`, `allows()`, `denies()`, `authorize()`; **`AuthorizationException`** for denied `authorize()` (rendered as 403 by **`ErrorRenderer`** without the full exception log path).
 - **`Vortex\Auth\RememberCookie`** — signed payload (requires **`APP_KEY`**); **`Vortex\Auth\Middleware\RememberFromCookie`** restores session from the cookie.
