@@ -18,7 +18,7 @@ final class RouteDiscoveryTest extends TestCase
     public function testLoadHttpRoutesSkipsConsoleSuffixAndSortsFiles(): void
     {
         $base = $this->tempProjectRoot();
-        $routes = $base . '/app/Routes';
+        $routes = $base . '/routes';
         mkdir($routes, 0777, true);
 
         file_put_contents(
@@ -67,7 +67,7 @@ PHP,
     public function testLoadConsoleRoutesLoadsStarConsolePhp(): void
     {
         $base = $this->tempProjectRoot();
-        $routes = $base . '/app/Routes';
+        $routes = $base . '/routes';
         mkdir($routes, 0777, true);
 
         file_put_contents(
@@ -108,7 +108,7 @@ PHP,
     public function testHttpRouteFileMayReturnUnusedValue(): void
     {
         $base = $this->tempProjectRoot();
-        $routes = $base . '/app/Routes';
+        $routes = $base . '/routes';
         mkdir($routes, 0777, true);
         file_put_contents(
             $routes . '/Bad.php',

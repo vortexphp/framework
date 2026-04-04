@@ -14,7 +14,7 @@ final class MakeControllerCommand extends Command
 {
     public function description(): string
     {
-        return 'Scaffold an invokable Controller under app/Http/Controllers (config/paths.php **controllers**). Wire it in app/Routes/*.php.';
+        return 'Scaffold an invokable Controller under app/Controllers (config/paths.php **controllers**). Wire it in routes/*.php.';
     }
 
     protected function execute(Input $input): int
@@ -28,7 +28,7 @@ final class MakeControllerCommand extends Command
 
         $raw = trim(implode(' ', $args));
         if (str_contains($raw, '\\')) {
-            $this->error('Use a short class name only (e.g. Post). Namespace is App\\Http\\Controllers.');
+            $this->error('Use a short class name only (e.g. Post). Namespace follows config/paths.php **controllers** (PSR-4 under App\\).');
 
             return 1;
         }
@@ -44,6 +44,7 @@ final class MakeControllerCommand extends Command
 
         try {
             $paths = AppPaths::forBase($this->basePath());
+            $ns = $paths->controllersNamespace();
         } catch (InvalidArgumentException $e) {
             $this->error('Invalid config/paths.php: ' . $e->getMessage());
 
@@ -65,7 +66,7 @@ final class MakeControllerCommand extends Command
         }
 
         $contents = Stub::render('controller', [
-            'NAMESPACE' => 'App\\Http\\Controllers',
+            'NAMESPACE' => $ns,
             'CLASS' => $className,
         ]);
 
@@ -76,7 +77,7 @@ final class MakeControllerCommand extends Command
         }
 
         $this->info('Created ' . $file);
-        $fqcn = 'App\\Http\\Controllers\\' . $className;
+        $fqcn = $ns . '\\' . $className;
         $this->line('Route example: Route::get(\'/\', \\' . $fqcn . '::class);');
 
         return 0;

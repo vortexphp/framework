@@ -11,11 +11,11 @@ final class RouteDiscovery
 {
     public static function httpRouteDirectory(string $basePath): string
     {
-        return rtrim($basePath, '/') . '/app/Routes';
+        return rtrim($basePath, '/') . '/routes';
     }
 
     /**
-     * Load every `app/Routes/*.php` that is not named `*Console.php`. Each file is {@see require}d
+     * Load every `routes/*.php` except `console.php` and `*Console.php`. Each file is {@see require}d
      * in sorted order; register routes with {@see Route} (the active router is set before the first file runs).
      */
     public static function loadHttpRoutes(Router $router, string $basePath): void
@@ -33,7 +33,7 @@ final class RouteDiscovery
     }
 
     /**
-     * Load every `app/Routes/*Console.php`. Each file is {@see require}d in sorted order; register commands with
+     * Load `routes/console.php` (if present) and every `routes/*Console.php`. Each file is {@see require}d in sorted order; register commands with
      * {@see \Vortex\Vortex}; the active {@see ConsoleApplication} is set before the first file runs.
      */
     public static function loadConsoleRoutes(ConsoleApplication $app, string $basePath): void
@@ -61,7 +61,8 @@ final class RouteDiscovery
         $paths = glob($dir . '/*.php') ?: [];
         $out = [];
         foreach ($paths as $path) {
-            if (str_ends_with(basename($path), 'Console.php')) {
+            $base = basename($path);
+            if ($base === 'console.php' || str_ends_with($base, 'Console.php')) {
                 continue;
             }
             $out[] = $path;
@@ -76,9 +77,18 @@ final class RouteDiscovery
      */
     private static function consoleRouteFiles(string $dir): array
     {
-        $paths = glob($dir . '/*Console.php') ?: [];
-        sort($paths);
+        $out = [];
+        $console = $dir . '/console.php';
+        if (is_file($console)) {
+            $out[] = $console;
+        }
+        foreach (glob($dir . '/*Console.php') ?: [] as $path) {
+            if ($path !== $console) {
+                $out[] = $path;
+            }
+        }
+        sort($out);
 
-        return $paths;
+        return $out;
     }
 }

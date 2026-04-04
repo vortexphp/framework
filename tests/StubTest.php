@@ -12,15 +12,19 @@ final class StubTest extends TestCase
 {
     public function testRenderSubstitutesPlaceholders(): void
     {
-        $out = Stub::render('command', ['CLASS' => 'DemoCommand']);
+        $out = Stub::render('command', [
+            'NAMESPACE' => 'App\\Commands',
+            'CLASS' => 'DemoCommand',
+        ]);
+        self::assertStringContainsString('namespace App\\Commands', $out);
         self::assertStringContainsString('final class DemoCommand extends Command', $out);
         self::assertStringNotContainsString('{{CLASS}}', $out);
 
         $ctrl = Stub::render('controller', [
-            'NAMESPACE' => 'App\\Http\\Controllers',
+            'NAMESPACE' => 'App\\Controllers',
             'CLASS' => 'DemoController',
         ]);
-        self::assertStringContainsString('namespace App\\Http\\Controllers', $ctrl);
+        self::assertStringContainsString('namespace App\\Controllers', $ctrl);
         self::assertStringContainsString('final class DemoController extends Controller', $ctrl);
     }
 

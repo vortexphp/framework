@@ -18,7 +18,7 @@ The framework expects a **base path** (your app root) with at least:
 - `config/paths.php` (optional) — return `['migrations' => '…', 'models' => '…', 'controllers' => '…']` relative to the project root; defaults are `db/migrations`, `app/Models`, and `app/Http/Controllers`
 - `app/Routes/*.php` — HTTP route files (`require`d in order; register via `Vortex\Routing\Route`; optional `->name('key')` + `route('key', $params)`)
 - `app/Routes/*Console.php` — console registration files (`Vortex::command(...)` at top level, analogous to `Route::get` for HTTP)
-- `ui/views/` — Twig templates (used by `Vortex\Application::boot()`)
+- `resources/views/` — Twig templates (used by `Vortex\Application::boot()`; override with `config/view.php` key `path`)
 - `storage/cache/twig/` — optional Twig cache when `app.debug` is false
 
 ## Quick start

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Vortex\Console\Commands;
 
+use InvalidArgumentException;
 use Vortex\Console\Command;
 use Vortex\Console\Input;
 use Vortex\Console\Stub;
@@ -35,7 +36,15 @@ final class MakeCommandCommand extends Command
 
         $className = str_ends_with($base, 'Command') ? $base : $base . 'Command';
 
-        $paths = AppPaths::forBase($this->basePath());
+        try {
+            $paths = AppPaths::forBase($this->basePath());
+            $ns = $paths->commandsNamespace();
+        } catch (InvalidArgumentException $e) {
+            $this->error('Invalid config/paths.php: ' . $e->getMessage());
+
+            return 1;
+        }
+
         $dir = $paths->commandsDirectory($this->basePath());
         if (! is_dir($dir) && ! mkdir($dir, 0775, true) && ! is_dir($dir)) {
             $this->error('Cannot create directory: ' . $dir);
@@ -51,6 +60,7 @@ final class MakeCommandCommand extends Command
         }
 
         $contents = Stub::render('command', [
+            'NAMESPACE' => $ns,
             'CLASS' => $className,
         ]);
 

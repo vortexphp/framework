@@ -9,7 +9,7 @@ use Vortex\Console\Command;
 use Vortex\Console\ConsoleApplication;
 
 /**
- * Application-facing facade. Use {@see self::command()} from `app/Routes/*Console.php` (same idea as {@see \Vortex\Routing\Route} for HTTP).
+ * Application-facing facade. Use {@see self::command()} from `routes/console.php` or `routes/*Console.php` (same idea as {@see \Vortex\Routing\Route} for HTTP).
  */
 final class Vortex
 {
@@ -29,7 +29,7 @@ final class Vortex
     public static function command(string|Command $command): void
     {
         $app = self::$consoleApplication ?? throw new RuntimeException(
-            'app/Routes/*Console.php files can only register commands while the CLI kernel is loading them (no active ConsoleApplication).',
+            'routes/console.php and routes/*Console.php files can only register commands while the CLI kernel is loading them (no active ConsoleApplication).',
         );
 
         $instance = is_string($command) ? new $command() : $command;

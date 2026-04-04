@@ -9,6 +9,7 @@ use InvalidArgumentException;
 /**
  * Project path layout. Optional **`config/paths.php`** may return
  * **`['migrations' => '…', 'models' => '…', 'controllers' => '…', 'commands' => '…']`** (paths relative to project root).
+ * Command and controller namespaces are derived for paths under **`app/`** (PSR-4 **`App\` → `app/`**).
  */
 final class AppPaths
 {
@@ -24,10 +25,10 @@ final class AppPaths
     {
         $basePath = rtrim($basePath, '/\\');
         $defaults = [
-            'migrations' => 'db/migrations',
+            'migrations' => 'database/migrations',
             'models' => 'app/Models',
-            'controllers' => 'app/Http/Controllers',
-            'commands' => 'app/Console/Commands',
+            'controllers' => 'app/Controllers',
+            'commands' => 'app/Commands',
         ];
         $configFile = $basePath . '/config/paths.php';
         if (is_file($configFile)) {
@@ -101,5 +102,46 @@ final class AppPaths
     public function commandsRelative(): string
     {
         return $this->commandsRelative;
+    }
+
+    /**
+     * PHP namespace for classes in {@see self::controllersDirectory()} (e.g. `app/Controllers` → `App\Controllers`).
+     *
+     * @throws InvalidArgumentException when the configured path is not under `app/`
+     */
+    public function controllersNamespace(): string
+    {
+        return self::psr4NamespaceFromAppRelative($this->controllersRelative, 'controllers');
+    }
+
+    /**
+     * PHP namespace for classes in {@see self::commandsDirectory()} (e.g. `app/Commands` → `App\Commands`).
+     *
+     * @throws InvalidArgumentException when the configured path is not under `app/`
+     */
+    public function commandsNamespace(): string
+    {
+        return self::psr4NamespaceFromAppRelative($this->commandsRelative, 'commands');
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    private static function psr4NamespaceFromAppRelative(string $relative, string $configKey): string
+    {
+        $relative = str_replace('\\', '/', trim($relative, '/'));
+        if (! str_starts_with($relative, 'app/')) {
+            throw new InvalidArgumentException(
+                "config/paths.php [{$configKey}] must be under app/ for PSR-4 (App\\ → app/). Got: {$relative}",
+            );
+        }
+
+        $rest = substr($relative, strlen('app/'));
+        $parts = array_values(array_filter(explode('/', $rest), static fn (string $p): bool => $p !== ''));
+        if ($parts === []) {
+            throw new InvalidArgumentException("config/paths.php [{$configKey}] is not a valid app/ subpath.");
+        }
+
+        return 'App\\' . implode('\\', $parts);
     }
 }

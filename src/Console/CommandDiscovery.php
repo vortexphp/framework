@@ -13,13 +13,14 @@ use Vortex\Support\AppPaths;
 final class CommandDiscovery
 {
     /**
-     * Registers every concrete {@see Command} under {@see AppPaths::commandsDirectory()} (default **`app/Console/Commands`**), recursively. Files must be named **`*.php`** and end with **`Command.php`**; the class FQCN is **`App\Console\Commands\`** plus the path segments under that directory (PSR-4 under **`App\`**).
+     * Registers every concrete {@see Command} under {@see AppPaths::commandsDirectory()} (default **`app/Commands`**), recursively. Files must be named **`*.php`** and end with **`Command.php`**; the class FQCN uses the PSR-4 namespace for that directory (e.g. **`App\Commands\`**).
      */
     public static function registerAppCommands(ConsoleApplication $app): void
     {
         $basePath = $app->basePath();
-        $dir = AppPaths::forBase($basePath)->commandsDirectory($basePath);
-        $prefix = 'App\\Console\\Commands\\';
+        $paths = AppPaths::forBase($basePath);
+        $dir = $paths->commandsDirectory($basePath);
+        $prefix = $paths->commandsNamespace() . '\\';
 
         foreach (self::commandPhpFiles($dir) as $file) {
             $fqcn = self::classFromFile($dir, $file, $prefix);

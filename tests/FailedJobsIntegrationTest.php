@@ -118,9 +118,9 @@ final class FailedJobsIntegrationTest extends TestCase
         $fixture = __DIR__ . '/Fixtures/minimal-http-app';
         $base = sys_get_temp_dir() . '/vortex_failed_jobs_' . bin2hex(random_bytes(8));
         mkdir($base . '/config', 0777, true);
-        mkdir($base . '/app/Routes', 0777, true);
+        mkdir($base . '/routes', 0777, true);
         mkdir($base . '/public', 0777, true);
-        mkdir($base . '/ui/views', 0777, true);
+        mkdir($base . '/resources/views', 0777, true);
         mkdir($base . '/lang', 0777, true);
         mkdir($base . '/storage/cache/twig', 0777, true);
         mkdir($base . '/storage/logs', 0777, true);

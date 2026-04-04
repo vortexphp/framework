@@ -18,17 +18,17 @@ final class SchemaMigratorTest extends TestCase
     {
         parent::setUp();
         $this->base = sys_get_temp_dir() . '/vortex-migrator-' . bin2hex(random_bytes(4));
-        mkdir($this->base . '/db/migrations', 0700, true);
+        mkdir($this->base . '/database/migrations', 0700, true);
     }
 
     protected function tearDown(): void
     {
         if ($this->base !== '' && is_dir($this->base)) {
-            foreach (glob($this->base . '/db/migrations/*.php') ?: [] as $f) {
+            foreach (glob($this->base . '/database/migrations/*.php') ?: [] as $f) {
                 unlink($f);
             }
-            @rmdir($this->base . '/db/migrations');
-            @rmdir($this->base . '/db');
+            @rmdir($this->base . '/database/migrations');
+            @rmdir($this->base . '/database');
             @rmdir($this->base);
         }
         parent::tearDown();
@@ -36,7 +36,7 @@ final class SchemaMigratorTest extends TestCase
 
     public function testUpThenDownLastBatch(): void
     {
-        file_put_contents($this->base . '/db/migrations/001_create_users.php', <<<'PHP'
+        file_put_contents($this->base . '/database/migrations/001_create_users.php', <<<'PHP'
 <?php
 use Vortex\Database\Connection;
 use Vortex\Database\Schema\Migration;
@@ -46,7 +46,7 @@ return new class extends Migration {
     public function down(): void { Vortex\Database\Schema\Schema::dropIfExists('users'); }
 };
 PHP);
-        file_put_contents($this->base . '/db/migrations/002_create_posts.php', <<<'PHP'
+        file_put_contents($this->base . '/database/migrations/002_create_posts.php', <<<'PHP'
 <?php
 use Vortex\Database\Connection;
 use Vortex\Database\Schema\Migration;

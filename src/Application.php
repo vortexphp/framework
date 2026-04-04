@@ -146,8 +146,10 @@ final class Application
         Translator::setInstance($container->make(Translator::class));
         $container->singleton(Factory::class, static function () use ($basePath): Factory {
             $debug = (bool) Repository::get('app.debug', false);
+            $viewPath = (string) Repository::get('view.path', 'resources/views');
+            $viewPath = trim(str_replace('\\', '/', $viewPath), '/');
             $factory = new Factory(
-                $basePath . '/ui/views',
+                $basePath . '/' . $viewPath,
                 $debug,
                 $debug ? null : $basePath . '/storage/cache/twig',
             );

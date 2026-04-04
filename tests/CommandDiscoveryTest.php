@@ -19,7 +19,7 @@ final class CommandDiscoveryTest extends TestCase
         $this->base = sys_get_temp_dir() . '/vortex-cmd-disc-' . bin2hex(random_bytes(4));
         mkdir($this->base . '/config', 0700, true);
         file_put_contents($this->base . '/config/paths.php', "<?php\nreturn [];\n");
-        mkdir($this->base . '/app/Console/Commands/Nested', 0700, true);
+        mkdir($this->base . '/app/Commands/Nested', 0700, true);
     }
 
     protected function tearDown(): void
@@ -56,11 +56,11 @@ final class CommandDiscoveryTest extends TestCase
         $this->registerAppAutoloader();
 
         file_put_contents(
-            $this->base . '/app/Console/Commands/PingCommand.php',
+            $this->base . '/app/Commands/PingCommand.php',
             <<<'PHP'
 <?php
 declare(strict_types=1);
-namespace App\Console\Commands;
+namespace App\Commands;
 use Vortex\Console\Command;
 use Vortex\Console\Input;
 final class PingCommand extends Command
@@ -72,11 +72,11 @@ PHP,
         );
 
         file_put_contents(
-            $this->base . '/app/Console/Commands/Nested/PongCommand.php',
+            $this->base . '/app/Commands/Nested/PongCommand.php',
             <<<'PHP'
 <?php
 declare(strict_types=1);
-namespace App\Console\Commands\Nested;
+namespace App\Commands\Nested;
 use Vortex\Console\Command;
 use Vortex\Console\Input;
 final class PongCommand extends Command
@@ -99,11 +99,11 @@ PHP,
         $this->registerAppAutoloader();
 
         file_put_contents(
-            $this->base . '/app/Console/Commands/BaseJobCommand.php',
+            $this->base . '/app/Commands/BaseJobCommand.php',
             <<<'PHP'
 <?php
 declare(strict_types=1);
-namespace App\Console\Commands;
+namespace App\Commands;
 use Vortex\Console\Command;
 use Vortex\Console\Input;
 abstract class BaseJobCommand extends Command
@@ -124,17 +124,17 @@ PHP,
     {
         file_put_contents(
             $this->base . '/config/paths.php',
-            "<?php\n\ndeclare(strict_types=1);\n\nreturn ['commands' => 'src/Cli'];\n",
+            "<?php\n\ndeclare(strict_types=1);\n\nreturn ['commands' => 'app/Cli'];\n",
         );
-        mkdir($this->base . '/src/Cli', 0700, true);
-        $this->registerAppAutoloaderForAlternateCommandsDir($this->base . '/src/Cli');
+        mkdir($this->base . '/app/Cli', 0700, true);
+        $this->registerAppAutoloaderForAlternateCommandsDir($this->base . '/app/Cli');
 
         file_put_contents(
-            $this->base . '/src/Cli/OtherCommand.php',
+            $this->base . '/app/Cli/OtherCommand.php',
             <<<'PHP'
 <?php
 declare(strict_types=1);
-namespace App\Console\Commands;
+namespace App\Cli;
 use Vortex\Console\Command;
 use Vortex\Console\Input;
 final class OtherCommand extends Command
@@ -172,7 +172,7 @@ PHP,
     private function registerAppAutoloaderForAlternateCommandsDir(string $commandsRoot): void
     {
         $base = $this->base;
-        $prefix = 'App\\Console\\Commands\\';
+        $prefix = 'App\\Cli\\';
         spl_autoload_register(static function (string $class) use ($base, $commandsRoot, $prefix): bool {
             if (! str_starts_with($class, 'App\\')) {
                 return false;

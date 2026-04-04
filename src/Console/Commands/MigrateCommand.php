@@ -21,7 +21,7 @@ final class MigrateCommand extends Command
 
     public function description(): string
     {
-        return 'Run pending migration classes (directory from config/paths.php migrations key, default db/migrations/*.php).';
+        return 'Run pending migration classes (directory from config/paths.php migrations key, default database/migrations/*.php).';
     }
 
     protected function execute(Input $input): int

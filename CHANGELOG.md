@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-04-05
+
+### Breaking
+
+- **HTTP routes:** route files load from **`routes/*.php`** (project root), not **`app/Routes/`**. Files named **`console.php`** or ending in **`*Console.php`** are excluded from HTTP discovery and used for CLI registration only.
+- **Console routes:** **`routes/console.php`** (if present) and **`routes/*Console.php`** are loaded for **`Vortex::command(...)`** (in addition to the previous `*Console.php`-only pattern under the old directory).
+- **`AppPaths` defaults:** **`database/migrations`**, **`app/Controllers`**, **`app/Commands`** (replacing **`db/migrations`**, **`app/Http/Controllers`**, **`app/Console/Commands`**).
+- **`CommandDiscovery`** resolves command classes using a PSR-4 namespace derived from the configured **`commands`** path under **`app/`** (e.g. **`App\Commands\`**). Paths not under **`app/`** cannot be used for auto-discovery namespaces.
+- **`AppPaths`:** **`controllersNamespace()`** and **`commandsNamespace()`**; **`make:controller`**, **`make:command`**, and stubs follow these namespaces.
+- **Twig:** default template root is **`resources/views`** (was **`ui/views`**). Override with **`config/view.php`** → **`path`** (or **`view.path`** in the merged config).
+
+### Changed
+
+- **`Application`:** reads **`view.path`** with default **`resources/views`**.
+
 ## [0.10.0] - 2026-04-04
 
 ### Changed
@@ -197,6 +212,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Contracts**: `Cache`, `Mailer`, `Middleware`.
 - PHPUnit test suite under `tests/`.
 
+[0.11.0]: https://github.com/vortexphp/framework/releases/tag/v0.11.0
 [0.10.0]: https://github.com/vortexphp/framework/releases/tag/v0.10.0
 [0.9.0]: https://github.com/vortexphp/framework/releases/tag/v0.9.0
 [0.8.0]: https://github.com/vortexphp/framework/releases/tag/v0.8.0
