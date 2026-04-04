@@ -16,13 +16,13 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **ORM: global scopes** — `addGlobalScope`, `withoutGlobalScope(s)`; `find` / `all` via `query()`.
 - **ORM: eager `with()`** — `Model::eagerRelations()` for batched `belongsTo` / `hasMany` / `belongsToMany`; nested dot paths (e.g. `author.country`).
 - **Routing: model binding** — `Router::model` / `Router::bind` (+ `Route::model` / `Route::bind`); missing model or `null` resolver → 404.
-- **HTTP: JSON API envelope** — `Response::apiOk` / `apiError`, `JsonResource`, `validationFailed(ValidationResult)`, `Request::validationResponse` / `bodyValidationResponse`, aligned negotiation errors + `ErrorRenderer` JSON.
+- **HTTP: JSON API envelope** — `Response::apiOk` / `apiError`, `JsonResource`, `validationFailed(ValidationResult)`, `Request::validationResponse` / `bodyValidationResponse`, path/header API version helpers (`splitVersionedPath`, `resolvedApiVersion`, `withPath`), aligned negotiation errors + `ErrorRenderer` JSON.
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **ORM / HTTP** — relation API polish, API versioning (`Accept-Version` / path prefix helpers), or schema-based JSON decoding.
+1. **ORM / HTTP** — relation API polish, schema-based JSON decoding, or `Route::resource()` groups.
 
 ## Core platform
 
@@ -39,7 +39,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 
 ## HTTP & API
 
-- **API conveniences** — Shipped: **`JsonResource`**, **`Response::apiOk`/`apiError`/`validationFailed`**, **`Request` validation helpers**, negotiated errors with **`error`** codes. Optional: versioning headers/prefix helpers, deeper transform pipelines.
+- **API conveniences** — Shipped: **`JsonResource`**, **`Response::apiOk`/`apiError`/`validationFailed`**, **`Request` validation + version helpers**, negotiated errors with **`error`** codes. Optional: deeper transform pipelines.
 - **Routing DX** — Shipped: route model binding and custom `bind`. Remaining: resource route groups, stronger controller + middleware conventions if we keep growing past closure/`[Class, 'method']` style.
 
 ## Developer experience

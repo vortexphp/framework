@@ -42,6 +42,14 @@ For HTML vs JSON negotiation, **`Response::notFound()`**, **`forbidden()`**, **`
 
 On a **`Request`** instance, **`validationResponse($rules, $messages = [], $attributes = [])`** runs **`Validator::make`** on query + body (body wins on duplicate keys) and returns **`Response::validationFailed()`** or **`null`**. **`bodyValidationResponse(...)`** uses only **`$request->body`**. With a stack request, call **`Request::current()->validationResponse(...)`**.
 
+## API versioning helpers
+
+- **`Request::splitVersionedPath($path)`** — detects **`/v{n}/...`** (case-insensitive **`v`**) and returns `[ version, innerPath ]`.
+- **`$request->apiVersionFromHeaders()`** — **`Accept-Version`** or **`X-Api-Version`**.
+- **`$request->resolvedApiVersion()`** — header value if present, else numeric segment from the path.
+- **`$request->matchesApiVersion('1')`** — compares after optional leading **`v`**.
+- **`$request->withPath('/inner')`** — copy with a new path (e.g. strip version prefix before routing).
+
 ## Notes
 
 - `Request::wantsJson()` is true for `Accept: application/json` and `X-Requested-With: XMLHttpRequest`.

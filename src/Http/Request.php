@@ -192,6 +192,92 @@ final class Request
     }
 
     /**
+     * Split {@code /v1/...} style prefix (case-insensitive {@code v} + digits) from the rest of the path.
+     *
+     * @return array{0: ?string, 1: string} Numeric version without {@code v}, then inner path (normalized, {@code /} if empty).
+     */
+    public static function splitVersionedPath(string $path): array
+    {
+        $path = self::normalizePath($path);
+        if (preg_match('#^/v(\d+)(/.*)?$#i', $path, $m) !== 1) {
+            return [null, $path];
+        }
+        $version = $m[1];
+        $tail = $m[2] ?? '';
+        if ($tail === '' || $tail === '/') {
+            return [$version, '/'];
+        }
+
+        return [$version, self::normalizePath($tail)];
+    }
+
+    /**
+     * Version string from {@code Accept-Version} or {@code X-Api-Version} headers (first non-empty wins). Trimming only; no path parsing.
+     */
+    public function apiVersionFromHeaders(): ?string
+    {
+        foreach (['Accept-Version', 'X-Api-Version'] as $header) {
+            $v = $this->readHeader($header);
+            if ($v !== null && ($v = trim($v)) !== '') {
+                return $v;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Header-derived version if set, otherwise numeric segment from {@see splitVersionedPath()} on this request path.
+     */
+    public function resolvedApiVersion(): ?string
+    {
+        $fromHeader = $this->apiVersionFromHeaders();
+        if ($fromHeader !== null) {
+            return $fromHeader;
+        }
+
+        [$fromPath] = self::splitVersionedPath($this->path);
+
+        return $fromPath;
+    }
+
+    /**
+     * Compare to an expected label such as {@code "1"} or {@code "v2"} (leading {@code v} ignored on both sides).
+     */
+    public function matchesApiVersion(string $expected): bool
+    {
+        $resolved = $this->resolvedApiVersion();
+        if ($resolved === null) {
+            return false;
+        }
+        $a = preg_replace('/^v/i', '', $resolved);
+        $b = preg_replace('/^v/i', '', trim($expected));
+
+        return $a !== '' && $b !== '' && $a === $b;
+    }
+
+    /**
+     * Clone this request with a different path (e.g. after stripping {@code /v1} in middleware).
+     */
+    public function withPath(string $path): self
+    {
+        $path = self::normalizePath($path === '' ? '/' : $path);
+        $server = $this->server;
+        $server['REQUEST_URI'] = $path;
+
+        return new self(
+            $this->method,
+            $path,
+            $this->query,
+            $this->body,
+            $this->headers,
+            $server,
+            $this->files,
+            $this->cookies,
+        );
+    }
+
+    /**
      * Build a synthetic request (e.g. PHPUnit). Does not read superglobals.
      *
      * @param array<string, string> $query
