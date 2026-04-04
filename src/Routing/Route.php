@@ -71,6 +71,15 @@ final class Route
         return self::router()->bind($parameter, $resolver);
     }
 
+    /**
+     * @param class-string $controller
+     * @param array<string, mixed> $options
+     */
+    public static function resource(string $uri, string $controller, array $options = []): Router
+    {
+        return self::router()->resource($uri, $controller, $options);
+    }
+
     private static function router(): Router
     {
         if (self::$router === null) {

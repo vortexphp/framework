@@ -151,6 +151,139 @@ final class Router
     }
 
     /**
+     * Register REST-style routes for one controller. Order matches Laravel so {@code /create} and {@code /edit} win over {@code /{id}}.
+     *
+     * Default omits {@code create} and {@code edit} (JSON-style). Pass {@code except: []} for the full seven actions.
+     *
+     * @param class-string $controller
+     * @param array{
+     *     only?: list<string>,
+     *     except?: list<string>,
+     *     parameter?: string,
+     *     middleware?: list<string>,
+     *     names?: bool|string
+     * } $options {@code names: false} skips names; string adds a prefix (e.g. {@code 'api'} → {@code api.posts.index}).
+     */
+    public function resource(string $uri, string $controller, array $options = []): self
+    {
+        $prefix = '/' . trim($uri, '/');
+        $nameBase = str_replace('/', '.', trim($prefix, '/'));
+        $segments = $nameBase !== '' ? explode('.', $nameBase) : [];
+        $lastSeg = $segments !== [] ? $segments[array_key_last($segments)] : 'resource';
+        $param = $options['parameter'] ?? self::singularRouteSegment($lastSeg);
+
+        $middleware = $options['middleware'] ?? [];
+        $namesMode = $options['names'] ?? true;
+        $namePrefix = null;
+        if ($namesMode !== false) {
+            $namePrefix = is_string($namesMode) ? $namesMode . '.' . $nameBase : $nameBase;
+        }
+
+        $order = ['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'];
+        if (isset($options['only'])) {
+            $active = array_values(array_intersect($order, $options['only']));
+        } else {
+            $except = $options['except'] ?? ['create', 'edit'];
+            $active = array_values(array_diff($order, $except));
+        }
+
+        foreach ($active as $key) {
+            match ($key) {
+                'index' => $this->registerNamedResourceRoute(
+                    ['GET'],
+                    $prefix,
+                    [$controller, 'index'],
+                    $middleware,
+                    $namePrefix,
+                    'index',
+                ),
+                'create' => $this->registerNamedResourceRoute(
+                    ['GET'],
+                    $prefix . '/create',
+                    [$controller, 'create'],
+                    $middleware,
+                    $namePrefix,
+                    'create',
+                ),
+                'store' => $this->registerNamedResourceRoute(
+                    ['POST'],
+                    $prefix,
+                    [$controller, 'store'],
+                    $middleware,
+                    $namePrefix,
+                    'store',
+                ),
+                'show' => $this->registerNamedResourceRoute(
+                    ['GET'],
+                    $prefix . '/{' . $param . '}',
+                    [$controller, 'show'],
+                    $middleware,
+                    $namePrefix,
+                    'show',
+                ),
+                'edit' => $this->registerNamedResourceRoute(
+                    ['GET'],
+                    $prefix . '/{' . $param . '}/edit',
+                    [$controller, 'edit'],
+                    $middleware,
+                    $namePrefix,
+                    'edit',
+                ),
+                'update' => $this->registerNamedResourceRoute(
+                    ['PUT', 'PATCH'],
+                    $prefix . '/{' . $param . '}',
+                    [$controller, 'update'],
+                    $middleware,
+                    $namePrefix,
+                    'update',
+                ),
+                'destroy' => $this->registerNamedResourceRoute(
+                    ['DELETE'],
+                    $prefix . '/{' . $param . '}',
+                    [$controller, 'destroy'],
+                    $middleware,
+                    $namePrefix,
+                    'destroy',
+                ),
+            };
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param list<string> $methods
+     * @param list<string> $middleware
+     * @param Closure|array{0: class-string, 1: string} $action
+     */
+    private function registerNamedResourceRoute(
+        array $methods,
+        string $pattern,
+        array|Closure $action,
+        array $middleware,
+        ?string $namePrefix,
+        string $nameSuffix,
+    ): void {
+        $this->add($methods, $pattern, $action, $middleware);
+        if ($namePrefix !== null) {
+            $this->name($namePrefix . '.' . $nameSuffix);
+        }
+    }
+
+    private static function singularRouteSegment(string $segment): string
+    {
+        $segment = strtolower($segment);
+        if (str_ends_with($segment, 'ies') && strlen($segment) > 3) {
+            return substr($segment, 0, -3) . 'y';
+        }
+        if (str_ends_with($segment, 's') && strlen($segment) > 1 && ! str_ends_with($segment, 'ss')) {
+            return substr($segment, 0, -1);
+        }
+
+        return $segment;
+    }
+
+    /**
      * Resolve a route parameter to a model instance (404 when missing).
      *
      * @param class-string<Model> $modelClass

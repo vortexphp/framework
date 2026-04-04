@@ -27,6 +27,14 @@ On the active router (often via `Route::useRouter()` during bootstrap), register
 
 `Route::model(...)` and `Route::bind(...)` forward to the same router instance.
 
+## Resource routes
+
+**`Route::resource('photos', PhotoController::class)`** (or **`$router->resource(...)`**) registers REST-style **`index`**, **`store`**, **`show`**, **`update`** (PUT + PATCH), and **`destroy`**. By default it **omits** **`create`** and **`edit`** (API-style). Use **`['except' => []]`** for the full set including **`GET .../create`** and **`GET .../{id}/edit`**.
+
+Options: **`only`**, **`except`**, **`parameter`** (placeholder name; otherwise derived from the last URI segment), **`middleware`**, **`names`** (`false`, `true`, or a string prefix such as **`api`** for **`api.photos.index`**).
+
+Without **`create`**, a path like **`/photos/create`** is handled by **`show`** with **`id = create`**. Use numeric IDs, UUIDs, or register **`create`** if that path must be reserved.
+
 ## Generate a URL
 
 ```php
