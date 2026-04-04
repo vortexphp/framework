@@ -16,6 +16,42 @@ use Vortex\Validation\ValidationResult;
 final class JsonSchemaValidator
 {
     /**
+     * Validate any JSON-encodable value (scalars, arrays, lists, objects) — for **response** payloads built from **`JsonResource::toArray()`**, etc.
+     *
+     * @param array<string, mixed>|object $schema
+     */
+    public static function validateDecoded(mixed $data, array|object $schema): ValidationResult
+    {
+        $schemaObj = is_object($schema) ? $schema : BaseConstraint::arrayToObjectRecursive($schema);
+
+        try {
+            $json = json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+            $value = json_decode($json, false, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            return ValidationResult::make(['_root' => 'Value is not JSON-encodable for schema validation']);
+        }
+
+        $value = self::normalizeDecodedRoot($value, $schemaObj);
+
+        $validator = new Validator();
+        $validator->validate($value, $schemaObj);
+
+        if ($validator->isValid()) {
+            return ValidationResult::make([]);
+        }
+
+        $errors = [];
+        foreach ($validator->getErrors() as $row) {
+            $key = self::normalizeFieldKey((string) ($row['property'] ?? ''));
+            if (! isset($errors[$key])) {
+                $errors[$key] = (string) ($row['message'] ?? 'Invalid value');
+            }
+        }
+
+        return ValidationResult::make($errors);
+    }
+
+    /**
      * @param array<string, mixed> $data Request body or other decoded JSON as PHP associative arrays
      * @param array<string, mixed>|object $schema Schema as returned from **`json_decode(..., true)`** or **`false`** (object)
      */
@@ -45,6 +81,15 @@ final class JsonSchemaValidator
         }
 
         return ValidationResult::make($errors);
+    }
+
+    private static function normalizeDecodedRoot(mixed $value, object $schema): mixed
+    {
+        if (is_array($value) && $value === [] && self::rootSchemaExpectsObject($schema) && ! self::rootSchemaExpectsArray($schema)) {
+            return new \stdClass();
+        }
+
+        return $value;
     }
 
     private static function normalizeFieldKey(string $property): string

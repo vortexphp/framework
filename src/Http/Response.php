@@ -7,6 +7,7 @@ namespace Vortex\Http;
 use Closure;
 use LogicException;
 use Vortex\Support\JsonHelp;
+use Vortex\Support\JsonSchemaValidator;
 use Vortex\Validation\ValidationResult;
 
 final class Response
@@ -81,6 +82,41 @@ final class Response
     public static function apiOk(mixed $data, int $status = 200): self
     {
         return self::json(['ok' => true, 'data' => $data], $status);
+    }
+
+    /**
+     * Like {@see apiOk()} but validates **`data`** only against JSON Schema first. On mismatch returns **500**
+     * {@see apiError()} with **`error: response_schema_mismatch`** (server contract; not **`422`** client validation).
+     *
+     * @param array<string, mixed>|object $schema Schema for the **`data`** payload shape, not the **`{ ok, data }`** envelope.
+     */
+    public static function apiOkValidated(mixed $data, array|object $schema, int $status = 200): self
+    {
+        $result = JsonSchemaValidator::validateDecoded($data, $schema);
+        if ($result->failed()) {
+            return self::apiError(500, 'response_schema_mismatch', 'Response failed JSON Schema validation', [
+                'errors' => $result->errors(),
+            ]);
+        }
+
+        return self::apiOk($data, $status);
+    }
+
+    /**
+     * Like {@see json()} with the same **500** schema mismatch behavior as {@see apiOkValidated()}.
+     *
+     * @param array<string, mixed>|object $schema
+     */
+    public static function jsonValidated(mixed $data, array|object $schema, int $status = 200): self
+    {
+        $result = JsonSchemaValidator::validateDecoded($data, $schema);
+        if ($result->failed()) {
+            return self::apiError(500, 'response_schema_mismatch', 'Response failed JSON Schema validation', [
+                'errors' => $result->errors(),
+            ]);
+        }
+
+        return self::json($data, $status);
     }
 
     /**

@@ -61,6 +61,81 @@ final class JsonResourceTest extends TestCase
     {
         self::assertSame('{"ok":true,"data":{"k":"v"}}', Response::apiOk(['k' => 'v'])->body());
     }
+
+    public function testApiOkValidatedPassesAndMismatchIs500(): void
+    {
+        $schema = [
+            'type' => 'object',
+            'properties' => ['id' => ['type' => 'integer']],
+            'required' => ['id'],
+        ];
+        $ok = Response::apiOkValidated(['id' => 1], $schema);
+        self::assertSame(200, $ok->httpStatus());
+        self::assertSame('{"ok":true,"data":{"id":1}}', $ok->body());
+
+        $bad = Response::apiOkValidated(['id' => 'nope'], $schema);
+        self::assertSame(500, $bad->httpStatus());
+        $payload = json_decode($bad->body(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertFalse($payload['ok']);
+        self::assertSame('response_schema_mismatch', $payload['error']);
+        self::assertArrayHasKey('id', $payload['errors']);
+    }
+
+    public function testJsonValidatedMismatchIs500(): void
+    {
+        $schema = ['type' => 'object', 'properties' => ['a' => ['type' => 'string']], 'required' => ['a']];
+        $bad = Response::jsonValidated([], $schema);
+        self::assertSame(500, $bad->httpStatus());
+    }
+
+    public function testToValidatedResponsePasses(): void
+    {
+        $schema = [
+            'type' => 'object',
+            'properties' => ['id' => ['type' => 'integer']],
+            'required' => ['id'],
+        ];
+        $r = (new DemoResource(['id' => 9]))->toValidatedResponse($schema);
+        self::assertSame('{"ok":true,"data":{"id":9}}', $r->body());
+    }
+
+    public function testToValidatedResponseMismatch(): void
+    {
+        $schema = [
+            'type' => 'object',
+            'properties' => ['id' => ['type' => 'string']],
+            'required' => ['id'],
+        ];
+        $r = (new DemoResource(['id' => 9]))->toValidatedResponse($schema);
+        self::assertSame(500, $r->httpStatus());
+        $p = json_decode($r->body(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame('response_schema_mismatch', $p['error']);
+    }
+
+    public function testCollectionValidatedResponse(): void
+    {
+        $schema = [
+            'type' => 'array',
+            'items' => [
+                'type' => 'object',
+                'properties' => ['n' => ['type' => 'string']],
+                'required' => ['n'],
+            ],
+        ];
+        $r = JsonResource::collectionValidatedResponse(
+            [['n' => 'a'], ['n' => 'b']],
+            DemoResource::class,
+            $schema,
+        );
+        self::assertSame('{"ok":true,"data":[{"n":"a"},{"n":"b"}]}', $r->body());
+
+        $bad = JsonResource::collectionValidatedResponse(
+            [['n' => 1]],
+            DemoResource::class,
+            $schema,
+        );
+        self::assertSame(500, $bad->httpStatus());
+    }
 }
 
 /** @internal */

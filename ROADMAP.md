@@ -26,7 +26,7 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 
 - **API cursor pagination** — **`QueryBuilder::cursorPaginate()`**, **`Cursor`** / **`CursorPaginator`**, **`toApiData()`** for JSON collections with **`Response::apiOk`**.
 - **ORM polymorphic relations** — **`morphTo`**, **`morphMany`**, **`morphOne`** (lazy + eager, nested eager under **`morphTo`** via per–concrete-class grouping); **`MorphMap`** aliases for **`_type`** columns + **`getMorphClass()`**.
-- **JSON Schema** — **`justinrainbow/json-schema`**, **`JsonSchemaValidator::validateArray()`**, **`Request::bodyJsonSchemaResponse()`** (request bodies; **`JsonShape`** remains the lightweight default).
+- **JSON Schema** — **`justinrainbow/json-schema`**, **`JsonSchemaValidator::validateArray()`** / **`validateDecoded()`**, **`Request::bodyJsonSchemaResponse()`** (requests); **`Response::apiOkValidated()`** / **`jsonValidated()`**, **`JsonResource::toValidatedResponse()`** / **`collectionValidatedResponse()`** (responses; **`JsonShape`** remains the lightweight default for bodies).
 - **Container** — **`Container::call()`** for method-style injection; constructor unions, **`self` / `parent`**, nullable / interface failures aligned with **`RuntimeException`**.
 - **Real-time** — **SSE** (**`Response::serverSentEvents()`**, **`SseEmitter`**); **`Broadcaster`** + **`SyncBroadcaster`** (replace binding for Redis / other fan-out).
 
@@ -34,7 +34,7 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **HTTP & API** — response-side schema validation or deeper **`JsonResource`** pipelines (when needed).
+1. **HTTP & API** — **`JsonResource`** composition / multi-step transform pipelines when a single **`toArray()`** grows unwieldy (optional).
 
 ## Core platform
 
@@ -51,7 +51,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 
 ## HTTP & API
 
-- **API conveniences** — Shipped: **`JsonResource`**, **`Response::apiOk`/`apiError`/`validationFailed`**, **`Request`** validation + version + **`JsonShape`** and JSON Schema (**`JsonSchemaValidator`**, **`Request::bodyJsonSchemaResponse()`**), negotiated errors with **`error`** codes; **cursor pagination** (**`QueryBuilder::cursorPaginate()`**, **`CursorPaginator::toApiData()`**). Optional: deeper transform pipelines, response-side schema checks.
+- **API conveniences** — Shipped: **`JsonResource`**, **`Response::apiOk`/`apiError`/`validationFailed`**, **`apiOkValidated`** / **`jsonValidated`**, **`Request`** validation + version + **`JsonShape`** and JSON Schema (**`JsonSchemaValidator`**, **`Request::bodyJsonSchemaResponse()`**), negotiated errors with **`error`** codes; **cursor pagination** (**`QueryBuilder::cursorPaginate()`**, **`CursorPaginator::toApiData()`**). Optional: deeper **`JsonResource`** pipelines.
 - **Routing DX** — Shipped: route model binding, custom `bind`, **`Route::resource`**, invokable class routes, **`middleware()`** on the last route, optional **`Controller`** base helpers.
 
 ## Developer experience

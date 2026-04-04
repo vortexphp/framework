@@ -34,7 +34,7 @@ return Response::redirect('/login')
 - **`Response::apiOk($data)`** — `{ "ok": true, "data": ... }`.
 - **`Response::apiError($status, $errorCode, $message, $extra = [])`** — `{ "ok": false, "error", "message", ... }` (always JSON).
 - **`Response::validationFailed($result)`** — **`422`** (by default) with **`error: validation_failed`** and **`errors`** (field → message from **`ValidationResult`**).
-- **`JsonResource`** — implement `toArray()`; **`toResponse()`** / **`collectionResponse()`** build **`apiOk`**-wrapped responses.
+- **`JsonResource`** — implement `toArray()`; **`toResponse()`** / **`collectionResponse()`** build **`apiOk`**-wrapped responses. **`toValidatedResponse($schema)`** and **`collectionValidatedResponse($items, $class, $schema)`** run JSON Schema on the encoded payload; mismatch → **500** **`response_schema_mismatch`** (same as **`Response::apiOkValidated`** / **`jsonValidated`** on arbitrary data).
 
 For HTML vs JSON negotiation, **`Response::notFound()`**, **`forbidden()`**, **`unauthorized()`**, and **`error()`** include **`ok`**, **`error`** (machine code), and **`message`** when **`Request::wantsJson()`** is true.
 
@@ -52,7 +52,7 @@ On a **`Request`** instance, **`validationResponse($rules, $messages = [], $attr
 
 ## JSON Schema (decoded array)
 
-**`JsonSchemaValidator::validateArray($body, $schema)`** validates against a JSON Schema (assoc array or decoded object). **`$request->bodyJsonSchemaResponse($schema)`** returns the same **`422`** **`validation_failed`** envelope when invalid. Violation keys are normalized to dot paths (**`items.0.id`**). Prefer **`JsonShape`** when a small structural check is enough; use JSON Schema when you want **`$ref`**, **`oneOf`**, **`format`**, and spec‑driven contracts.
+**`JsonSchemaValidator::validateArray($body, $schema)`** validates against a JSON Schema (assoc array or decoded object). **`JsonSchemaValidator::validateDecoded($data, $schema)`** accepts any JSON-encodable value (e.g. lists from **`JsonResource::collect()`**). **`$request->bodyJsonSchemaResponse($schema)`** returns **`422`** **`validation_failed`** when invalid. **`Response::apiOkValidated($data, $schema)`** and **`Response::jsonValidated($data, $schema)`** return **500** **`response_schema_mismatch`** when the payload does not match (server contract). Violation keys are normalized to dot paths (**`items.0.id`**). Prefer **`JsonShape`** when a small structural check is enough; use JSON Schema when you want **`$ref`**, **`oneOf`**, **`format`**, and spec‑driven contracts.
 
 ## API versioning helpers
 

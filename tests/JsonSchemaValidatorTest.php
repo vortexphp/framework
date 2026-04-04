@@ -36,6 +36,20 @@ final class JsonSchemaValidatorTest extends TestCase
         self::assertArrayHasKey('name', $r->errors());
     }
 
+    public function testValidateDecodedListRoot(): void
+    {
+        $schema = [
+            'type' => 'array',
+            'items' => ['type' => 'integer'],
+        ];
+        $r = JsonSchemaValidator::validateDecoded([1, 2, 3], $schema);
+        self::assertFalse($r->failed());
+
+        $rBad = JsonSchemaValidator::validateDecoded([1, 'x'], $schema);
+        self::assertTrue($rBad->failed());
+        self::assertArrayHasKey('1', $rBad->errors());
+    }
+
     public function testNestedArrayPathUsesDotIndices(): void
     {
         $schema = [
