@@ -737,6 +737,21 @@ abstract class Model
         if (array_key_exists('id', $payload) && ($payload['id'] === null || $payload['id'] === '')) {
             unset($payload['id']);
         }
+        if (static::$timestamps) {
+            $now = date('Y-m-d H:i:s');
+            if (! array_key_exists('created_at', $payload)) {
+                $created = $this->created_at ?? null;
+                $payload['created_at'] = $created instanceof DateTimeInterface
+                    ? $created->format('Y-m-d H:i:s')
+                    : (is_string($created) && $created !== '' ? $created : $now);
+            }
+            if (! array_key_exists('updated_at', $payload)) {
+                $updated = $this->updated_at ?? null;
+                $payload['updated_at'] = $updated instanceof DateTimeInterface
+                    ? $updated->format('Y-m-d H:i:s')
+                    : (is_string($updated) && $updated !== '' ? $updated : $now);
+            }
+        }
         if ($payload === []) {
             throw new LogicException('Cannot insert a model with no fillable attributes set.');
         }
