@@ -17,6 +17,33 @@ abstract class Model
 
     protected static bool $timestamps = true;
 
+    /** @var array<string, list<object>> Observers keyed by concrete model class name. */
+    private static array $observerRegistry = [];
+
+    /**
+     * Register an observer instance or class (instantiated with {@code new}) for this model type.
+     *
+     * Handlers are optional methods on the observer: {@code saving}, {@code creating}, {@code updating},
+     * {@code deleting} (before persistence) and {@code saved}, {@code created}, {@code updated}, {@code deleted} (after).
+     *
+     * @param class-string|object $observer
+     */
+    public static function observe(string|object $observer): void
+    {
+        $instance = is_string($observer) ? new $observer() : $observer;
+        $modelClass = static::class;
+        self::$observerRegistry[$modelClass] ??= [];
+        self::$observerRegistry[$modelClass][] = $instance;
+    }
+
+    /**
+     * @internal Resets all observer registrations (test harness).
+     */
+    public static function forgetRegisteredObservers(): void
+    {
+        self::$observerRegistry = [];
+    }
+
     public static function connection(): Connection
     {
         return AppContext::container()->make(Connection::class);
@@ -90,14 +117,10 @@ abstract class Model
             $filtered['updated_at'] ??= $now;
         }
 
-        $cols = array_keys($filtered);
-        $placeholders = implode(', ', array_fill(0, count($cols), '?'));
-        $colList = implode(', ', $cols);
-        $sql = 'INSERT INTO ' . static::table() . " ({$colList}) VALUES ({$placeholders})";
-        static::connection()->execute($sql, array_values($filtered));
-        $id = static::connection()->lastInsertId();
+        $model = static::fromRow($filtered);
+        $model->performInsert();
 
-        return static::find($id) ?? static::fromRow($filtered + ['id' => $id]);
+        return $model;
     }
 
     /**
@@ -248,13 +271,30 @@ abstract class Model
     {
         $id = $this->id ?? null;
         if ($id !== null && $id !== '') {
+            $this->fireModelEvent('saving');
+            $this->fireModelEvent('updating');
             static::updateRecord((int) $id, $this->gatherFillableFromInstance());
+            $this->fireModelEvent('updated');
+            $this->fireModelEvent('saved');
 
             return;
         }
 
-        $created = static::create($this->gatherFillableFromInstance());
-        $this->refreshFromCreated($created);
+        if (static::$timestamps) {
+            $now = date('Y-m-d H:i:s');
+            if (static::$fillable === [] || in_array('created_at', static::$fillable, true)) {
+                if (! isset($this->created_at)) {
+                    $this->created_at = $now;
+                }
+            }
+            if (static::$fillable === [] || in_array('updated_at', static::$fillable, true)) {
+                if (! isset($this->updated_at)) {
+                    $this->updated_at = $now;
+                }
+            }
+        }
+
+        $this->performInsert();
     }
 
     /**
@@ -283,7 +323,9 @@ abstract class Model
             return;
         }
 
+        $this->fireModelEvent('deleting');
         static::deleteId((int) $id);
+        $this->fireModelEvent('deleted');
         $this->id = null;
     }
 
@@ -293,6 +335,10 @@ abstract class Model
     private function gatherFillableFromInstance(): array
     {
         $vars = get_object_vars($this);
+        if (static::$fillable === []) {
+            return $vars;
+        }
+
         $attrs = [];
         foreach (static::$fillable as $key) {
             if (array_key_exists($key, $vars)) {
@@ -303,11 +349,44 @@ abstract class Model
         return $attrs;
     }
 
-    private function refreshFromCreated(self $created): void
+    private function performInsert(): void
     {
-        $this->id = $created->id;
-        foreach (get_object_vars($created) as $k => $v) {
-            $this->{$k} = $v;
+        $this->fireModelEvent('saving');
+        $this->fireModelEvent('creating');
+
+        $payload = $this->gatherFillableFromInstance();
+        if (array_key_exists('id', $payload) && ($payload['id'] === null || $payload['id'] === '')) {
+            unset($payload['id']);
+        }
+        if ($payload === []) {
+            throw new LogicException('Cannot insert a model with no fillable attributes set.');
+        }
+
+        $cols = array_keys($payload);
+        $placeholders = implode(', ', array_fill(0, count($cols), '?'));
+        $colList = implode(', ', $cols);
+        $sql = 'INSERT INTO ' . static::table() . " ({$colList}) VALUES ({$placeholders})";
+        static::connection()->execute($sql, array_values($payload));
+        $id = (int) static::connection()->lastInsertId();
+        $this->id = $id;
+
+        $fresh = static::find($id);
+        if ($fresh !== null) {
+            foreach (get_object_vars($fresh) as $k => $v) {
+                $this->{$k} = $v;
+            }
+        }
+
+        $this->fireModelEvent('created');
+        $this->fireModelEvent('saved');
+    }
+
+    protected function fireModelEvent(string $event): void
+    {
+        foreach (self::$observerRegistry[static::class] ?? [] as $observer) {
+            if (method_exists($observer, $event)) {
+                $observer->{$event}($this);
+            }
         }
     }
 }

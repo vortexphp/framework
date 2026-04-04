@@ -10,12 +10,13 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **Cache: Redis** — `RedisCache` + `cache.stores.*` driver **`redis`** (phpredis / **ext-redis**).
 - **Cache: Memcached** — `MemcachedCache` + driver **`memcached`** (**ext-memcached**).
 - **Queue: Redis** — `RedisQueue`, `QueueDriver` contract, `queue.driver` / `queue.redis`, shared `PhpRedisConnect` with cache.
+- **ORM: observers** — `Model::observe()` with `creating` / `updated` / … hooks on `create()`, `save()`, `delete()`.
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **ORM depth (slice)** — model lifecycle hooks / observers, attribute casting, soft deletes, or global scopes (pick one small vertical first).
+1. **ORM depth (slice)** — attribute casting, soft deletes, or global scopes (next small vertical).
 
 ## Core platform
 
@@ -27,7 +28,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 ## Data & persistence
 
 - **Cache drivers** — **Redis** (phpredis) and **Memcached** (ext-memcached) behind `Cache`; file + null unchanged. PSR-16 optional later.
-- **ORM depth** — Model observers/events, attribute casting, soft deletes, global scopes; richer relation API (lazy load, constrained eager loads) beyond current helpers + `QueryBuilder::with()`.
+- **ORM depth** — Shipped: model observers. Remaining: attribute casting, soft deletes, global scopes; richer relation API beyond `QueryBuilder::with()`.
 - **Schema builder** — Broader column/index/foreign-key coverage and dialect-specific pieces where needed.
 
 ## HTTP & API

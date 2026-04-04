@@ -32,6 +32,28 @@ $published = Post::query()
     ->get();
 ```
 
+## Model observers
+
+Register listeners on a concrete model class; implement any subset of **`saving`**, **`creating`**, **`updating`**, **`deleting`** (before the query) and **`saved`**, **`created`**, **`updated`**, **`deleted`** (after). Pass an object or a class name (constructed with `new`).
+
+```php
+<?php
+
+use Vortex\Database\Model;
+
+final class PostObserver
+{
+    public function creating(Post $post): void
+    {
+        $post->title = trim((string) $post->title);
+    }
+}
+
+Post::observe(PostObserver::class);
+```
+
+`Model::create()`, `save()`, and `delete()` dispatch these events. Static helpers such as **`updateRecord`** / **`deleteId`** do not.
+
 ## Migrations
 
 - Migration files return classes extending `Schema\Migration`.
