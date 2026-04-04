@@ -38,6 +38,9 @@ final class QueryBuilder
 
     private ?int $offset = null;
 
+    /** @var 'default'|'with'|'only' */
+    private string $softDeleteScope = 'default';
+
     /**
      * @param class-string<Model> $modelClass
      */
@@ -70,6 +73,28 @@ final class QueryBuilder
         $this->selectColumns = [...$this->selectColumns];
         $this->withRelations = [...$this->withRelations];
         $this->orderClauses = [...$this->orderClauses];
+    }
+
+    public function withTrashed(): self
+    {
+        if (! $this->modelClass::usesSoftDeletes()) {
+            return $this;
+        }
+        $clone = clone $this;
+        $clone->softDeleteScope = 'with';
+
+        return $clone;
+    }
+
+    public function onlyTrashed(): self
+    {
+        if (! $this->modelClass::usesSoftDeletes()) {
+            return $this;
+        }
+        $clone = clone $this;
+        $clone->softDeleteScope = 'only';
+
+        return $clone;
     }
 
     /**
@@ -265,9 +290,7 @@ final class QueryBuilder
      */
     private function compileWhere(bool $withKeyword = true): array
     {
-        if ($this->wheres === []) {
-            return ['', []];
-        }
+        [$softSql, $softBindings] = $this->softDeletePredicate();
 
         $parts = [];
         $bindings = [];
@@ -279,12 +302,43 @@ final class QueryBuilder
             }
         }
 
-        $where = implode('', $parts);
-        if ($withKeyword) {
-            return [' WHERE ' . $where, $bindings];
+        $inner = implode('', $parts);
+
+        if ($softSql === '' && $inner === '') {
+            return ['', []];
         }
 
-        return [$where, $bindings];
+        $allBindings = [...$softBindings, ...$bindings];
+        if ($softSql !== '' && $inner !== '') {
+            $where = '(' . $softSql . ') AND (' . $inner . ')';
+        } elseif ($softSql !== '') {
+            $where = $softSql;
+        } else {
+            $where = $inner;
+        }
+
+        if ($withKeyword) {
+            return [' WHERE ' . $where, $allBindings];
+        }
+
+        return [$where, $allBindings];
+    }
+
+    /**
+     * @return array{0: string, 1: list<mixed>}
+     */
+    private function softDeletePredicate(): array
+    {
+        $col = $this->modelClass::softDeleteColumn();
+        if ($col === null) {
+            return ['', []];
+        }
+
+        return match ($this->softDeleteScope) {
+            'with' => ['', []],
+            'only' => [$col . ' IS NOT NULL', []],
+            default => [$col . ' IS NULL', []],
+        };
     }
 
     private function compileJoin(): string
@@ -354,6 +408,7 @@ final class QueryBuilder
     private function addGroupedWhere(string $boolean, callable $callback): self
     {
         $nested = new self($this->modelClass);
+        $nested->softDeleteScope = $this->softDeleteScope;
         $callback($nested);
         [$nestedSql, $nestedBindings] = $nested->compileWhere(false);
         if ($nestedSql === '') {
@@ -531,6 +586,17 @@ final class QueryBuilder
     public function delete(): int
     {
         $modelClass = $this->modelClass;
+        $col = $modelClass::softDeleteColumn();
+        if ($col !== null && $this->softDeleteScope !== 'only') {
+            $now = date('Y-m-d H:i:s');
+            $sets = [$col => $now];
+            if ($modelClass::usesTimestamps()) {
+                $sets['updated_at'] = $now;
+            }
+
+            return $this->update($sets);
+        }
+
         [$whereSql, $bindings] = $this->compileWhere();
         $sql = 'DELETE FROM ' . $modelClass::table() . $whereSql;
 

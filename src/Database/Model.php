@@ -23,6 +23,14 @@ abstract class Model
     protected static bool $timestamps = true;
 
     /**
+     * When true, {@see delete()} sets {@see $deletedAtColumn} instead of removing the row.
+     */
+    protected static bool $softDeletes = false;
+
+    /** @var non-empty-string Timestamp column used by soft deletes (SQL NULL = not deleted). */
+    protected static string $deletedAtColumn = 'deleted_at';
+
+    /**
      * Attribute casts: key => type. Supported: {@code int}, {@code float}, {@code bool}, {@code string},
      * {@code array} / {@code json}, {@code datetime}.
      *
@@ -67,6 +75,24 @@ abstract class Model
         return new QueryBuilder(static::class);
     }
 
+    public static function usesSoftDeletes(): bool
+    {
+        return static::$softDeletes;
+    }
+
+    /**
+     * @return non-empty-string|null
+     */
+    public static function softDeleteColumn(): ?string
+    {
+        return static::$softDeletes ? static::$deletedAtColumn : null;
+    }
+
+    public static function usesTimestamps(): bool
+    {
+        return static::$timestamps;
+    }
+
     public static function table(): string
     {
         if (static::$table !== null && static::$table !== '') {
@@ -99,7 +125,12 @@ abstract class Model
      */
     public static function all(): array
     {
-        $rows = static::connection()->select('SELECT * FROM ' . static::table());
+        $sql = 'SELECT * FROM ' . static::table();
+        $bindings = [];
+        if (($col = static::softDeleteColumn()) !== null) {
+            $sql .= ' WHERE ' . $col . ' IS NULL';
+        }
+        $rows = static::connection()->select($sql, $bindings);
         $out = [];
         foreach ($rows as $row) {
             $out[] = static::fromRow($row);
@@ -110,10 +141,13 @@ abstract class Model
 
     public static function find(mixed $id): ?static
     {
-        $row = static::connection()->selectOne(
-            'SELECT * FROM ' . static::table() . ' WHERE id = ? LIMIT 1',
-            [$id],
-        );
+        $sql = 'SELECT * FROM ' . static::table() . ' WHERE id = ?';
+        $bindings = [$id];
+        if (($col = static::softDeleteColumn()) !== null) {
+            $sql .= ' AND ' . $col . ' IS NULL';
+        }
+        $sql .= ' LIMIT 1';
+        $row = static::connection()->selectOne($sql, $bindings);
 
         return $row === null ? null : static::fromRow($row);
     }
@@ -199,10 +233,11 @@ abstract class Model
         $bindings = array_values($filtered);
         $bindings[] = $id;
 
-        static::connection()->execute(
-            'UPDATE ' . static::table() . ' SET ' . $set . ' WHERE id = ?',
-            $bindings,
-        );
+        $sql = 'UPDATE ' . static::table() . ' SET ' . $set . ' WHERE id = ?';
+        if (($col = static::softDeleteColumn()) !== null) {
+            $sql .= ' AND ' . $col . ' IS NULL';
+        }
+        static::connection()->execute($sql, $bindings);
     }
 
     public static function deleteId(int $id): void
@@ -341,9 +376,81 @@ abstract class Model
         }
 
         $this->fireModelEvent('deleting');
+
+        if (static::$softDeletes) {
+            $col = static::$deletedAtColumn;
+            $now = date('Y-m-d H:i:s');
+            if (static::$timestamps) {
+                static::connection()->execute(
+                    'UPDATE ' . static::table()
+                    . ' SET ' . $col . ' = ?, updated_at = ? WHERE id = ? AND ' . $col . ' IS NULL',
+                    [$now, $now, (int) $id],
+                );
+                $this->updated_at = $now;
+            } else {
+                static::connection()->execute(
+                    'UPDATE ' . static::table()
+                    . ' SET ' . $col . ' = ? WHERE id = ? AND ' . $col . ' IS NULL',
+                    [$now, (int) $id],
+                );
+            }
+            $this->{$col} = $now;
+        } else {
+            static::deleteId((int) $id);
+            $this->id = null;
+        }
+
+        $this->fireModelEvent('deleted');
+    }
+
+    /**
+     * Permanently remove the row (ignores soft-delete column).
+     */
+    public function forceDelete(): void
+    {
+        $id = $this->id ?? null;
+        if ($id === null || $id === '') {
+            return;
+        }
+
+        $this->fireModelEvent('deleting');
         static::deleteId((int) $id);
         $this->fireModelEvent('deleted');
         $this->id = null;
+    }
+
+    /**
+     * Clear soft-delete timestamp for this instance (must exist in DB and be trashed).
+     */
+    public function restore(): void
+    {
+        if (! static::$softDeletes) {
+            throw new LogicException(static::class . ' does not use soft deletes.');
+        }
+
+        $id = $this->id ?? null;
+        if ($id === null || $id === '') {
+            return;
+        }
+
+        $col = static::$deletedAtColumn;
+        if (static::$timestamps) {
+            $now = date('Y-m-d H:i:s');
+            static::connection()->execute(
+                'UPDATE ' . static::table()
+                . ' SET ' . $col . ' = NULL, updated_at = ? WHERE id = ? AND ' . $col . ' IS NOT NULL',
+                [$now, (int) $id],
+            );
+            $this->updated_at = $now;
+        } else {
+            static::connection()->execute(
+                'UPDATE ' . static::table()
+                . ' SET ' . $col . ' = NULL WHERE id = ? AND ' . $col . ' IS NOT NULL',
+                [(int) $id],
+            );
+        }
+
+        $this->{$col} = null;
     }
 
     /**
