@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`Translator`:** loads **`lang/{locale}.php`** (if present) and merges every **`lang/{locale}/*.php`** file (sorted by path). Fixes apps that only ship **`lang/en/app.php`** (dot keys were previously shown verbatim).
+
 ## [0.11.0] - 2026-04-05
 
 ### Breaking

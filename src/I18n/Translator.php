@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Vortex\I18n;
 
+/**
+ * Loads translations from {@code lang/{locale}.php} (if present) and every {@code lang/{locale}/*.php} file,
+ * merged with {@see array_replace_recursive} (later files override earlier keys).
+ */
 final class Translator
 {
     private static ?self $instance = null;
@@ -124,16 +128,31 @@ final class Translator
             return $this->loaded[$locale];
         }
 
-        $path = $this->langPath . '/' . $locale . '.php';
-        if (! is_file($path)) {
-            $this->loaded[$locale] = [];
+        $merged = [];
 
-            return [];
+        $single = $this->langPath . '/' . $locale . '.php';
+        if (is_file($single)) {
+            /** @var mixed $data */
+            $data = require $single;
+            if (is_array($data)) {
+                $merged = array_replace_recursive($merged, $data);
+            }
         }
 
-        /** @var mixed $data */
-        $data = require $path;
-        $this->loaded[$locale] = is_array($data) ? $data : [];
+        $subDir = $this->langPath . '/' . $locale;
+        if (is_dir($subDir)) {
+            $files = glob($subDir . '/*.php') ?: [];
+            sort($files, SORT_STRING);
+            foreach ($files as $file) {
+                /** @var mixed $data */
+                $data = require $file;
+                if (is_array($data)) {
+                    $merged = array_replace_recursive($merged, $data);
+                }
+            }
+        }
+
+        $this->loaded[$locale] = $merged;
 
         return $this->loaded[$locale];
     }
