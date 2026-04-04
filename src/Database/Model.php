@@ -135,9 +135,9 @@ abstract class Model
      * Eager-load definitions for {@see QueryBuilder::with()}. Keys match public relation method names (use dot paths for nested eager loads, e.g. {@code author} on the root model and {@code country} on the related author model).
      *
      * Each value is one of:
-     * - `['belongsTo', Related::class, foreignKey, ownerKey?]` (owner key defaults to {@code id})
-     * - `['hasMany', Related::class, foreignKey, localKey?]` (local key defaults to {@code id})
-     * - `['belongsToMany', Related::class, pivotTable, foreignPivotKey, relatedPivotKey, parentKey?, relatedKey?]`
+     * - `['belongsTo', Related::class, foreignKey, ownerKey?]` (owner key defaults to {@code id}), or {@see Relation::belongsTo()}
+     * - `['hasMany', Related::class, foreignKey, localKey?]` (local key defaults to {@code id}), or {@see Relation::hasMany()}
+     * - `['belongsToMany', Related::class, pivotTable, foreignPivotKey, relatedPivotKey, parentKey?, relatedKey?]`, or {@see Relation::belongsToMany()}
      *
      * @return array<string, list<mixed>>
      */
@@ -328,6 +328,28 @@ abstract class Model
         $related = $relatedClass::query()->where($foreignKey, $localId)->get();
 
         return $related;
+    }
+
+    /**
+     * Eager-load relations onto this instance (dot paths supported). Uses the same batching as {@see QueryBuilder::with()}.
+     *
+     * @param string|list<string> $relations
+     * @return $this
+     */
+    public function load(string|array $relations): static
+    {
+        $rels = is_array($relations) ? $relations : [$relations];
+        $rels = array_values(array_filter(
+            $rels,
+            static fn (mixed $r): bool => is_string($r) && $r !== '',
+        ));
+        if ($rels === []) {
+            return $this;
+        }
+
+        static::query()->with($rels)->eagerLoadOnto([$this]);
+
+        return $this;
     }
 
     /**

@@ -656,6 +656,16 @@ final class QueryBuilder
     }
 
     /**
+     * Run {@see with()} paths against models already in memory (batch queries; same engine as {@see get()}).
+     *
+     * @param list<Model> $models
+     */
+    public function eagerLoadOnto(array $models): void
+    {
+        $this->eagerLoad($models);
+    }
+
+    /**
      * @param list<string> $paths Dot-separated relation paths (e.g. {@code author.country}).
      *
      * @return array<string, list<string>> First segment => remainder paths to eager-load on the related model.

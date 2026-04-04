@@ -14,7 +14,7 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **ORM: casts** — `$casts` on `Model` for int/float/bool/string/json/datetime.
 - **ORM: soft deletes** — `$softDeletes` / `$deletedAtColumn`, query scopes, `restore` / `forceDelete`.
 - **ORM: global scopes** — `addGlobalScope`, `withoutGlobalScope(s)`; `find` / `all` via `query()`.
-- **ORM: eager `with()`** — `Model::eagerRelations()` for batched `belongsTo` / `hasMany` / `belongsToMany`; nested dot paths (e.g. `author.country`).
+- **ORM: eager `with()`** — `Model::eagerRelations()` for batched `belongsTo` / `hasMany` / `belongsToMany`; nested dot paths (e.g. `author.country`); **`Relation`** spec builders, **`Model::load()`**, **`QueryBuilder::eagerLoadOnto()`**.
 - **Routing: model binding** — `Router::model` / `Router::bind` (+ `Route::model` / `Route::bind`); missing model or `null` resolver → 404.
 - **Routing: resource groups** — `Router::resource` / `Route::resource` (REST index/store/show/update/destroy; optional create/edit).
 - **HTTP: JSON API envelope** — `Response::apiOk` / `apiError`, `JsonResource`, `validationFailed(ValidationResult)`, `Request::validationResponse` / `bodyValidationResponse`, **`JsonShape`** / **`object`** / **`listOfObjects`** / **`listOfPrimitive`** + **`bodyShapeResponse`**, path/header API version helpers (`splitVersionedPath`, `resolvedApiVersion`, `withPath`), aligned negotiation errors + `ErrorRenderer` JSON.
@@ -23,7 +23,7 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **ORM / HTTP** — relation API polish.
+1. **Developer experience** — package reusable HTTP/kernel test helpers for consuming apps.
 
 ## Core platform
 

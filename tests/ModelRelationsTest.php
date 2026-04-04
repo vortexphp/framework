@@ -12,6 +12,7 @@ use Vortex\Container;
 use Vortex\Database\Connection;
 use Vortex\Database\DatabaseManager;
 use Vortex\Database\Model;
+use Vortex\Database\Relation;
 
 final class ModelRelationsTest extends TestCase
 {
@@ -197,6 +198,44 @@ PHP
         }
     }
 
+    public function testLoadEagerOnSingleModel(): void
+    {
+        $author = TestAuthor::create(['name' => 'Frank']);
+        $article = TestArticle::create(['test_author_id' => (int) $author->id, 'title' => 'Solo']);
+        $fresh = TestArticle::find((int) $article->id);
+        self::assertNotNull($fresh);
+        self::assertFalse(isset($fresh->author));
+        $fresh->load('author');
+        self::assertInstanceOf(TestAuthor::class, $fresh->author);
+        self::assertSame('Frank', (string) ($fresh->author->name ?? ''));
+    }
+
+    public function testLoadWithNestedPathOnSingleModel(): void
+    {
+        $country = TestCountry::create(['code' => 'CA']);
+        $author = TestAuthor::create(['name' => 'Grace', 'test_country_id' => (int) $country->id]);
+        $article = TestArticle::create(['test_author_id' => (int) $author->id, 'title' => 'Deep']);
+        $fresh = TestArticle::find((int) $article->id);
+        self::assertNotNull($fresh);
+        $fresh->load(['author.country']);
+        self::assertInstanceOf(TestCountry::class, $fresh->author->country ?? null);
+        self::assertSame('CA', (string) ($fresh->author->country->code ?? ''));
+    }
+
+    public function testEagerLoadOntoMaterializedModels(): void
+    {
+        $author = TestAuthor::create(['name' => 'Hank']);
+        $a = TestArticle::create(['test_author_id' => (int) $author->id, 'title' => 'X']);
+        $b = TestArticle::create(['test_author_id' => (int) $author->id, 'title' => 'Y']);
+        $one = TestArticle::find((int) $a->id);
+        $two = TestArticle::find((int) $b->id);
+        self::assertNotNull($one);
+        self::assertNotNull($two);
+        TestArticle::query()->with(['author'])->eagerLoadOnto([$one, $two]);
+        self::assertSame('Hank', (string) ($one->author->name ?? ''));
+        self::assertSame('Hank', (string) ($two->author->name ?? ''));
+    }
+
     private function clearAppContext(): void
     {
         $ref = new \ReflectionClass(AppContext::class);
@@ -215,8 +254,8 @@ final class TestAuthor extends Model
     protected static function eagerRelations(): array
     {
         return [
-            'articles' => ['hasMany', TestArticle::class, 'test_author_id'],
-            'country' => ['belongsTo', TestCountry::class, 'test_country_id'],
+            'articles' => Relation::hasMany(TestArticle::class, 'test_author_id'),
+            'country' => Relation::belongsTo(TestCountry::class, 'test_country_id'),
         ];
     }
 
@@ -249,8 +288,13 @@ final class TestArticle extends Model
     protected static function eagerRelations(): array
     {
         return [
-            'author' => ['belongsTo', TestAuthor::class, 'test_author_id'],
-            'tags' => ['belongsToMany', TestTag::class, 'test_article_tags', 'test_article_id', 'test_tag_id'],
+            'author' => Relation::belongsTo(TestAuthor::class, 'test_author_id'),
+            'tags' => Relation::belongsToMany(
+                TestTag::class,
+                'test_article_tags',
+                'test_article_id',
+                'test_tag_id',
+            ),
         ];
     }
 
