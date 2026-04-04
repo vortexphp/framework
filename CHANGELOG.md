@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-04-05
+
 ### Fixed
 
 - **`Translator`:** loads **`lang/{locale}.php`** (if present) and merges every **`lang/{locale}/*.php`** file (sorted by path). Fixes apps that only ship **`lang/en/app.php`** (dot keys were previously shown verbatim).
@@ -216,6 +218,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Contracts**: `Cache`, `Mailer`, `Middleware`.
 - PHPUnit test suite under `tests/`.
 
+[0.11.1]: https://github.com/vortexphp/framework/releases/tag/v0.11.1
 [0.11.0]: https://github.com/vortexphp/framework/releases/tag/v0.11.0
 [0.10.0]: https://github.com/vortexphp/framework/releases/tag/v0.10.0
 [0.9.0]: https://github.com/vortexphp/framework/releases/tag/v0.9.0
