@@ -22,6 +22,7 @@ use Vortex\Http\Session;
 use Vortex\Http\SessionManager;
 use Vortex\I18n\Translator;
 use Vortex\Mail\MailFactory;
+use Vortex\Queue\DatabaseQueue;
 use Vortex\Routing\RouteDiscovery;
 use Vortex\Routing\Router;
 use Vortex\Support\Env;
@@ -54,6 +55,14 @@ final class Application
         Repository::setInstance($container->make(Repository::class));
         $container->singleton(DatabaseManager::class, static fn (): DatabaseManager => DatabaseManager::fromRepository());
         $container->singleton(Connection::class, static fn (Container $c): Connection => $c->make(DatabaseManager::class)->connection());
+        $container->singleton(DatabaseQueue::class, static function (Container $c): DatabaseQueue {
+            $table = Repository::get('queue.table', 'jobs');
+
+            return new DatabaseQueue(
+                $c->make(Connection::class),
+                is_string($table) && $table !== '' ? $table : 'jobs',
+            );
+        });
         $container->singleton(CacheManager::class, static fn (): CacheManager => CacheManager::fromRepository($basePath));
         $container->singleton(CacheContract::class, static fn (Container $c): CacheContract => $c->make(CacheManager::class)->store());
         $container->singleton(Dispatcher::class, static fn (Container $c): Dispatcher => DispatcherFactory::make($c));

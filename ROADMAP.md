@@ -5,17 +5,18 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 ## In progress / shipped slices
 
 - **Authentication & authorization** — Session `Auth`, `Gate` (abilities + model policies), `RememberCookie` + `RememberFromCookie` middleware, `PasswordResetBroker` (SQL tokens), `Authenticate` / `AuthorizeAbility` middleware, Twig `auth_*` and `gate_allows`.
+- **Database queue + worker** — `Vortex\Queue\Contracts\Job`, `DatabaseQueue`, `Queue::push`, `queue:work` CLI (poll or `once`), reservation + stale reclaim, retries with backoff (no `failed_jobs` table yet).
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **Database queue + worker** — `jobs` table (migration contract), `Queue::push` / job interface, `php vortex queue:work` (or equivalent) polling the table, retries and `failed_jobs` optional in a second pass.
+1. **Failed jobs persistence** — optional `failed_jobs` table, `queue:failed` listing, and replay command; or broaden the driver contract for Redis later.
 
 ## Core platform
 
 - **Authentication & authorization** — Shipped for the current scope (session login, remember-me cookie, gates/policies, reset token broker; apps wire mail and routes).
-- **Queues & workers** — Job objects, queue contract + drivers (e.g. database table, Redis), and a worker entrypoint for async/background work.
+- **Queues & workers** — Shipped: SQL driver + worker CLI. Remaining: optional `failed_jobs` / Redis driver if needed.
 - **Scheduling** — Cron-friendly scheduler (register recurring closures/commands; single CLI that runs due tasks).
 - **Real-time** — Optional WebSockets/SSE or a thin broadcasting abstraction (channels, publish) if demand appears.
 

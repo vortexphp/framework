@@ -36,6 +36,7 @@ Each top-level module has its own README with real usage snippets:
 - `I18n/README.md`
 - `Mail/README.md`
 - `Pagination/README.md`
+- `Queue/README.md`
 - `Routing/README.md`
 - `Support/README.md`
 - `Validation/README.md`

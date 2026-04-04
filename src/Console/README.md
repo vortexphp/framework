@@ -27,6 +27,8 @@ final class HelloCommand extends Command
 }
 ```
 
+Built-in commands include **`migrate`**, **`queue:work`** (see `src/Queue/README.md`), **`doctor`**, **`serve`**, and others — run `php your-entrypoint help` for the list.
+
 ## Register from console routes
 
 `app/Routes/AppConsole.php`:
