@@ -36,6 +36,43 @@ final class JsonResourceTest extends TestCase
         self::assertSame([['x' => 1], ['x' => 2]], $rows);
     }
 
+    public function testPushResponseTransformsRunInOrderBeforeTransformResponse(): void
+    {
+        $r = new class (['n' => 1]) extends JsonResource {
+            public function __construct(mixed $resource)
+            {
+                parent::__construct($resource);
+                $this->pushResponseTransform(static fn (array $d): array => $d + ['a' => 1]);
+                $this->pushResponseTransform(static fn (array $d): array => $d + ['b' => 2]);
+            }
+
+            public function toArray(): array
+            {
+                return is_array($this->resource) ? $this->resource : [];
+            }
+
+            protected function transformResponse(array $data): array
+            {
+                $data['c'] = 3;
+
+                return $data;
+            }
+        };
+
+        self::assertSame(['n' => 1, 'a' => 1, 'b' => 2, 'c' => 3], $r->resolve());
+    }
+
+    public function testWithResponseTransformsDoesNotMutateOriginal(): void
+    {
+        $base = new DemoResource(['id' => 1]);
+        $altered = $base->withResponseTransforms(
+            static fn (array $d): array => $d + ['x' => 9],
+        );
+
+        self::assertSame(['id' => 1], $base->resolve());
+        self::assertSame(['id' => 1, 'x' => 9], $altered->resolve());
+    }
+
     public function testResolveAppliesTransformResponse(): void
     {
         $r = new class (['id' => 1]) extends JsonResource {

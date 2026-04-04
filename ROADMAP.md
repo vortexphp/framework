@@ -17,7 +17,7 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **ORM: eager `with()`** — `Model::eagerRelations()` for batched `belongsTo` / `hasMany` / `hasOne` / `belongsToMany`; nested dot paths (e.g. `author.country`); **`Relation`** spec builders, **`Model::load()`**, **`QueryBuilder::eagerLoadOnto()`**.
 - **Routing: model binding** — `Router::model` / `Router::bind` (+ `Route::model` / `Route::bind`); missing model or `null` resolver → 404.
 - **Routing: resource groups** — `Router::resource` / `Route::resource` (REST index/store/show/update/destroy; optional create/edit).
-- **HTTP: JSON API envelope** — `Response::apiOk` / `apiError`, `JsonResource` (**`resolve()`** / **`transformResponse()`**), `validationFailed(ValidationResult)`, `Request::validationResponse` / `bodyValidationResponse`, **`JsonShape`** / **`object`** / **`listOfObjects`** / **`listOfPrimitive`** + **`bodyShapeResponse`**, path/header API version helpers (`splitVersionedPath`, `resolvedApiVersion`, `withPath`), aligned negotiation errors + `ErrorRenderer` JSON.
+- **HTTP: JSON API envelope** — `Response::apiOk` / `apiError`, `JsonResource` (**`resolve()`**, **`pushResponseTransform`** / **`withResponseTransforms`**, **`transformResponse()`**), `validationFailed(ValidationResult)`, `Request::validationResponse` / `bodyValidationResponse`, **`JsonShape`** / **`object`** / **`listOfObjects`** / **`listOfPrimitive`** + **`bodyShapeResponse`**, path/header API version helpers (`splitVersionedPath`, `resolvedApiVersion`, `withPath`), aligned negotiation errors + `ErrorRenderer` JSON.
 - **Testing helpers** — `Vortex\Testing\KernelBrowser` for in-process `Kernel` dispatch + `Container::has()`.
 - **Schema builder** — extra column types (`decimal`, `json`, `date`, `floatType`, `char`, sized integers), `Schema::hasTable`, FK `ON UPDATE`, MySQL `UNSIGNED` on integers.
 - **HTTP controllers** — optional **`Controller`** base + invokable class routes + per-route **`middleware()`** chaining.
@@ -34,7 +34,7 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **HTTP & API** — optional multi-stage **`JsonResource`** helpers (e.g. ordered transform list) if **`transformResponse()`** is not enough.
+1. **Real-time** — optional **`Broadcaster`** backed by **Redis** (or similar) for multi-process / multi-server fan-out (beyond **`SyncBroadcaster`**).
 
 ## Core platform
 
@@ -51,7 +51,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 
 ## HTTP & API
 
-- **API conveniences** — Shipped: **`JsonResource`** (**`resolve()`**, **`transformResponse()`**), **`Response::apiOk`/`apiError`/`validationFailed`**, **`apiOkValidated`** / **`jsonValidated`**, **`Request`** validation + version + **`JsonShape`** and JSON Schema (**`JsonSchemaValidator`**, **`Request::bodyJsonSchemaResponse()`**), negotiated errors with **`error`** codes; **cursor pagination** (**`QueryBuilder::cursorPaginate()`**, **`CursorPaginator::toApiData()`**). Optional: multi-stage transform utilities beyond a single hook.
+- **API conveniences** — Shipped: **`JsonResource`** (**`resolve()`**, **`pushResponseTransform`** / **`withResponseTransforms`**, **`transformResponse()`**), **`Response::apiOk`/`apiError`/`validationFailed`**, **`apiOkValidated`** / **`jsonValidated`**, **`Request`** validation + version + **`JsonShape`** and JSON Schema (**`JsonSchemaValidator`**, **`Request::bodyJsonSchemaResponse()`**), negotiated errors with **`error`** codes; **cursor pagination** (**`QueryBuilder::cursorPaginate()`**, **`CursorPaginator::toApiData()`**).
 - **Routing DX** — Shipped: route model binding, custom `bind`, **`Route::resource`**, invokable class routes, **`middleware()`** on the last route, optional **`Controller`** base helpers.
 
 ## Developer experience

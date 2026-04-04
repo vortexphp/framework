@@ -11,6 +11,9 @@ use Vortex\Support\JsonSchemaValidator;
  */
 abstract class JsonResource
 {
+    /** @var list<callable(array<string, mixed>): array<string, mixed>> */
+    private array $responseTransforms = [];
+
     public function __construct(protected mixed $resource)
     {
     }
@@ -21,13 +24,44 @@ abstract class JsonResource
     abstract public function toArray(): array;
 
     /**
-     * Base mapping from {@see $resource} — passed through {@see transformResponse()} for API output.
+     * Register a transform run after {@see toArray()} and before {@see transformResponse()}, in registration order.
+     * Typical use: call from the resource constructor.
+     *
+     * @param callable(array<string, mixed>): array<string, mixed> $transform
+     */
+    protected function pushResponseTransform(callable $transform): void
+    {
+        $this->responseTransforms[] = $transform;
+    }
+
+    /**
+     * Clone with extra transforms appended (immutable-style); does not mutate this instance.
+     *
+     * @param callable(array<string, mixed>): array<string, mixed> ...$transforms
+     */
+    public function withResponseTransforms(callable ...$transforms): static
+    {
+        $copy = clone $this;
+        foreach ($transforms as $t) {
+            $copy->responseTransforms[] = $t;
+        }
+
+        return $copy;
+    }
+
+    /**
+     * Base mapping from {@see $resource} — each pushed transform, then {@see transformResponse()}.
      *
      * @return array<string, mixed>
      */
     public function resolve(): array
     {
-        return $this->transformResponse($this->toArray());
+        $data = $this->toArray();
+        foreach ($this->responseTransforms as $fn) {
+            $data = $fn($data);
+        }
+
+        return $this->transformResponse($data);
     }
 
     /**
