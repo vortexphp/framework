@@ -38,4 +38,13 @@ final class ContainerTest extends TestCase
 
         self::assertSame($live, $c->make(NoDeps::class));
     }
+
+    public function testHas(): void
+    {
+        $c = new Container();
+        self::assertFalse($c->has(NoDeps::class));
+        $c->singleton(NoDeps::class, NoDeps::class);
+        self::assertTrue($c->has(NoDeps::class));
+        self::assertFalse($c->has(NeedsNoDeps::class));
+    }
 }

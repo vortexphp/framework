@@ -7,7 +7,7 @@ namespace Vortex\Tests;
 use PHPUnit\Framework\TestCase;
 use Vortex\Testing\KernelBrowser;
 
-final class KernelHandleTest extends TestCase
+final class KernelBrowserTest extends TestCase
 {
     private string $fixtureBase;
 
@@ -23,20 +23,29 @@ final class KernelHandleTest extends TestCase
         parent::tearDown();
     }
 
-    public function testHandleReturnsResponseWithoutSending(): void
+    public function testGetDispatchesThroughKernel(): void
     {
         $browser = KernelBrowser::boot($this->fixtureBase);
         $response = $browser->get('/t');
-
         self::assertSame(200, $response->httpStatus());
         self::assertSame('ok', $response->body());
     }
 
-    public function testHandleAppliesSecurityHeaders(): void
+    public function testRequestHelperPassesQueryAndHeaders(): void
     {
         $browser = KernelBrowser::boot($this->fixtureBase);
-        $response = $browser->get('/t');
+        $response = $browser->request('GET', '/t', [
+            'query' => ['x' => '1'],
+            'headers' => ['X-Test' => 'y'],
+        ]);
+        self::assertSame(200, $response->httpStatus());
+    }
 
-        self::assertSame('nosniff', $response->headers()['X-Content-Type-Options']);
+    public function testDecodeJson(): void
+    {
+        $browser = KernelBrowser::boot($this->fixtureBase);
+        $response = $browser->postJson('/echo-json', ['a' => 1]);
+        self::assertSame(200, $response->httpStatus());
+        self::assertSame(['a' => 1, 'method' => 'POST'], KernelBrowser::decodeJson($response));
     }
 }

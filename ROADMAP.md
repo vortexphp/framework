@@ -18,12 +18,13 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **Routing: model binding** — `Router::model` / `Router::bind` (+ `Route::model` / `Route::bind`); missing model or `null` resolver → 404.
 - **Routing: resource groups** — `Router::resource` / `Route::resource` (REST index/store/show/update/destroy; optional create/edit).
 - **HTTP: JSON API envelope** — `Response::apiOk` / `apiError`, `JsonResource`, `validationFailed(ValidationResult)`, `Request::validationResponse` / `bodyValidationResponse`, **`JsonShape`** / **`object`** / **`listOfObjects`** / **`listOfPrimitive`** + **`bodyShapeResponse`**, path/header API version helpers (`splitVersionedPath`, `resolvedApiVersion`, `withPath`), aligned negotiation errors + `ErrorRenderer` JSON.
+- **Testing helpers** — `Vortex\Testing\KernelBrowser` for in-process `Kernel` dispatch + `Container::has()`.
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **Developer experience** — package reusable HTTP/kernel test helpers for consuming apps.
+1. **Data & persistence** — schema builder breadth (columns, indexes, foreign keys, dialect pieces).
 
 ## Core platform
 
@@ -47,7 +48,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 
 - **Container** — Method injection, tagged services, or contextual binding only if complexity stays justified for Vortex’s size.
 - **Tooling** — Optional codegen (`make:command`, `make:migration`) and/or a small REPL; debug helpers (without pulling a full debugbar dependency by default).
-- **Framework test kit** — Reusable HTTP/kernel test helpers for consuming applications (patterns exist in framework tests; not packaged as a first-class API yet).
+- **Framework test kit** — Shipped: **`KernelBrowser`** (`Vortex\Testing`) for consuming app PHPUnit tests.
 
 ## Packaging
 

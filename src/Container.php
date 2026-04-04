@@ -42,6 +42,14 @@ final class Container
         $this->bindings[$abstract] = $concrete;
     }
 
+    /**
+     * True when {@see make()} resolves from an {@see instance()} or {@see bind()}/{@see singleton()} entry.
+     */
+    public function has(string $abstract): bool
+    {
+        return isset($this->instances[$abstract]) || isset($this->bindings[$abstract]);
+    }
+
     public function make(string $abstract): object
     {
         if (isset($this->instances[$abstract])) {
