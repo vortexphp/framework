@@ -78,4 +78,59 @@ final class SchemaBuilderTest extends TestCase
         Schema::dropIfExists('users');
         self::assertNull($this->db->selectOne("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'users'"));
     }
+
+    public function testHasTable(): void
+    {
+        self::assertFalse(Schema::hasTable('missing'));
+        Schema::create('widgets', static function ($table): void {
+            $table->id();
+        });
+        self::assertTrue(Schema::hasTable('widgets'));
+        Schema::dropIfExists('widgets');
+        self::assertFalse(Schema::hasTable('widgets'));
+    }
+
+    public function testExtendedColumnTypes(): void
+    {
+        Schema::create('demo_types', static function ($table): void {
+            $table->id();
+            $table->char('code', 3);
+            $table->bigInteger('big_n');
+            $table->smallInteger('small_n');
+            $table->decimal('amount', 10, 4);
+            $table->floatType('score');
+            $table->date('day');
+            $table->dateTime('started_at');
+            $table->json('meta');
+        });
+
+        $info = $this->db->select('PRAGMA table_info(demo_types)');
+        $types = [];
+        foreach ($info as $row) {
+            $types[(string) $row['name']] = (string) $row['type'];
+        }
+
+        self::assertStringContainsString('CHAR(3)', $types['code']);
+        self::assertSame('INTEGER', $types['big_n']);
+        self::assertSame('INTEGER', $types['small_n']);
+        self::assertStringStartsWith('DECIMAL', $types['amount']);
+        self::assertSame('REAL', $types['score']);
+        self::assertSame('DATE', $types['day']);
+        self::assertSame('DATETIME', $types['started_at']);
+        self::assertSame('TEXT', $types['meta']);
+    }
+
+    public function testForeignKeyOnUpdate(): void
+    {
+        Schema::create('parents', static function ($table): void {
+            $table->id();
+        });
+        Schema::create('children', static function ($table): void {
+            $table->id();
+            $table->foreignId('parent_id')->constrained('parents')->cascadeOnUpdate();
+        });
+
+        $fk = $this->db->select('PRAGMA foreign_key_list(children)');
+        self::assertSame('CASCADE', (string) ($fk[0]['on_update'] ?? ''));
+    }
 }

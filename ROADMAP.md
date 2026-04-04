@@ -19,12 +19,13 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **Routing: resource groups** — `Router::resource` / `Route::resource` (REST index/store/show/update/destroy; optional create/edit).
 - **HTTP: JSON API envelope** — `Response::apiOk` / `apiError`, `JsonResource`, `validationFailed(ValidationResult)`, `Request::validationResponse` / `bodyValidationResponse`, **`JsonShape`** / **`object`** / **`listOfObjects`** / **`listOfPrimitive`** + **`bodyShapeResponse`**, path/header API version helpers (`splitVersionedPath`, `resolvedApiVersion`, `withPath`), aligned negotiation errors + `ErrorRenderer` JSON.
 - **Testing helpers** — `Vortex\Testing\KernelBrowser` for in-process `Kernel` dispatch + `Container::has()`.
+- **Schema builder** — extra column types (`decimal`, `json`, `date`, `floatType`, `char`, sized integers), `Schema::hasTable`, FK `ON UPDATE`, MySQL `UNSIGNED` on integers.
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **Data & persistence** — schema builder breadth (columns, indexes, foreign keys, dialect pieces).
+1. **HTTP & API** — stronger controller / middleware conventions (optional slice).
 
 ## Core platform
 
@@ -37,7 +38,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 
 - **Cache drivers** — **Redis** (phpredis) and **Memcached** (ext-memcached) behind `Cache`; file + null unchanged. PSR-16 optional later.
 - **ORM depth** — Shipped: model observers, attribute casts, soft deletes, global scopes, batched **`with()`** including nested dot paths. Remaining: relation objects or richer conveniences as needed.
-- **Schema builder** — Broader column/index/foreign-key coverage and dialect-specific pieces where needed.
+- **Schema builder** — Shipped: more column types (**`decimal`**, **`json`**, **`date`**, **`floatType`**, integer sizes, **`char`**), **`Schema::hasTable`**, FK **`ON UPDATE`**, MySQL **`UNSIGNED`** on integer columns.
 
 ## HTTP & API
 

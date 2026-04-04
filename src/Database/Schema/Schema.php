@@ -52,6 +52,11 @@ final class Schema
         (new self(self::resolveConnection()))->dropIfExistsInternal($table);
     }
 
+    public static function hasTable(string $table): bool
+    {
+        return (new self(self::resolveConnection()))->hasTableInternal($table);
+    }
+
     private static function resolveConnection(): Connection
     {
         if (self::$connectionResolver !== null) {
@@ -101,6 +106,29 @@ final class Schema
         $this->db->pdo()->exec('DROP TABLE IF EXISTS ' . $this->quoteIdent($table));
     }
 
+    private function hasTableInternal(string $table): bool
+    {
+        if ($table === '') {
+            return false;
+        }
+
+        return match ($this->driverName()) {
+            'sqlite' => $this->db->selectOne(
+                "SELECT 1 AS ok FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1",
+                [$table],
+            ) !== null,
+            'mysql' => $this->db->selectOne(
+                'SELECT 1 AS ok FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ? LIMIT 1',
+                [$table],
+            ) !== null,
+            'pgsql' => $this->db->selectOne(
+                'SELECT 1 AS ok FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = ? LIMIT 1',
+                [$table],
+            ) !== null,
+            default => throw new RuntimeException('hasTable is not implemented for driver [' . $this->driverName() . '].'),
+        };
+    }
+
     private function compileCreateTable(Blueprint $blueprint): string
     {
         $columns = [];
@@ -113,6 +141,9 @@ final class Schema
                     . '(' . $this->quoteIdent($column->referencesColumn) . ')';
                 if ($column->onDelete !== null) {
                     $foreign .= ' ON DELETE ' . $column->onDelete;
+                }
+                if ($column->onUpdate !== null) {
+                    $foreign .= ' ON UPDATE ' . $column->onUpdate;
                 }
                 $foreigns[] = $foreign;
             }
@@ -149,6 +180,10 @@ final class Schema
         $driver = $this->driverName();
         $sql = $this->quoteIdent($column->name) . ' ' . $this->columnTypeSql($column, $driver);
 
+        if ($column->unsigned && $driver === 'mysql' && in_array($column->type, ['integer', 'bigInteger', 'smallInteger'], true)) {
+            $sql .= ' UNSIGNED';
+        }
+
         if ($column->autoIncrement) {
             if ($driver === 'pgsql' && $column->type === 'id') {
                 // BIGSERIAL already includes auto increment semantics.
@@ -176,6 +211,17 @@ final class Schema
 
     private function columnTypeSql(ColumnDefinition $column, string $driver): string
     {
+        if ($column->type === 'decimal') {
+            $p = $column->precision ?? 8;
+            $s = $column->scale ?? 2;
+
+            return match ($driver) {
+                'sqlite', 'mysql' => 'DECIMAL(' . $p . ',' . $s . ')',
+                'pgsql' => 'NUMERIC(' . $p . ',' . $s . ')',
+                default => throw new RuntimeException('Unsupported driver [' . $driver . '] for schema builder.'),
+            };
+        }
+
         return match ($column->type) {
             'id' => match ($driver) {
                 'sqlite' => 'INTEGER PRIMARY KEY AUTOINCREMENT',
@@ -184,10 +230,37 @@ final class Schema
                 default => throw new RuntimeException('Unsupported driver [' . $driver . '] for schema builder.'),
             },
             'string' => 'VARCHAR(' . (int) ($column->length ?? 255) . ')',
+            'char' => 'CHAR(' . (int) ($column->length ?? 1) . ')',
             'text' => 'TEXT',
             'integer' => 'INTEGER',
+            'bigInteger' => match ($driver) {
+                'sqlite' => 'INTEGER',
+                'mysql' => 'BIGINT',
+                'pgsql' => 'BIGINT',
+                default => throw new RuntimeException('Unsupported driver [' . $driver . '] for schema builder.'),
+            },
+            'smallInteger' => match ($driver) {
+                'sqlite' => 'INTEGER',
+                'mysql' => 'SMALLINT',
+                'pgsql' => 'SMALLINT',
+                default => throw new RuntimeException('Unsupported driver [' . $driver . '] for schema builder.'),
+            },
+            'float' => match ($driver) {
+                'sqlite' => 'REAL',
+                'mysql' => 'DOUBLE',
+                'pgsql' => 'DOUBLE PRECISION',
+                default => throw new RuntimeException('Unsupported driver [' . $driver . '] for schema builder.'),
+            },
             'boolean' => $driver === 'sqlite' ? 'INTEGER' : 'BOOLEAN',
+            'date' => 'DATE',
+            'dateTime' => $driver === 'pgsql' ? 'TIMESTAMP' : 'DATETIME',
             'timestamp' => $driver === 'pgsql' ? 'TIMESTAMP' : 'DATETIME',
+            'json' => match ($driver) {
+                'sqlite' => 'TEXT',
+                'mysql' => 'JSON',
+                'pgsql' => 'JSONB',
+                default => throw new RuntimeException('Unsupported driver [' . $driver . '] for schema builder.'),
+            },
             'foreignId' => match ($driver) {
                 'sqlite' => 'INTEGER',
                 'mysql' => 'BIGINT UNSIGNED',

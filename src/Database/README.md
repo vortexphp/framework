@@ -105,4 +105,5 @@ Use **`Vortex\Database\Relation::belongsTo()`**, **`Relation::hasMany()`**, and 
 ## Migrations
 
 - Migration files return classes extending `Schema\Migration`.
-- Use static schema methods (`Schema::create`, `Schema::table`, `Schema::dropIfExists`).
+- Use static schema methods: **`Schema::create`**, **`Schema::table`**, **`Schema::dropIfExists`**, **`Schema::hasTable`** (SQLite, MySQL, PostgreSQL).
+- **`Blueprint`**: **`id`**, **`foreignId`** (with **`constrained`**, **`onDelete` / `onUpdate`** actions), **`string`**, **`char`**, **`text`**, **`integer`**, **`bigInteger`**, **`smallInteger`** (MySQL **`unsigned()`** on integers), **`decimal`**, **`floatType`**, **`boolean`**, **`date`**, **`dateTime`**, **`timestamp`**, **`json`** (SQLite `TEXT`, MySQL `JSON`, PostgreSQL `JSONB`), **`timestamps`**, **`index`**, **`unique`**.

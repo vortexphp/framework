@@ -19,6 +19,13 @@ final class ColumnDefinition
     public ?string $referencesTable = null;
     public ?string $referencesColumn = null;
     public ?string $onDelete = null;
+    public ?string $onUpdate = null;
+
+    /** @internal Used by {@see Blueprint::decimal()}. */
+    public ?int $precision = null;
+
+    /** @internal Used by {@see Blueprint::decimal()}. */
+    public ?int $scale = null;
 
     public function __construct(
         public readonly string $name,
@@ -111,6 +118,41 @@ final class ColumnDefinition
     public function noActionOnDelete(): self
     {
         $this->onDelete = 'NO ACTION';
+
+        return $this;
+    }
+
+    public function cascadeOnUpdate(): self
+    {
+        $this->onUpdate = 'CASCADE';
+
+        return $this;
+    }
+
+    public function restrictOnUpdate(): self
+    {
+        $this->onUpdate = 'RESTRICT';
+
+        return $this;
+    }
+
+    public function nullOnUpdate(): self
+    {
+        $this->onUpdate = 'SET NULL';
+
+        return $this;
+    }
+
+    public function noActionOnUpdate(): self
+    {
+        $this->onUpdate = 'NO ACTION';
+
+        return $this;
+    }
+
+    public function unsigned(): self
+    {
+        $this->unsigned = true;
 
         return $this;
     }

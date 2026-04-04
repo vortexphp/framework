@@ -63,6 +63,72 @@ final class Blueprint
         return $column;
     }
 
+    public function bigInteger(string $name): ColumnDefinition
+    {
+        $column = new ColumnDefinition($name, 'bigInteger');
+        $this->columns[] = $column;
+
+        return $column;
+    }
+
+    public function smallInteger(string $name): ColumnDefinition
+    {
+        $column = new ColumnDefinition($name, 'smallInteger');
+        $this->columns[] = $column;
+
+        return $column;
+    }
+
+    public function decimal(string $name, int $precision = 8, int $scale = 2): ColumnDefinition
+    {
+        $column = new ColumnDefinition($name, 'decimal');
+        $column->precision = max(1, $precision);
+        $column->scale = max(0, min($scale, $column->precision));
+        $this->columns[] = $column;
+
+        return $column;
+    }
+
+    public function floatType(string $name): ColumnDefinition
+    {
+        $column = new ColumnDefinition($name, 'float');
+        $this->columns[] = $column;
+
+        return $column;
+    }
+
+    public function date(string $name): ColumnDefinition
+    {
+        $column = new ColumnDefinition($name, 'date');
+        $this->columns[] = $column;
+
+        return $column;
+    }
+
+    public function dateTime(string $name): ColumnDefinition
+    {
+        $column = new ColumnDefinition($name, 'dateTime');
+        $this->columns[] = $column;
+
+        return $column;
+    }
+
+    public function json(string $name): ColumnDefinition
+    {
+        $column = new ColumnDefinition($name, 'json');
+        $this->columns[] = $column;
+
+        return $column;
+    }
+
+    public function char(string $name, int $length): ColumnDefinition
+    {
+        $column = new ColumnDefinition($name, 'char', max(1, $length));
+        $this->columns[] = $column;
+
+        return $column;
+    }
+
     public function boolean(string $name): ColumnDefinition
     {
         $column = new ColumnDefinition($name, 'boolean');
