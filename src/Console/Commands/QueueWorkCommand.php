@@ -34,10 +34,10 @@ final class QueueWorkCommand extends Command
 
     protected function execute(Input $input): int
     {
-        $tokens = $input->tokens();
-        $once = in_array('once', $tokens, true);
+        $args = $input->arguments();
+        $once = in_array('once', $args, true);
         $queue = Queue::defaultQueue();
-        foreach ($tokens as $t) {
+        foreach ($args as $t) {
             if ($t === 'once') {
                 continue;
             }

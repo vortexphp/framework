@@ -24,24 +24,14 @@ final class ServeCommand extends Command
 
     protected function execute(Input $input): int
     {
-        $host = '127.0.0.1';
+        $host = (string) $input->option('host', '127.0.0.1');
         $port = 8080;
-        $positional = [];
-
-        foreach ($input->tokens() as $arg) {
-            if (str_starts_with($arg, '--host=')) {
-                $host = substr($arg, 7);
-                continue;
-            }
-            if (str_starts_with($arg, '--port=')) {
-                $port = (int) substr($arg, 7);
-                continue;
-            }
-            if (! str_starts_with($arg, '--')) {
-                $positional[] = $arg;
-            }
+        $portOpt = $input->option('port');
+        if (is_string($portOpt) && $portOpt !== '') {
+            $port = (int) $portOpt;
         }
 
+        $positional = $input->arguments();
         if (isset($positional[0])) {
             $host = $positional[0];
         }

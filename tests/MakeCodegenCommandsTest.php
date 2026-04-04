@@ -107,4 +107,14 @@ final class MakeCodegenCommandsTest extends TestCase
         $src = (string) file_get_contents($this->base . '/app/Models/Puppy.php');
         self::assertStringContainsString("\$table = 'puppies'", $src);
     }
+
+    public function testMakeModelWithSpacedTableOption(): void
+    {
+        $cmd = new MakeModelCommand();
+        $cmd->setBasePath($this->base);
+        self::assertSame(0, $cmd->run(Input::fromArgv(['vortex', 'make:model', 'Fish', '--table', 'fish'])));
+
+        $src = (string) file_get_contents($this->base . '/app/Models/Fish.php');
+        self::assertStringContainsString("\$table = 'fish'", $src);
+    }
 }

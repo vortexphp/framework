@@ -18,14 +18,14 @@ final class MakeMigrationCommand extends Command
 
     protected function execute(Input $input): int
     {
-        $tokens = $input->tokens();
-        if ($tokens === []) {
+        $args = $input->arguments();
+        if ($args === []) {
             $this->error('Usage: make:migration <name> — e.g. make:migration create_widgets_table');
 
             return 1;
         }
 
-        $name = $this->normalizeMigrationName(implode(' ', $tokens));
+        $name = $this->normalizeMigrationName(implode(' ', $args));
         if ($name === '') {
             $this->error('Migration name must contain letters or numbers.');
 

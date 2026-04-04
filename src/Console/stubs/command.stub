@@ -16,6 +16,8 @@ final class {{CLASS}} extends Command
 
     protected function execute(Input $input): int
     {
+        // $input->arguments() — positional argv after the command
+        // $input->argument(0), $input->option('name', 'default'), $input->flag('verbose')
         $this->info('{{CLASS}} ready.');
 
         return 0;

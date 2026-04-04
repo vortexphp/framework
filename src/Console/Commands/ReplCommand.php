@@ -86,7 +86,7 @@ class ReplCommand extends Command
 
     private function guard(Input $input): int
     {
-        $force = in_array('--force', $input->tokens(), true);
+        $force = $input->flag('force');
         $debug = (bool) Repository::get('app.debug', false);
         if (! $debug && ! $force) {
             $this->error('REPL disabled: enable app.debug in config/app.php or pass --force (still unsafe on shared servers).');

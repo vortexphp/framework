@@ -28,7 +28,7 @@ final class DoctorCommand extends Command
     {
         $base = $this->basePath();
         $failed = false;
-        $production = in_array('--production', $input->tokens(), true);
+        $production = $input->flag('production');
 
         $title = $production
             ? Term::style('2', ' — §1 hosting') . ' + ' . Term::style('1;33', '§2 production')

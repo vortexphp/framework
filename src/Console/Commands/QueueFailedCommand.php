@@ -29,7 +29,7 @@ final class QueueFailedCommand extends Command
     protected function execute(Input $input): int
     {
         $limit = 50;
-        foreach ($input->tokens() as $t) {
+        foreach ($input->arguments() as $t) {
             if (ctype_digit($t)) {
                 $limit = max(1, min(500, (int) $t));
             }

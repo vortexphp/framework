@@ -17,14 +17,14 @@ final class MakeCommandCommand extends Command
 
     protected function execute(Input $input): int
     {
-        $tokens = $input->tokens();
-        if ($tokens === []) {
+        $args = $input->arguments();
+        if ($args === []) {
             $this->error('Usage: make:command <name> — e.g. make:command send-welcome or SendWelcome');
 
             return 1;
         }
 
-        $raw = trim(implode(' ', $tokens));
+        $raw = trim(implode(' ', $args));
         $base = $this->toPascalCase($raw);
         if ($base === '') {
             $this->error('Command name must contain letters or numbers.');

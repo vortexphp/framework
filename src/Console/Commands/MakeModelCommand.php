@@ -19,16 +19,9 @@ final class MakeModelCommand extends Command
 
     protected function execute(Input $input): int
     {
-        $tokens = $input->tokens();
-        if ($tokens === []) {
-            $this->error('Usage: make:model <Name> [--table=table_name] — e.g. make:model Post --table=posts');
-
-            return 1;
-        }
-
-        ['args' => $args, 'options' => $options] = $this->parseTokens($tokens);
+        $args = $input->arguments();
         if ($args === []) {
-            $this->error('Model name required.');
+            $this->error('Usage: make:model <Name> [--table=table_name] — e.g. make:model Post --table=posts');
 
             return 1;
         }
@@ -69,7 +62,15 @@ final class MakeModelCommand extends Command
             return 1;
         }
 
-        $table = isset($options['table']) && is_string($options['table']) ? trim($options['table']) : '';
+        $tableOpt = $input->option('table', '');
+        $table = '';
+        if (is_string($tableOpt)) {
+            $table = trim($tableOpt);
+        } elseif ($input->hasOption('table') && $tableOpt === true) {
+            $this->error('Option --table requires a value (e.g. --table=posts or --table posts).');
+
+            return 1;
+        }
         try {
             $tableProperty = $table !== ''
                 ? "    protected static ?string \$table = '" . $this->sanitizeTableName($table) . "';\n\n"
@@ -95,33 +96,6 @@ final class MakeModelCommand extends Command
         $this->info('Created ' . $file);
 
         return 0;
-    }
-
-    /**
-     * @param list<string> $tokens
-     * @return array{args: list<string>, options: array<string, string>}
-     */
-    private function parseTokens(array $tokens): array
-    {
-        $args = [];
-        $options = [];
-        foreach ($tokens as $t) {
-            if (str_starts_with($t, '--') && str_contains($t, '=')) {
-                $eq = strpos($t, '=');
-                if ($eq !== false) {
-                    $k = substr($t, 2, $eq - 2);
-                    $options[$k] = substr($t, $eq + 1);
-                }
-
-                continue;
-            }
-            if (str_starts_with($t, '--')) {
-                continue;
-            }
-            $args[] = $t;
-        }
-
-        return ['args' => $args, 'options' => $options];
     }
 
     private function toPascalCase(string $raw): string

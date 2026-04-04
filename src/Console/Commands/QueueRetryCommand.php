@@ -29,7 +29,7 @@ final class QueueRetryCommand extends Command
 
     protected function execute(Input $input): int
     {
-        $tokens = $input->tokens();
+        $tokens = $input->arguments();
         if ($tokens === []) {
             fwrite(STDERR, Term::style('1;31', 'Usage:') . " queue:retry <id>|all\n");
 

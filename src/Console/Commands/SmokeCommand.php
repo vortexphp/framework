@@ -26,7 +26,7 @@ final class SmokeCommand extends Command
 
     protected function execute(Input $input): int
     {
-        $tokens = $input->tokens();
+        $tokens = $input->arguments();
         $base = isset($tokens[0]) ? (string) $tokens[0] : (string) (Env::get('APP_URL') ?? 'http://127.0.0.1:8080');
         $base = rtrim($base, '/');
 
