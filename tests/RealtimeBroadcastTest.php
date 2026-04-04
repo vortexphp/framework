@@ -50,7 +50,7 @@ final class RealtimeBroadcastTest extends TestCase
         mkdir($base . '/lang', 0777, true);
         mkdir($base . '/storage/cache/twig', 0777, true);
         mkdir($base . '/storage/logs', 0777, true);
-        foreach (['app.php', 'cache.php', 'database.php', 'events.php', 'mail.php'] as $f) {
+        foreach (['app.php', 'broadcasting.php', 'cache.php', 'database.php', 'events.php', 'mail.php'] as $f) {
             copy($fixture . '/config/' . $f, $base . '/config/' . $f);
         }
 

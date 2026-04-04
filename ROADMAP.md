@@ -28,20 +28,20 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **ORM polymorphic relations** — **`morphTo`**, **`morphMany`**, **`morphOne`** (lazy + eager, nested eager under **`morphTo`** via per–concrete-class grouping); **`MorphMap`** aliases for **`_type`** columns + **`getMorphClass()`**.
 - **JSON Schema** — **`justinrainbow/json-schema`**, **`JsonSchemaValidator::validateArray()`** / **`validateDecoded()`**, **`Request::bodyJsonSchemaResponse()`** (requests); **`Response::apiOkValidated()`** / **`jsonValidated()`**, **`JsonResource::toValidatedResponse()`** / **`collectionValidatedResponse()`** (responses; **`JsonShape`** remains the lightweight default for bodies).
 - **Container** — **`Container::call()`** for method-style injection; constructor unions, **`self` / `parent`**, nullable / interface failures aligned with **`RuntimeException`**.
-- **Real-time** — **SSE** (**`Response::serverSentEvents()`**, **`SseEmitter`**); **`Broadcaster`** + **`SyncBroadcaster`** (replace binding for Redis / other fan-out).
+- **Real-time** — **SSE** (**`Response::serverSentEvents()`**, **`SseEmitter`**); **`Broadcaster`** (**`SyncBroadcaster`**, **`RedisBroadcaster`** + **`broadcasting.driver`** **`redis`**).
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **Real-time** — optional **`Broadcaster`** backed by **Redis** (or similar) for multi-process / multi-server fan-out (beyond **`SyncBroadcaster`**).
+1. **Container** — optional tagged services / contextual bindings if app complexity justifies them.
 
 ## Core platform
 
 - **Authentication & authorization** — Shipped for the current scope (session login, remember-me cookie, gates/policies, reset token broker; apps wire mail and routes).
 - **Queues & workers** — Shipped: SQL + Redis drivers, worker CLI, failed-job persistence + replay.
 - **Scheduling** — Shipped: `schedule:run`, config + programmatic tasks, cron lists/ranges, overlap guard via **`Cache::add`** and **`schedule.mutex_store`** (use a Redis-backed store for distributed mutexes).
-- **Real-time** — Shipped: **SSE** + in-process **`Broadcaster`**. Optional later: WebSockets, Redis fan-out **`Broadcaster`**, or full pub/sub.
+- **Real-time** — Shipped: **SSE** + **`SyncBroadcaster`** + optional **`RedisBroadcaster`** (**`broadcasting.driver`** **`redis`**). Optional later: WebSockets or full pub/sub.
 
 ## Data & persistence
 

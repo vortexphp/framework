@@ -48,7 +48,7 @@ On a **`Request`** instance, **`validationResponse($rules, $messages = [], $attr
 
 ## Server-Sent Events (SSE)
 
-**`Response::serverSentEvents(callable $writer)`** sets **`text/event-stream`** headers; **`$writer`** receives **`SseEmitter`** (`message`, `json`, `comment`). Call **`send()`** on the response to run the writer (after headers). Pair with **`Vortex\Broadcasting\Contracts\Broadcaster`** in the same app if listeners should fan out to SSE routes (subscribe in **`SyncBroadcaster::listen`** and write events with **`SseEmitter`**).
+**`Response::serverSentEvents(callable $writer)`** sets **`text/event-stream`** headers; **`$writer`** receives **`SseEmitter`** (`message`, `json`, `comment`). Call **`send()`** on the response to run the writer (after headers). For pub/sub, use **`SyncBroadcaster::listen()`** and **`Broadcaster::publish()`**; when **`broadcasting.driver`** is **`redis`**, the same publish also goes to Redis **`PUBLISH`** (see **`Broadcasting/README.md`**).
 
 ## JSON Schema (decoded array)
 

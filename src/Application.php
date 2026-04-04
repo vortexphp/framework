@@ -7,6 +7,7 @@ namespace Vortex;
 use Psr\SimpleCache\CacheInterface as Psr16CacheInterface;
 use Vortex\Cache\CacheManager;
 use Vortex\Broadcasting\Contracts\Broadcaster;
+use Vortex\Broadcasting\RedisBroadcaster;
 use Vortex\Broadcasting\SyncBroadcaster;
 use Vortex\Cache\Psr16Cache;
 use Vortex\Config\Repository;
@@ -100,7 +101,23 @@ final class Application
         $container->singleton(CacheContract::class, static fn (Container $c): CacheContract => $c->make(CacheManager::class)->store());
         $container->singleton(Psr16CacheInterface::class, static fn (Container $c): Psr16CacheInterface => new Psr16Cache($c->make(CacheContract::class)));
         $container->singleton(Dispatcher::class, static fn (Container $c): Dispatcher => DispatcherFactory::make($c));
-        $container->singleton(Broadcaster::class, static fn (): Broadcaster => new SyncBroadcaster());
+        $container->singleton(SyncBroadcaster::class, static fn (): SyncBroadcaster => new SyncBroadcaster());
+        $container->singleton(Broadcaster::class, static function (Container $c): Broadcaster {
+            $driver = Repository::get('broadcasting.driver', 'sync');
+            if ($driver !== 'redis') {
+                return $c->make(SyncBroadcaster::class);
+            }
+
+            /** @var array<string, mixed> $redisCfg */
+            $redisCfg = Repository::get('broadcasting.redis', []);
+            if (! is_array($redisCfg)) {
+                $redisCfg = [];
+            }
+            $p = $redisCfg['prefix'] ?? 'vortex:broadcast:';
+            $prefix = is_string($p) && $p !== '' ? $p : 'vortex:broadcast:';
+
+            return new RedisBroadcaster(PhpRedisConnect::connect($redisCfg), $prefix, $c->make(SyncBroadcaster::class));
+        });
         $container->singleton(Mailer::class, static fn (): Mailer => MailFactory::make($basePath));
         $container->singleton(SessionManager::class, static fn (): SessionManager => SessionManager::fromRepository());
         $container->singleton(Session::class, static fn (Container $c): Session => new Session($c->make(SessionManager::class)->store()));
