@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Vortex\Http;
 
+use LogicException;
 use Vortex\Support\JsonHelp;
+use Vortex\Validation\ValidationResult;
 
 final class Response
 {
@@ -60,6 +62,25 @@ final class Response
             'error' => $error,
             'message' => $message,
         ], $extra), $status);
+    }
+
+    /**
+     * JSON API response for a failed {@see ValidationResult} ({@code error: validation_failed}, {@code errors: field => message}).
+     *
+     * @throws LogicException When the result has no errors (caller should guard with {@see ValidationResult::failed()}).
+     */
+    public static function validationFailed(
+        ValidationResult $result,
+        string $message = 'Validation failed',
+        int $status = 422,
+    ): self {
+        if (! $result->failed()) {
+            throw new LogicException('validationFailed() requires a failed ValidationResult.');
+        }
+
+        return self::apiError($status, 'validation_failed', $message, [
+            'errors' => $result->errors(),
+        ]);
     }
 
     /**

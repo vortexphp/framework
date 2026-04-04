@@ -33,6 +33,7 @@ return Response::redirect('/login')
 
 - **`Response::apiOk($data)`** — `{ "ok": true, "data": ... }`.
 - **`Response::apiError($status, $errorCode, $message, $extra = [])`** — `{ "ok": false, "error", "message", ... }` (always JSON).
+- **`Response::validationFailed($result)`** — **`422`** (by default) with **`error: validation_failed`** and **`errors`** (field → message from **`ValidationResult`**).
 - **`JsonResource`** — implement `toArray()`; **`toResponse()`** / **`collectionResponse()`** build **`apiOk`**-wrapped responses.
 
 For HTML vs JSON negotiation, **`Response::notFound()`**, **`forbidden()`**, **`unauthorized()`**, and **`error()`** include **`ok`**, **`error`** (machine code), and **`message`** when **`Request::wantsJson()`** is true.

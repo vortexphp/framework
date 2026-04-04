@@ -20,7 +20,7 @@ $result = Validator::make(
 );
 
 if ($result->failed()) {
-    $errors = $result->errors();
+    return \Vortex\Http\Response::validationFailed($result);
 }
 ```
 
