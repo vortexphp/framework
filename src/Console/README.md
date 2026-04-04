@@ -27,7 +27,7 @@ final class HelloCommand extends Command
 }
 ```
 
-Built-in commands include **`migrate`**, **`queue:work`**, **`queue:failed`**, **`queue:retry`** (see `src/Queue/README.md`), **`doctor`**, **`serve`**, and others — run `php your-entrypoint help` for the list.
+Built-in commands include **`migrate`**, **`queue:work`**, **`queue:failed`**, **`queue:retry`** (see `src/Queue/README.md`), **`schedule:run`** (see `src/Schedule/README.md`), **`doctor`**, **`serve`**, and others — run `php your-entrypoint help` for the list.
 
 ## Register from console routes
 

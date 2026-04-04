@@ -26,6 +26,7 @@ use Vortex\Queue\DatabaseQueue;
 use Vortex\Queue\FailedJobStore;
 use Vortex\Routing\RouteDiscovery;
 use Vortex\Routing\Router;
+use Vortex\Schedule\Schedule;
 use Vortex\Support\Env;
 use Vortex\Support\Log;
 use Vortex\View\Factory;
@@ -133,6 +134,9 @@ final class Application
 
         $container->singleton(Router::class, Router::class);
         $container->singleton(ErrorRenderer::class, static fn (): ErrorRenderer => new ErrorRenderer());
+
+        Schedule::clear();
+        Schedule::loadFromRepository();
 
         if ($configure !== null) {
             $configure($container, $basePath);

@@ -6,18 +6,19 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 
 - **Authentication & authorization** — Session `Auth`, `Gate` (abilities + model policies), `RememberCookie` + `RememberFromCookie` middleware, `PasswordResetBroker` (SQL tokens), `Authenticate` / `AuthorizeAbility` middleware, Twig `auth_*` and `gate_allows`.
 - **Database queue + worker** — `Vortex\Queue\Contracts\Job`, `DatabaseQueue`, `Queue::push`, `queue:work`, `queue:failed`, `queue:retry` (incl. `all`), `FailedJobStore` + optional `queue.failed_jobs_table`.
+- **Scheduling** — `config/schedule.php` tasks, `Schedule::register()`, five-field cron matching (`CronExpression`), CLI **`schedule:run`**.
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **Scheduling** — cron-friendly scheduler CLI and recurring task registration; or **Redis queue driver** if multi-node workers matter before scheduling.
+1. **Redis queue driver** — or richer cron (lists/ranges), overlap guards, mutex per task.
 
 ## Core platform
 
 - **Authentication & authorization** — Shipped for the current scope (session login, remember-me cookie, gates/policies, reset token broker; apps wire mail and routes).
 - **Queues & workers** — Shipped: SQL driver, worker CLI, failed-job persistence + replay. Remaining: Redis (or other) driver if needed.
-- **Scheduling** — Cron-friendly scheduler (register recurring closures/commands; single CLI that runs due tasks).
+- **Scheduling** — Shipped: `schedule:run`, config + programmatic tasks, minimal cron. Remaining: mutex / overlap, optional Redis for distributed locks.
 - **Real-time** — Optional WebSockets/SSE or a thin broadcasting abstraction (channels, publish) if demand appears.
 
 ## Data & persistence

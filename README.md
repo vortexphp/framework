@@ -152,6 +152,10 @@ $result = Validator::make($data, [
   - `Response::notFound()`, `forbidden()`, `unauthorized()`, `error()`
   - `->with()`, `->withMany()`, `->withErrors()`, `->withInput()`
 
+### Scheduler
+
+- Add `config/schedule.php` with `tasks` (`cron` + handler `class`) and run **`php vortex schedule:run`** from cron each minute (see `src/Schedule/README.md`). Optional `app.timezone` for due-time evaluation.
+
 ### Queue
 
 - Implement `Vortex\Queue\Contracts\Job`, push with `Vortex\Queue\Queue::push()` after boot, and add a `jobs` table (see `src/Queue/README.md`).

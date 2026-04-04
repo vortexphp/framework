@@ -38,6 +38,7 @@ Each top-level module has its own README with real usage snippets:
 - `Pagination/README.md`
 - `Queue/README.md`
 - `Routing/README.md`
+- `Schedule/README.md`
 - `Support/README.md`
 - `Validation/README.md`
 - `View/README.md`

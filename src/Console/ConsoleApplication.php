@@ -11,6 +11,7 @@ use Vortex\Console\Commands\MigrateDownCommand;
 use Vortex\Console\Commands\QueueFailedCommand;
 use Vortex\Console\Commands\QueueRetryCommand;
 use Vortex\Console\Commands\QueueWorkCommand;
+use Vortex\Console\Commands\ScheduleRunCommand;
 use Vortex\Console\Commands\ServeCommand;
 use Vortex\Console\Commands\SmokeCommand;
 use Vortex\Routing\RouteDiscovery;
@@ -38,6 +39,7 @@ final class ConsoleApplication
         $app->register(new QueueWorkCommand($basePath));
         $app->register(new QueueFailedCommand($basePath));
         $app->register(new QueueRetryCommand($basePath));
+        $app->register(new ScheduleRunCommand($basePath));
 
         RouteDiscovery::loadConsoleRoutes($app, $basePath);
 
