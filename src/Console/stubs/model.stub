@@ -1,0 +1,16 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{NAMESPACE}};
+
+use Vortex\Database\Model;
+
+final class {{CLASS}} extends Model
+{
+{{TABLE_PROPERTY}}
+    /** @var list<string> */
+    protected static array $fillable = [
+        //
+    ];
+}

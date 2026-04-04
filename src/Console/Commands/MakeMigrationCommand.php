@@ -6,6 +6,7 @@ namespace Vortex\Console\Commands;
 
 use Vortex\Console\Command;
 use Vortex\Console\Input;
+use Vortex\Console\Stub;
 use Vortex\Support\AppPaths;
 
 final class MakeMigrationCommand extends Command
@@ -60,27 +61,7 @@ final class MakeMigrationCommand extends Command
             return 1;
         }
 
-        $contents = <<<PHP
-<?php
-
-declare(strict_types=1);
-
-use Vortex\Database\Schema\Migration;
-use Vortex\Database\Schema\Schema;
-
-return new class extends Migration {
-    public function up(): void
-    {
-        //
-    }
-
-    public function down(): void
-    {
-        //
-    }
-};
-
-PHP;
+        $contents = Stub::render('migration', []);
 
         if (file_put_contents($file, $contents) === false) {
             $this->error('Could not write: ' . $file);

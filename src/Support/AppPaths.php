@@ -8,12 +8,13 @@ use InvalidArgumentException;
 
 /**
  * Project path layout. Optional **`config/paths.php`** may return
- * **`['migrations' => '…']`** (relative to project root).
+ * **`['migrations' => '…', 'models' => '…']`** (paths relative to project root).
  */
 final class AppPaths
 {
     private function __construct(
         private readonly string $migrationsRelative,
+        private readonly string $modelsRelative,
     ) {
     }
 
@@ -22,6 +23,7 @@ final class AppPaths
         $basePath = rtrim($basePath, '/\\');
         $defaults = [
             'migrations' => 'db/migrations',
+            'models' => 'app/Models',
         ];
         $configFile = $basePath . '/config/paths.php';
         if (is_file($configFile)) {
@@ -31,10 +33,13 @@ final class AppPaths
                 if (isset($data['migrations']) && is_string($data['migrations']) && trim($data['migrations']) !== '') {
                     $defaults['migrations'] = self::normalizeRelativeKey($data['migrations'], 'migrations');
                 }
+                if (isset($data['models']) && is_string($data['models']) && trim($data['models']) !== '') {
+                    $defaults['models'] = self::normalizeRelativeKey($data['models'], 'models');
+                }
             }
         }
 
-        return new self($defaults['migrations']);
+        return new self($defaults['migrations'], $defaults['models']);
     }
 
     private static function normalizeRelativeKey(string $path, string $key): string
@@ -56,5 +61,15 @@ final class AppPaths
     public function migrationsRelative(): string
     {
         return $this->migrationsRelative;
+    }
+
+    public function modelsDirectory(string $basePath): string
+    {
+        return rtrim($basePath, '/\\') . '/' . $this->modelsRelative;
+    }
+
+    public function modelsRelative(): string
+    {
+        return $this->modelsRelative;
     }
 }

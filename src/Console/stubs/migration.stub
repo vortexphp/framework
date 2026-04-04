@@ -1,0 +1,18 @@
+<?php
+
+declare(strict_types=1);
+
+use Vortex\Database\Schema\Migration;
+use Vortex\Database\Schema\Schema;
+
+return new class extends Migration {
+    public function up(): void
+    {
+        //
+    }
+
+    public function down(): void
+    {
+        //
+    }
+};

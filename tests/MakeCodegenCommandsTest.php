@@ -7,6 +7,7 @@ namespace Vortex\Tests;
 use PHPUnit\Framework\TestCase;
 use Vortex\Console\Commands\MakeCommandCommand;
 use Vortex\Console\Commands\MakeMigrationCommand;
+use Vortex\Console\Commands\MakeModelCommand;
 use Vortex\Console\Input;
 use Vortex\Database\Schema\Migration;
 
@@ -36,6 +37,10 @@ final class MakeCodegenCommandsTest extends TestCase
             }
             @rmdir($this->base . '/app/Console/Commands');
             @rmdir($this->base . '/app/Console');
+            foreach (glob($this->base . '/app/Models/*.php') ?: [] as $f) {
+                unlink($f);
+            }
+            @rmdir($this->base . '/app/Models');
             @rmdir($this->base . '/app');
             if (is_file($this->base . '/config/paths.php')) {
                 unlink($this->base . '/config/paths.php');
@@ -55,6 +60,8 @@ final class MakeCodegenCommandsTest extends TestCase
         self::assertCount(1, $files);
         $migration = require $files[0];
         self::assertInstanceOf(Migration::class, $migration);
+        $src = (string) file_get_contents($files[0]);
+        self::assertStringContainsString('declare(strict_types=1);', $src);
     }
 
     public function testMakeMigrationRequiresName(): void
@@ -72,5 +79,27 @@ final class MakeCodegenCommandsTest extends TestCase
         self::assertFileExists($file);
         self::assertStringContainsString('namespace App\\Console\\Commands', (string) file_get_contents($file));
         self::assertStringContainsString('final class DemoWidgetCommand', (string) file_get_contents($file));
+    }
+
+    public function testMakeModelScaffoldsFile(): void
+    {
+        $cmd = new MakeModelCommand($this->base);
+        self::assertSame(0, $cmd->run(Input::fromArgv(['vortex', 'make:model', 'Kitten'])));
+
+        $file = $this->base . '/app/Models/Kitten.php';
+        self::assertFileExists($file);
+        $src = (string) file_get_contents($file);
+        self::assertStringContainsString('namespace App\\Models', $src);
+        self::assertStringContainsString('final class Kitten extends Model', $src);
+        self::assertStringNotContainsString('$table', $src);
+    }
+
+    public function testMakeModelWithTableOption(): void
+    {
+        $cmd = new MakeModelCommand($this->base);
+        self::assertSame(0, $cmd->run(Input::fromArgv(['vortex', 'make:model', 'Puppy', '--table=puppies'])));
+
+        $src = (string) file_get_contents($this->base . '/app/Models/Puppy.php');
+        self::assertStringContainsString("\$table = 'puppies'", $src);
     }
 }

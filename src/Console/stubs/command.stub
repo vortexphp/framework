@@ -1,0 +1,28 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Console\Commands;
+
+use Vortex\Console\Command;
+use Vortex\Console\Input;
+
+final class {{CLASS}} extends Command
+{
+    public function __construct(string $basePath)
+    {
+        parent::__construct($basePath);
+    }
+
+    public function description(): string
+    {
+        return 'TODO: one-line description';
+    }
+
+    protected function execute(Input $input): int
+    {
+        $this->info('{{CLASS}} ready.');
+
+        return 0;
+    }
+}

@@ -59,8 +59,8 @@ use Vortex\Support\AppPaths;
 
 $paths = AppPaths::forBase(__DIR__);
 $migrationsDir = $paths->migrationsDirectory(__DIR__);
-// default: __DIR__ . '/db/migrations'
-// override with config/paths.php => ['migrations' => 'custom/path']
+$modelsDir = $paths->modelsDirectory(__DIR__);
+// defaults: db/migrations, app/Models — override with config/paths.php => ['migrations' => '…', 'models' => '…']
 ```
 
 ## PathHelp + JsonHelp examples

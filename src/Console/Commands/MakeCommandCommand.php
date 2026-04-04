@@ -6,6 +6,7 @@ namespace Vortex\Console\Commands;
 
 use Vortex\Console\Command;
 use Vortex\Console\Input;
+use Vortex\Console\Stub;
 
 final class MakeCommandCommand extends Command
 {
@@ -54,7 +55,9 @@ final class MakeCommandCommand extends Command
             return 1;
         }
 
-        $contents = $this->template($className);
+        $contents = Stub::render('command', [
+            'CLASS' => $className,
+        ]);
 
         if (file_put_contents($file, $contents) === false) {
             $this->error('Could not write: ' . $file);
@@ -81,40 +84,5 @@ final class MakeCommandCommand extends Command
         }
 
         return $out;
-    }
-
-    private function template(string $className): string
-    {
-        return <<<PHP
-<?php
-
-declare(strict_types=1);
-
-namespace App\\Console\\Commands;
-
-use Vortex\\Console\\Command;
-use Vortex\\Console\\Input;
-
-final class {$className} extends Command
-{
-    public function __construct(string \$basePath)
-    {
-        parent::__construct(\$basePath);
-    }
-
-    public function description(): string
-    {
-        return 'TODO: one-line description';
-    }
-
-    protected function execute(Input \$input): int
-    {
-        \$this->info('{$className} ready.');
-
-        return 0;
-    }
-}
-
-PHP;
     }
 }

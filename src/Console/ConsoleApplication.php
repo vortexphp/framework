@@ -7,6 +7,7 @@ namespace Vortex\Console;
 use Vortex\Console\Commands\DbCheckCommand;
 use Vortex\Console\Commands\MakeCommandCommand;
 use Vortex\Console\Commands\MakeMigrationCommand;
+use Vortex\Console\Commands\MakeModelCommand;
 use Vortex\Console\Commands\MigrateCommand;
 use Vortex\Console\Commands\DoctorCommand;
 use Vortex\Console\Commands\MigrateDownCommand;
@@ -40,6 +41,7 @@ final class ConsoleApplication
         $app->register(new MigrateCommand($basePath));
         $app->register(new MigrateDownCommand($basePath));
         $app->register(new MakeMigrationCommand($basePath));
+        $app->register(new MakeModelCommand($basePath));
         $app->register(new MakeCommandCommand($basePath));
         $app->register(new ReplCommand($basePath));
         $app->register(new QueueWorkCommand($basePath));
