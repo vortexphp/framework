@@ -7,6 +7,7 @@ namespace Vortex\Queue;
 use InvalidArgumentException;
 use Vortex\Database\Connection;
 use Vortex\Queue\Contracts\Job;
+use Vortex\Queue\Contracts\QueueDriver;
 
 /**
  * SQL-backed FIFO queue: jobs are PHP-serialized {@see Job} instances.
@@ -14,7 +15,7 @@ use Vortex\Queue\Contracts\Job;
  * Expected table (see {@see README.md} in this directory): {@code queue}, {@code payload}, {@code attempts},
  * {@code reserved_at}, {@code available_at}, {@code created_at}.
  */
-final class DatabaseQueue
+final class DatabaseQueue implements QueueDriver
 {
     private readonly string $tableSql;
 
@@ -75,29 +76,21 @@ final class DatabaseQueue
                 return null;
             }
 
-            return new ReservedJob($id, (string) $row['payload'], (int) $row['attempts']);
+            return new ReservedJob($id, (string) $row['payload'], (int) $row['attempts'], $queue);
         });
     }
 
-    /**
-     * @param positive-int $id
-     */
-    public function delete(int $id): void
+    public function delete(ReservedJob $reserved): void
     {
-        $this->db->execute("DELETE FROM {$this->tableSql} WHERE id = ?", [$id]);
+        $this->db->execute("DELETE FROM {$this->tableSql} WHERE id = ?", [$reserved->id]);
     }
 
-    /**
-     * @param positive-int         $id
-     * @param non-negative-int     $attempts      new attempts count after failure
-     * @param non-negative-int     $delaySeconds  delay before the job is due again
-     */
-    public function release(int $id, int $attempts, int $delaySeconds): void
+    public function release(ReservedJob $reserved, int $attempts, int $delaySeconds): void
     {
         $availableAt = time() + max(0, $delaySeconds);
         $this->db->execute(
             "UPDATE {$this->tableSql} SET reserved_at = NULL, attempts = ?, available_at = ? WHERE id = ?",
-            [$attempts, $availableAt, $id],
+            [$attempts, $availableAt, $reserved->id],
         );
     }
 }

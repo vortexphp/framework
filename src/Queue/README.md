@@ -1,8 +1,32 @@
 # Queue module
 
-Database-backed job queue: push serializable {@see \Vortex\Queue\Contracts\Job} objects, process them with `php vortex queue:work` (or embed {@see \Vortex\Queue\DatabaseQueue} in tests).
+Push serializable {@see \Vortex\Queue\Contracts\Job} objects and run them with `php vortex queue:work`. The active backend is {@see \Vortex\Queue\Contracts\QueueDriver}: **database** (default) or **Redis** (`queue.driver`).
 
-## Table
+## Drivers
+
+| `queue.driver` | Class | Notes |
+|----------------|-------|--------|
+| `database` (default) | {@see \Vortex\Queue\DatabaseQueue} | SQL `jobs` table + row reservation / stale reclaim. |
+| `redis` | {@see \Vortex\Queue\RedisQueue} | Lists + delayed sorted sets; requires **ext-redis**. `queue.stale_reserve_seconds` is ignored (POP is the claim). |
+
+Redis config (`config/queue.php` or equivalent):
+
+```php
+'driver' => 'redis',
+'redis' => [
+    'host' => '127.0.0.1',
+    'port' => 6379,
+    'password' => null,
+    'database' => 2,  // use a dedicated DB index for queues
+    'prefix' => 'myapp:q:',
+    'timeout' => 0.0,
+    'persistent' => false,
+],
+```
+
+Connection options mirror the cache Redis store (see `src/Cache/README.md`). **PhpRedisConnect** is shared for both.
+
+## Table (database driver)
 
 Create a `jobs` table (name overridable via config `queue.table`):
 
@@ -22,7 +46,7 @@ For MySQL, use `INT` / `BIGINT` and `AUTO_INCREMENT` instead of `INTEGER PRIMARY
 
 ## Failed jobs table
 
-When a job exceeds `queue.tries`, the worker deletes it from `jobs` and inserts a row into the failed store (if enabled). Suggested schema:
+When a job exceeds `queue.tries`, the worker discards it from the driver (SQL row deleted or Redis POP already done) and inserts a row into the failed store (if enabled). Suggested schema:
 
 ```sql
 CREATE TABLE failed_jobs (
@@ -46,6 +70,8 @@ Set `queue.failed_jobs_table` to `''` (empty string) in `config/queue.php` to sk
 | `queue.stale_reserve_seconds` | `300` | If a worker dies while holding a job, reclaim the row after this many seconds. |
 | `queue.idle_sleep_ms` | `1000` | When `queue:work` is polling and the queue is empty, sleep this long between attempts. |
 | `queue.failed_jobs_table` | `failed_jobs` | Table for permanent failures; use `false` or `''` to disable {@see \Vortex\Queue\FailedJobStore::record()}. |
+| `queue.driver` | `database` | `database` or `redis`. |
+| `queue.redis` | `[]` | Connection array when `queue.driver` is `redis` (see above). |
 
 ## Pushing jobs
 
@@ -89,4 +115,4 @@ The command boots the full application (same database config as HTTP).
 
 ## Direct API
 
-Inject {@see \Vortex\Queue\DatabaseQueue} from the container, or `new DatabaseQueue($connection, 'custom_jobs')` in tests.
+Resolve {@see \Vortex\Queue\Contracts\QueueDriver} from the container, or use {@see \Vortex\Queue\DatabaseQueue} / {@see \Vortex\Queue\RedisQueue} directly in tests.

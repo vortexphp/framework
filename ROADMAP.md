@@ -8,17 +8,18 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **Database queue + worker** — `Vortex\Queue\Contracts\Job`, `DatabaseQueue`, `Queue::push`, `queue:work`, `queue:failed`, `queue:retry` (incl. `all`), `FailedJobStore` + optional `queue.failed_jobs_table`.
 - **Scheduling** — `config/schedule.php` tasks, `Schedule::register()`, five-field cron matching (`CronExpression`), CLI **`schedule:run`**.
 - **Cache: Redis** — `RedisCache` + `cache.stores.*` driver **`redis`** (phpredis / **ext-redis**).
+- **Queue: Redis** — `RedisQueue`, `QueueDriver` contract, `queue.driver` / `queue.redis`, shared `PhpRedisConnect` with cache.
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **Redis queue driver** — or richer cron (lists/ranges), overlap guards, mutex per task; optional Memcached cache store.
+1. **Richer cron / schedule mutex** — cron lists/ranges, overlap guards, optional Redis lock; optional Memcached cache store.
 
 ## Core platform
 
 - **Authentication & authorization** — Shipped for the current scope (session login, remember-me cookie, gates/policies, reset token broker; apps wire mail and routes).
-- **Queues & workers** — Shipped: SQL driver, worker CLI, failed-job persistence + replay. Remaining: Redis (or other) driver if needed.
+- **Queues & workers** — Shipped: SQL + Redis drivers, worker CLI, failed-job persistence + replay.
 - **Scheduling** — Shipped: `schedule:run`, config + programmatic tasks, minimal cron. Remaining: mutex / overlap, optional Redis for distributed locks.
 - **Real-time** — Optional WebSockets/SSE or a thin broadcasting abstraction (channels, publish) if demand appears.
 

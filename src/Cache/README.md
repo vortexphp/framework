@@ -52,3 +52,5 @@ return [
 ```
 
 Legacy single-`driver` `cache.php` files support only `file` and `null`; add **`stores`** for Redis.
+
+Redis connections are created with **`Vortex\Support\PhpRedisConnect::connect()`** (shared with the queue Redis driver).

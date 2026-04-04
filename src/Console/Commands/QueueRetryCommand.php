@@ -9,7 +9,7 @@ use Vortex\Console\Command;
 use Vortex\Console\Input;
 use Vortex\Console\Term;
 use Vortex\Queue\Contracts\Job;
-use Vortex\Queue\DatabaseQueue;
+use Vortex\Queue\Contracts\QueueDriver;
 use Vortex\Queue\FailedJobStore;
 
 /**
@@ -30,7 +30,7 @@ final class QueueRetryCommand extends Command
 
     public function description(): string
     {
-        return 'Push failed job payload(s) back onto the jobs table (id or "all").';
+        return 'Push failed job payload(s) back onto the queue (id or "all").';
     }
 
     protected function execute(Input $input): int
@@ -50,8 +50,8 @@ final class QueueRetryCommand extends Command
             return 1;
         }
 
-        /** @var DatabaseQueue $queue */
-        $queue = $this->app()->container()->make(DatabaseQueue::class);
+        /** @var QueueDriver $queue */
+        $queue = $this->app()->container()->make(QueueDriver::class);
 
         try {
             if ($tokens[0] === 'all') {
@@ -72,7 +72,7 @@ final class QueueRetryCommand extends Command
         }
     }
 
-    private function retryOne(DatabaseQueue $queue, FailedJobStore $store, int $id): int
+    private function retryOne(QueueDriver $queue, FailedJobStore $store, int $id): int
     {
         $row = $store->find($id);
         if ($row === null) {
@@ -94,7 +94,7 @@ final class QueueRetryCommand extends Command
         return 0;
     }
 
-    private function retryAll(DatabaseQueue $queue, FailedJobStore $store): int
+    private function retryAll(QueueDriver $queue, FailedJobStore $store): int
     {
         $rows = $store->allForRetry();
         if ($rows === []) {

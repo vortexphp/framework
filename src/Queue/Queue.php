@@ -8,9 +8,10 @@ use RuntimeException;
 use Vortex\AppContext;
 use Vortex\Config\Repository;
 use Vortex\Queue\Contracts\Job;
+use Vortex\Queue\Contracts\QueueDriver;
 
 /**
- * Static entry to the database queue (same instance as container resolution).
+ * Static entry to the configured {@see QueueDriver}.
  */
 final class Queue
 {
@@ -27,10 +28,10 @@ final class Queue
         return is_string($v) && $v !== '' ? $v : 'default';
     }
 
-    public static function driver(): DatabaseQueue
+    public static function driver(): QueueDriver
     {
         try {
-            return AppContext::container()->make(DatabaseQueue::class);
+            return AppContext::container()->make(QueueDriver::class);
         } catch (RuntimeException) {
             throw new RuntimeException('Application context is not initialized; call Queue::push only after Application::boot().');
         }

@@ -22,8 +22,11 @@ use Vortex\Http\Session;
 use Vortex\Http\SessionManager;
 use Vortex\I18n\Translator;
 use Vortex\Mail\MailFactory;
+use Vortex\Queue\Contracts\QueueDriver;
 use Vortex\Queue\DatabaseQueue;
 use Vortex\Queue\FailedJobStore;
+use Vortex\Queue\RedisQueue;
+use Vortex\Support\PhpRedisConnect;
 use Vortex\Routing\RouteDiscovery;
 use Vortex\Routing\Router;
 use Vortex\Schedule\Schedule;
@@ -64,6 +67,22 @@ final class Application
                 $c->make(Connection::class),
                 is_string($table) && $table !== '' ? $table : 'jobs',
             );
+        });
+        $container->singleton(QueueDriver::class, static function (Container $c): QueueDriver {
+            $name = Repository::get('queue.driver', 'database');
+            if ($name === 'redis') {
+                /** @var array<string, mixed> $redisCfg */
+                $redisCfg = Repository::get('queue.redis', []);
+                if (! is_array($redisCfg)) {
+                    $redisCfg = [];
+                }
+                $p = $redisCfg['prefix'] ?? 'vortex:q:';
+                $prefix = is_string($p) && $p !== '' ? $p : 'vortex:q:';
+
+                return new RedisQueue(PhpRedisConnect::connect($redisCfg), $prefix);
+            }
+
+            return $c->make(DatabaseQueue::class);
         });
         $container->singleton(FailedJobStore::class, static function (Container $c): FailedJobStore {
             $t = Repository::get('queue.failed_jobs_table', 'failed_jobs');

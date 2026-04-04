@@ -50,7 +50,7 @@ final class DatabaseQueueTest extends TestCase
         $un->handle();
 
         self::assertSame(7, DatabaseQueueCountingJob::$total);
-        $this->queue->delete($reserved->id);
+        $this->queue->delete($reserved);
 
         self::assertNull($this->queue->reserve('default', 300));
     }
@@ -67,7 +67,7 @@ final class DatabaseQueueTest extends TestCase
 
         $first = $this->queue->reserve('default', 300);
         self::assertNotNull($first);
-        $this->queue->release($first->id, 1, 0);
+        $this->queue->release($first, 1, 0);
 
         $second = $this->queue->reserve('default', 300);
         self::assertNotNull($second);

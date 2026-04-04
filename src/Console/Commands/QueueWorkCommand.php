@@ -10,13 +10,13 @@ use Vortex\Console\Command;
 use Vortex\Console\Input;
 use Vortex\Console\Term;
 use Vortex\Queue\Contracts\Job;
-use Vortex\Queue\DatabaseQueue;
+use Vortex\Queue\Contracts\QueueDriver;
 use Vortex\Queue\FailedJobStore;
 use Vortex\Queue\Queue;
 use Vortex\Support\Log;
 
 /**
- * Polls the database jobs table, runs one job at a time. Pass {@code once} to process at most one job and exit.
+ * Polls the configured queue driver (SQL or Redis), runs one job at a time. Pass {@code once} for a single iteration.
  *
  * Tokens: optional queue name (default from config {@code queue.default}), and/or {@code once}.
  */
@@ -35,7 +35,7 @@ final class QueueWorkCommand extends Command
 
     public function description(): string
     {
-        return 'Run queued jobs from the SQL jobs table (poll until interrupted, or pass "once" for a single attempt).';
+        return 'Run queued jobs from the configured driver (database or Redis; pass "once" for one batch).';
     }
 
     protected function execute(Input $input): int
@@ -52,8 +52,8 @@ final class QueueWorkCommand extends Command
         }
 
         $container = $this->app()->container();
-        /** @var DatabaseQueue $driver */
-        $driver = $container->make(DatabaseQueue::class);
+        /** @var QueueDriver $driver */
+        $driver = $container->make(QueueDriver::class);
         /** @var FailedJobStore $failedJobs */
         $failedJobs = $container->make(FailedJobStore::class);
 
@@ -83,17 +83,17 @@ final class QueueWorkCommand extends Command
                         'id' => $reserved->id,
                         'type' => is_object($job) ? $job::class : gettype($job),
                     ]);
-                    $driver->delete($reserved->id);
+                    $driver->delete($reserved);
                 } else {
                     $job->handle();
-                    $driver->delete($reserved->id);
+                    $driver->delete($reserved);
                     fwrite(STDERR, Term::style('1;32', 'Processed job') . " #{$reserved->id}\n");
                 }
             } catch (Throwable $e) {
                 Log::exception($e);
                 $attempts = $reserved->attempts + 1;
                 if ($attempts >= $maxTries) {
-                    $driver->delete($reserved->id);
+                    $driver->delete($reserved);
                     if ($failedJobs->isRecording()) {
                         try {
                             $failedJobs->record($queue, $reserved->payload, $e);
@@ -107,7 +107,7 @@ final class QueueWorkCommand extends Command
                     );
                 } else {
                     $delay = min(120, 10 * $attempts);
-                    $driver->release($reserved->id, $attempts, $delay);
+                    $driver->release($reserved, $attempts, $delay);
                     fwrite(
                         STDERR,
                         Term::style('1;33', 'Released job') . " #{$reserved->id} (attempt {$attempts}/{$maxTries}, retry in {$delay}s)\n",

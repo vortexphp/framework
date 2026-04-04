@@ -158,7 +158,7 @@ $result = Validator::make($data, [
 
 ### Queue
 
-- Implement `Vortex\Queue\Contracts\Job`, push with `Vortex\Queue\Queue::push()` after boot, and add a `jobs` table (see `src/Queue/README.md`).
+- Implement `Vortex\Queue\Contracts\Job`, push with `Vortex\Queue\Queue::push()` after boot. Default driver uses a SQL `jobs` table; set `queue.driver` to `redis` and `queue.redis` for a Redis-backed `QueueDriver` (see `src/Queue/README.md`).
 - Optional `failed_jobs` table and `queue:failed` / `queue:retry` for dead-letter handling (see `src/Queue/README.md`).
 - Run `php vortex queue:work` (add `once` to process one job and exit).
 
