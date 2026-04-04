@@ -157,4 +157,43 @@ final class JsonShapeTest extends TestCase
         ];
         self::assertFalse(JsonShape::validate($data, $shape)->failed());
     }
+
+    public function testListOfPrimitiveInts(): void
+    {
+        $shape = ['ids' => JsonShape::listOfPrimitive('int')];
+        self::assertFalse(JsonShape::validate(['ids' => [1, 2, 3]], $shape)->failed());
+
+        $bad = JsonShape::validate(['ids' => [1, 'two', 3]], $shape);
+        self::assertTrue($bad->failed());
+        self::assertNotNull($bad->first('ids.1'));
+    }
+
+    public function testListOfPrimitiveAllowsNullElementsWhenOptionalType(): void
+    {
+        $shape = ['vals' => JsonShape::listOfPrimitive('?int')];
+        self::assertFalse(JsonShape::validate(['vals' => [1, null, 3]], $shape)->failed());
+    }
+
+    public function testListOfPrimitiveRejectsNonList(): void
+    {
+        $r = JsonShape::validate(['tags' => 'a'], ['tags' => JsonShape::listOfPrimitive('string')]);
+        self::assertTrue($r->failed());
+        self::assertStringContainsString('list', (string) $r->first('tags'));
+    }
+
+    public function testListOfPrimitiveUnsupportedElementTypeThrows(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        JsonShape::listOfPrimitive('object');
+    }
+
+    public function testNestedListOfPrimitiveInsideObject(): void
+    {
+        $shape = [
+            'body' => JsonShape::object([
+                'scores' => JsonShape::listOfPrimitive('number'),
+            ]),
+        ];
+        self::assertFalse(JsonShape::validate(['body' => ['scores' => [1, 2.5]]], $shape)->failed());
+    }
 }

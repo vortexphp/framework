@@ -15,6 +15,7 @@ use Vortex\Validation\ValidationResult;
  *   (prefix {@code ?} for optional keys; {@code null} skips type check when optional), or
  * - {@see object() nested object} (recursive shapes).
  * - {@see listOf() list of objects} with the same object schema per index (errors use {@code items.0.field} paths).
+ * - {@see listOfPrimitive() list of primitives} (errors use {@code ids.2} paths).
  *
  * Note: JSON {@code {}} and {@code []} both decode to PHP {@code []}; nested {@code object()} treats empty {@code []} as an empty object.
  */
@@ -54,6 +55,29 @@ final class JsonShape
     public static function listOfObjects(array $fields, bool $optional = false): array
     {
         return self::listOf(self::object($fields), $optional);
+    }
+
+    /**
+     * Sequential list where every item matches a primitive JSON type (not {@code object}, {@code list}, or {@code array}).
+     * Use {@code ?type} (e.g. {@code ?int}) to allow {@code null} elements.
+     *
+     * @return array{_shape: 'list', optional: bool, elementType: string, elementOptional?: bool}
+     */
+    public static function listOfPrimitive(string $elementTypeSpec, bool $optional = false): array
+    {
+        [$elementOptional, $type] = self::parseSpec($elementTypeSpec);
+        if (! in_array($type, ['string', 'int', 'float', 'bool', 'number'], true)) {
+            throw new InvalidArgumentException(
+                'JsonShape::listOfPrimitive() supports string, int, float, bool, and number only.',
+            );
+        }
+
+        return [
+            '_shape' => 'list',
+            'optional' => $optional,
+            'elementType' => $type,
+            'elementOptional' => $elementOptional,
+        ];
     }
 
     /**
@@ -157,12 +181,6 @@ final class JsonShape
     private static function walkList(array $data, string $field, string $path, array $spec, array &$errors): void
     {
         $optional = $spec['optional'] ?? false;
-        $elementObject = $spec['element'];
-        if (($elementObject['_shape'] ?? '') !== 'object') {
-            throw new InvalidArgumentException('JsonShape list element must be JsonShape::object([...]).');
-        }
-        /** @var array<string, string|array> $innerFields */
-        $innerFields = $elementObject['fields'];
 
         if (! array_key_exists($field, $data)) {
             if (! $optional) {
@@ -183,6 +201,30 @@ final class JsonShape
 
             return;
         }
+
+        if (array_key_exists('elementType', $spec)) {
+            $type = (string) $spec['elementType'];
+            $elementOptional = (bool) ($spec['elementOptional'] ?? false);
+            foreach ($value as $i => $item) {
+                $ip = $path . '.' . $i;
+                if ($elementOptional && $item === null) {
+                    continue;
+                }
+                $msg = self::typeMismatch($ip, $item, $type);
+                if ($msg !== null) {
+                    $errors[$ip] = $msg;
+                }
+            }
+
+            return;
+        }
+
+        $elementObject = $spec['element'] ?? [];
+        if (($elementObject['_shape'] ?? '') !== 'object') {
+            throw new InvalidArgumentException('JsonShape list element must be JsonShape::object([...]).');
+        }
+        /** @var array<string, string|array> $innerFields */
+        $innerFields = $elementObject['fields'];
 
         foreach ($value as $i => $item) {
             $ip = $path . '.' . $i;

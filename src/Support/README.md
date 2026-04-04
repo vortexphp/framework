@@ -87,6 +87,10 @@ $rows = JsonShape::validate(
     ['rows' => [['id' => 1]]],
     ['rows' => JsonShape::listOfObjects(['id' => 'int'])],
 );
+$tags = JsonShape::validate(
+    ['tags' => ['a', 'b']],
+    ['tags' => JsonShape::listOfPrimitive('string')],
+);
 ```
 
 ## Other helpers
