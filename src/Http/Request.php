@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vortex\Http;
 
 use Vortex\Support\JsonHelp;
+use Vortex\Validation\Validator;
 
 final class Request
 {
@@ -135,6 +136,41 @@ final class Request
     public static function wantsJson(): bool
     {
         return self::current()->detectWantsJson();
+    }
+
+    /**
+     * Run {@see Validator::make} on query string merged with body (body wins on key conflicts).
+     * Returns {@see Response::validationFailed()} when invalid, or {@code null} when valid.
+     *
+     * @param array<string, string|\Vortex\Validation\Rule> $rules
+     * @param array<string, string> $messages
+     * @param array<string, string> $attributes
+     */
+    public function validationResponse(array $rules, array $messages = [], array $attributes = []): ?Response
+    {
+        $result = Validator::make($this->mergeInput(), $rules, $messages, $attributes);
+        if (! $result->failed()) {
+            return null;
+        }
+
+        return Response::validationFailed($result);
+    }
+
+    /**
+     * Like {@see validationResponse()} but uses only the request body (ignores query string).
+     *
+     * @param array<string, string|\Vortex\Validation\Rule> $rules
+     * @param array<string, string> $messages
+     * @param array<string, string> $attributes
+     */
+    public function bodyValidationResponse(array $rules, array $messages = [], array $attributes = []): ?Response
+    {
+        $result = Validator::make($this->body, $rules, $messages, $attributes);
+        if (! $result->failed()) {
+            return null;
+        }
+
+        return Response::validationFailed($result);
     }
 
     public static function isSecure(): bool
