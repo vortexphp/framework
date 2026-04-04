@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Vortex\Database;
 
+use DateTime;
+use DateTimeImmutable;
+use DateTimeInterface;
+use InvalidArgumentException;
+use JsonException;
 use LogicException;
 use Vortex\AppContext;
 
@@ -16,6 +21,14 @@ abstract class Model
     protected static array $fillable = [];
 
     protected static bool $timestamps = true;
+
+    /**
+     * Attribute casts: key => type. Supported: {@code int}, {@code float}, {@code bool}, {@code string},
+     * {@code array} / {@code json}, {@code datetime}.
+     *
+     * @var array<string, string>
+     */
+    protected static array $casts = [];
 
     /** @var array<string, list<object>> Observers keyed by concrete model class name. */
     private static array $observerRegistry = [];
@@ -130,7 +143,7 @@ abstract class Model
     {
         $m = new static();
         foreach ($row as $k => $v) {
-            $m->{$k} = $v;
+            $m->{$k} = static::castFromDatabase((string) $k, $v);
         }
 
         return $m;
@@ -167,6 +180,10 @@ abstract class Model
         $filtered = static::onlyFillable($attributes);
         foreach (static::excludedFromUpdate() as $key) {
             unset($filtered[$key]);
+        }
+
+        foreach ($filtered as $key => $value) {
+            $filtered[$key] = static::castForDatabase((string) $key, $value);
         }
 
         if ($filtered === []) {
@@ -336,14 +353,18 @@ abstract class Model
     {
         $vars = get_object_vars($this);
         if (static::$fillable === []) {
-            return $vars;
+            $attrs = $vars;
+        } else {
+            $attrs = [];
+            foreach (static::$fillable as $key) {
+                if (array_key_exists($key, $vars)) {
+                    $attrs[$key] = $vars[$key];
+                }
+            }
         }
 
-        $attrs = [];
-        foreach (static::$fillable as $key) {
-            if (array_key_exists($key, $vars)) {
-                $attrs[$key] = $vars[$key];
-            }
+        foreach ($attrs as $key => $value) {
+            $attrs[$key] = static::castForDatabase((string) $key, $value);
         }
 
         return $attrs;
@@ -388,5 +409,120 @@ abstract class Model
                 $observer->{$event}($this);
             }
         }
+    }
+
+    private static function castFromDatabase(string $key, mixed $value): mixed
+    {
+        if ($value === null || ! isset(static::$casts[$key])) {
+            return $value;
+        }
+
+        $type = strtolower(trim(static::$casts[$key]));
+
+        return match ($type) {
+            'int', 'integer' => (int) $value,
+            'float', 'double' => (float) $value,
+            'string' => (string) $value,
+            'bool', 'boolean' => static::castToBool($value),
+            'array', 'json' => static::castJsonFromDatabase($value),
+            'datetime' => static::castDateTimeFromDatabase($value),
+            default => throw new InvalidArgumentException('Unsupported cast [' . $type . '] for attribute [' . $key . '].'),
+        };
+    }
+
+    private static function castForDatabase(string $key, mixed $value): mixed
+    {
+        if ($value === null || ! isset(static::$casts[$key])) {
+            return $value;
+        }
+
+        $type = strtolower(trim(static::$casts[$key]));
+
+        return match ($type) {
+            'int', 'integer' => (int) $value,
+            'float', 'double' => (float) $value,
+            'string' => (string) $value,
+            'bool', 'boolean' => ((bool) $value) ? 1 : 0,
+            'array', 'json' => static::castJsonForDatabase($value),
+            'datetime' => static::castDateTimeForDatabase($value),
+            default => throw new InvalidArgumentException('Unsupported cast [' . $type . '] for attribute [' . $key . '].'),
+        };
+    }
+
+    private static function castToBool(mixed $value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_int($value) || is_float($value)) {
+            return $value !== 0;
+        }
+
+        if ($value === '') {
+            return false;
+        }
+
+        $filtered = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+
+        return $filtered ?? ((string) $value !== '0');
+    }
+
+    /**
+     * @return array<mixed>|null
+     */
+    private static function castJsonFromDatabase(mixed $value): ?array
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+        if ($value === '') {
+            return null;
+        }
+
+        try {
+            /** @var array<mixed>|null $decoded */
+            $decoded = json_decode((string) $value, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            return null;
+        }
+
+        return $decoded;
+    }
+
+    private static function castJsonForDatabase(mixed $value): string
+    {
+        if ($value instanceof \JsonSerializable) {
+            return json_encode($value->jsonSerialize(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+        }
+        if (is_array($value)) {
+            return json_encode($value, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+        }
+
+        return (string) $value;
+    }
+
+    private static function castDateTimeFromDatabase(mixed $value): ?DateTimeImmutable
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        if ($value instanceof DateTimeImmutable) {
+            return $value;
+        }
+        if ($value instanceof DateTime) {
+            return DateTimeImmutable::createFromMutable($value);
+        }
+
+        return new DateTimeImmutable((string) $value);
+    }
+
+    private static function castDateTimeForDatabase(mixed $value): string
+    {
+        if ($value instanceof DateTimeInterface) {
+            return $value->format('Y-m-d H:i:s');
+        }
+
+        return (string) $value;
     }
 }

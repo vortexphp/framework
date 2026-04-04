@@ -54,6 +54,12 @@ Post::observe(PostObserver::class);
 
 `Model::create()`, `save()`, and `delete()` dispatch these events. Static helpers such as **`updateRecord`** / **`deleteId`** do not.
 
+## Attribute casts
+
+Declare **`protected static array $casts`** (`attribute => type`). On load (`fromRow` / `find` / query results), values are converted for use in PHP; on **`save()`** and **`updateRecord()`**, they are converted for the database.
+
+Supported types: **`int`**, **`float`**, **`bool`**, **`string`**, **`json`** / **`array`** (JSON text in SQL), **`datetime`** (`DateTimeImmutable` in memory; `Y-m-d H:i:s` when stored). Unknown cast names throw **`InvalidArgumentException`**.
+
 ## Migrations
 
 - Migration files return classes extending `Schema\Migration`.
