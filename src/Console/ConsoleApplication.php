@@ -51,6 +51,7 @@ final class ConsoleApplication
         $app->register(new QueueRetryCommand());
         $app->register(new ScheduleRunCommand());
 
+        CommandDiscovery::registerAppCommands($app);
         RouteDiscovery::loadConsoleRoutes($app, $basePath);
 
         return $app;

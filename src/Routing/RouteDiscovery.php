@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Vortex\Routing;
 
 use Vortex\Console\ConsoleApplication;
-use RuntimeException;
+use Vortex\Vortex;
 
 final class RouteDiscovery
 {
@@ -33,7 +33,8 @@ final class RouteDiscovery
     }
 
     /**
-     * Load every `app/Routes/*Console.php`. Each file must return `callable(ConsoleApplication): void`.
+     * Load every `app/Routes/*Console.php`. Each file is {@see require}d in sorted order; register commands with
+     * {@see \Vortex\Vortex}; the active {@see ConsoleApplication} is set before the first file runs.
      */
     public static function loadConsoleRoutes(ConsoleApplication $app, string $basePath): void
     {
@@ -42,15 +43,13 @@ final class RouteDiscovery
             return;
         }
 
-        foreach (self::consoleRouteFiles($dir) as $file) {
-            /** @var mixed $register */
-            $register = require $file;
-            if (! is_callable($register)) {
-                throw new RuntimeException(
-                    sprintf('Console route file %s must return a callable(ConsoleApplication): void.', $file),
-                );
+        Vortex::bindConsoleApplication($app);
+        try {
+            foreach (self::consoleRouteFiles($dir) as $file) {
+                require $file;
             }
-            $register($app);
+        } finally {
+            Vortex::bindConsoleApplication(null);
         }
     }
 

@@ -7,7 +7,7 @@ CLI entrypoint, command base class, and built-in commands.
 ```php
 <?php
 
-namespace App\Console;
+namespace App\Console\Commands;
 
 use Vortex\Console\Command;
 use Vortex\Console\Input;
@@ -45,21 +45,23 @@ Codegen uses **`*.stub`** files under **`src/Console/stubs/`** — e.g. **`comma
 - **`make:migration <name>`** — creates `YYYYMMDDHHMMSS_<name>.php` under the migrations directory (from **`config/paths.php`** or default **`db/migrations`**).
 - **`make:model <Name> [--table=…] [-m|--migration]`** — creates **`app/Models/{Name}.php`** (namespace **`App\Models`**; **`config/paths.php`** key **`models`** overrides the folder). Omit **`--table`** to match **`Model::table()`** inference. **`-m`** adds **`create_{table}_table`** migration with **`id`** and **`timestamps()`**.
 - **`make:controller <Name>`** — creates an invokable **`App\Http\Controllers\{Name}Controller`** (or preserves a **`Controller`** suffix); folder from **`config/paths.php`** **`controllers`** or default **`app/Http/Controllers`**.
-- **`make:command <name>`** — creates **`app/Console/Commands/{Name}Command.php`**; register the class from **`app/Routes/*Console.php`** as in the example below.
+- **`make:command <name>`** — creates under the commands directory from **`config/paths.php`** key **`commands`** (default **`app/Console/Commands`**). **`CommandDiscovery`** registers concrete **`Command`** subclasses there at CLI boot (recursive; filename must end with **`Command.php`**; class must live in **`App\Console\Commands\…`** matching the subpath).
 
-## Register from console routes
+## Optional: register from console routes
 
-**`ConsoleApplication::register()`** assigns the project root via **`Command::setBasePath()`** (use **`$command->basePath()`** in **`execute()`**). No need to pass the path into your command’s constructor.
-
-`app/Routes/AppConsole.php`:
+Commands outside that tree (or overrides) use **`app/Routes/*Console.php`**, same idea as HTTP **`Route`** registration:
 
 ```php
 <?php
 
-use App\Console\HelloCommand;
-use Vortex\Console\ConsoleApplication;
+declare(strict_types=1);
 
-return static function (ConsoleApplication $app): void {
-    $app->register(new HelloCommand());
-};
+use App\Console\SendNewsletterCommand;
+use Vortex\Vortex;
+
+Vortex::command(SendNewsletterCommand::class);
 ```
+
+Pass a **`class-string<Command>`** or an existing **`Command`** instance. Later registrations replace the same CLI name.
+
+**`Vortex::command()`** delegates to **`ConsoleApplication::register()`**, which sets **`Command::setBasePath()`** (use **`$command->basePath()`** in **`execute()`**).

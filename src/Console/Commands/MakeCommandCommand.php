@@ -7,12 +7,13 @@ namespace Vortex\Console\Commands;
 use Vortex\Console\Command;
 use Vortex\Console\Input;
 use Vortex\Console\Stub;
+use Vortex\Support\AppPaths;
 
 final class MakeCommandCommand extends Command
 {
     public function description(): string
     {
-        return 'Scaffold a Command subclass under app/Console/Commands (register it from app/Routes/*Console.php).';
+        return 'Scaffold a Command subclass under the configured commands directory (auto-registered at CLI boot).';
     }
 
     protected function execute(Input $input): int
@@ -34,8 +35,8 @@ final class MakeCommandCommand extends Command
 
         $className = str_ends_with($base, 'Command') ? $base : $base . 'Command';
 
-        $relDir = 'app/Console/Commands';
-        $dir = $this->basePath() . '/' . $relDir;
+        $paths = AppPaths::forBase($this->basePath());
+        $dir = $paths->commandsDirectory($this->basePath());
         if (! is_dir($dir) && ! mkdir($dir, 0775, true) && ! is_dir($dir)) {
             $this->error('Cannot create directory: ' . $dir);
 
@@ -60,7 +61,6 @@ final class MakeCommandCommand extends Command
         }
 
         $this->info('Created ' . $file);
-        $this->line('Register with: $app->register(new \\App\\Console\\Commands\\' . $className . '());');
 
         return 0;
     }

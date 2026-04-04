@@ -61,7 +61,8 @@ $paths = AppPaths::forBase(__DIR__);
 $migrationsDir = $paths->migrationsDirectory(__DIR__);
 $modelsDir = $paths->modelsDirectory(__DIR__);
 $controllersDir = $paths->controllersDirectory(__DIR__);
-// defaults: db/migrations, app/Models, app/Http/Controllers — override in config/paths.php
+$commandsDir = $paths->commandsDirectory(__DIR__);
+// defaults: db/migrations, app/Models, app/Http/Controllers, app/Console/Commands — override in config/paths.php
 ```
 
 ## PathHelp + JsonHelp examples

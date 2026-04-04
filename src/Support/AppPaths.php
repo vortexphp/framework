@@ -8,7 +8,7 @@ use InvalidArgumentException;
 
 /**
  * Project path layout. Optional **`config/paths.php`** may return
- * **`['migrations' => '…', 'models' => '…', 'controllers' => '…']`** (paths relative to project root).
+ * **`['migrations' => '…', 'models' => '…', 'controllers' => '…', 'commands' => '…']`** (paths relative to project root).
  */
 final class AppPaths
 {
@@ -16,6 +16,7 @@ final class AppPaths
         private readonly string $migrationsRelative,
         private readonly string $modelsRelative,
         private readonly string $controllersRelative,
+        private readonly string $commandsRelative,
     ) {
     }
 
@@ -26,6 +27,7 @@ final class AppPaths
             'migrations' => 'db/migrations',
             'models' => 'app/Models',
             'controllers' => 'app/Http/Controllers',
+            'commands' => 'app/Console/Commands',
         ];
         $configFile = $basePath . '/config/paths.php';
         if (is_file($configFile)) {
@@ -41,10 +43,13 @@ final class AppPaths
                 if (isset($data['controllers']) && is_string($data['controllers']) && trim($data['controllers']) !== '') {
                     $defaults['controllers'] = self::normalizeRelativeKey($data['controllers'], 'controllers');
                 }
+                if (isset($data['commands']) && is_string($data['commands']) && trim($data['commands']) !== '') {
+                    $defaults['commands'] = self::normalizeRelativeKey($data['commands'], 'commands');
+                }
             }
         }
 
-        return new self($defaults['migrations'], $defaults['models'], $defaults['controllers']);
+        return new self($defaults['migrations'], $defaults['models'], $defaults['controllers'], $defaults['commands']);
     }
 
     private static function normalizeRelativeKey(string $path, string $key): string
@@ -86,5 +91,15 @@ final class AppPaths
     public function controllersRelative(): string
     {
         return $this->controllersRelative;
+    }
+
+    public function commandsDirectory(string $basePath): string
+    {
+        return rtrim($basePath, '/\\') . '/' . $this->commandsRelative;
+    }
+
+    public function commandsRelative(): string
+    {
+        return $this->commandsRelative;
     }
 }

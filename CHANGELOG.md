@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`CommandDiscovery::registerAppCommands()`** — registers concrete **`Command`** classes under **`AppPaths`** **`commands`** (default **`app/Console/Commands`**), recursively. **`ConsoleApplication::boot()`** runs it before **`RouteDiscovery::loadConsoleRoutes()`**.
+- **`AppPaths`:** **`commands`** / **`commandsDirectory()`** / **`commandsRelative()`** (**`config/paths.php`** key **`commands`**).
+- **`Vortex::command()`** on **`Vortex\Vortex`** — application facade for **`app/Routes/*Console.php`** (same role as **`Route`** for HTTP route files). **`bindConsoleApplication()`** is `@internal` for **`RouteDiscovery`**.
+
+### Changed
+
+- **Breaking:** **`app/Routes/*Console.php`** files are **`require`**d like HTTP route files; they must call **`Vortex::command(...)`** instead of returning **`callable(ConsoleApplication): void`**.
+
 ## [0.9.0] - 2026-04-04
 
 ### Changed
@@ -150,7 +160,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking
 
-- **HTTP route files** (`app/Routes/*.php` except `*Console.php`) are **required** at discovery time and must register routes at the top level with `Route::get` / `post` / `add` — no `return static function (): void { … }` wrapper. Console route files still `return callable(ConsoleApplication): void`.
+- **HTTP route files** (`app/Routes/*.php` except `*Console.php`) are **required** at discovery time and must register routes at the top level with `Route::get` / `post` / `add` — no `return static function (): void { … }` wrapper. Console route files returned `callable(ConsoleApplication): void` (later: `Vortex::command()`, see Unreleased).
 
 ### Added
 

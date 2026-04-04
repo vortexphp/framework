@@ -76,26 +76,24 @@ PHP,
 <?php
 declare(strict_types=1);
 use Vortex\Console\Command;
-use Vortex\Console\ConsoleApplication;
+use Vortex\Vortex;
 use Vortex\Console\Input;
-return static function (ConsoleApplication $app): void {
-    $app->register(new class extends Command {
-        public function name(): string
-        {
-            return 'route-discovery-fixture';
-        }
+Vortex::command(new class extends Command {
+    public function name(): string
+    {
+        return 'route-discovery-fixture';
+    }
 
-        public function description(): string
-        {
-            return 'test';
-        }
+    public function description(): string
+    {
+        return 'test';
+    }
 
-        protected function execute(Input $input): int
-        {
-            return 42;
-        }
-    });
-};
+    protected function execute(Input $input): int
+    {
+        return 42;
+    }
+});
 PHP,
         );
 
