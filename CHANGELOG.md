@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **PSR-16 cache:** dependency **`psr/simple-cache`**; **`Vortex\Cache\Psr16Cache`** implements **`Psr\SimpleCache\CacheInterface`** over **`Vortex\Contracts\Cache`**; **`SimpleCacheInvalidArgumentException`** for illegal keys. **`Application`** registers **`CacheInterface`** against the default cache store.
 - **CLI codegen:** **`make:migration`** (timestamped file + anonymous **`Migration`** class stub) and **`make:command`** (**`App\Console\Commands\*Command`** skeleton + registration hint).
 - **HTTP / routing conventions:** abstract **`Vortex\Http\Controller`** with small **`Response`** helpers; invokable controllers (**`Route::get('/path', MyController::class)`** → **`__invoke`**); **`Router::middleware()`** / **`Route::middleware()`** to attach middleware to the route registered immediately before (class names; de-duplicated).
 - **Schema builder:** **`Blueprint`** additions — **`bigInteger`**, **`smallInteger`**, **`decimal`**, **`floatType`**, **`date`**, **`dateTime`**, **`json`**, **`char`**; **`ColumnDefinition::unsigned()`** (MySQL integer family); foreign key **`onUpdate`** actions (**`cascadeOnUpdate`**, **`restrictOnUpdate`**, **`nullOnUpdate`**, **`noActionOnUpdate`**). **`Schema::hasTable()`** for SQLite / MySQL / PostgreSQL.

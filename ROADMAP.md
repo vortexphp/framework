@@ -22,12 +22,13 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **Schema builder** — extra column types (`decimal`, `json`, `date`, `floatType`, `char`, sized integers), `Schema::hasTable`, FK `ON UPDATE`, MySQL `UNSIGNED` on integers.
 - **HTTP controllers** — optional **`Controller`** base + invokable class routes + per-route **`middleware()`** chaining.
 - **CLI codegen** — **`make:migration`**, **`make:command`**.
+- **PSR-16 cache** — **`Psr16Cache`** + container **`Psr\SimpleCache\CacheInterface`**.
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **Data & persistence** — optional PSR-16 **`CacheInterface`** adapter over existing stores.
+1. **ORM / API** — relation conveniences (e.g. **`hasOne`**) or richer model helpers.
 
 ## Core platform
 
@@ -38,7 +39,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 
 ## Data & persistence
 
-- **Cache drivers** — **Redis** (phpredis) and **Memcached** (ext-memcached) behind `Cache`; file + null unchanged. PSR-16 optional later.
+- **Cache drivers** — **Redis** (phpredis) and **Memcached** (ext-memcached) behind `Cache`; file + null unchanged. **PSR-16 `CacheInterface`** via **`Psr16Cache`** on the default store.
 - **ORM depth** — Shipped: model observers, attribute casts, soft deletes, global scopes, batched **`with()`** including nested dot paths. Remaining: relation objects or richer conveniences as needed.
 - **Schema builder** — Shipped: more column types (**`decimal`**, **`json`**, **`date`**, **`floatType`**, integer sizes, **`char`**), **`Schema::hasTable`**, FK **`ON UPDATE`**, MySQL **`UNSIGNED`** on integer columns.
 

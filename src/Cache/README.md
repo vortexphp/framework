@@ -22,6 +22,10 @@ Cache::forget('users.count');
 $claimed = Cache::add('schedule:job:7', 1, 600);
 ```
 
+## PSR-16
+
+**`Psr\SimpleCache\CacheInterface`** is registered in the container as a **`Psr16Cache`** adapter around the default **`Vortex\Contracts\Cache`** store. Inject **`Psr\SimpleCache\CacheInterface`** or construct **`new Psr16Cache(Cache::store())`** for libraries that expect PSR-16. Invalid keys (including empty strings) throw **`Vortex\Cache\SimpleCacheInvalidArgumentException`**.
+
 ## Notes
 
 - `Cache::store('name')` returns a named store from `config/cache.php`.
