@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vortex\Http;
 
 use Vortex\Support\JsonHelp;
+use Vortex\Support\JsonSchemaValidator;
 use Vortex\Support\JsonShape;
 use Vortex\Validation\Validator;
 
@@ -182,6 +183,23 @@ final class Request
     public function bodyShapeResponse(array $shape): ?Response
     {
         $result = JsonShape::validate($this->body, $shape);
+        if (! $result->failed()) {
+            return null;
+        }
+
+        return Response::validationFailed($result);
+    }
+
+    /**
+     * Validate {@see $this->body} with JSON Schema (Draft 3–7 via **`justinrainbow/json-schema`**); returns {@see Response::validationFailed()} or {@code null}.
+     *
+     * Error keys use dot paths aligned with {@see JsonShape} (**{@code items.0.field}**, not JSON Pointer syntax).
+     *
+     * @param array<string, mixed>|object $schema
+     */
+    public function bodyJsonSchemaResponse(array|object $schema): ?Response
+    {
+        $result = JsonSchemaValidator::validateArray($this->body, $schema);
         if (! $result->failed()) {
             return null;
         }

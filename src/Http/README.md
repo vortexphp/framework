@@ -46,6 +46,10 @@ On a **`Request`** instance, **`validationResponse($rules, $messages = [], $attr
 
 **`JsonShape::validate($body, $shape)`** in **`Vortex\Support`** checks required keys and primitive/list/object **`types`** for API JSON (not a full JSON Schema). Use **`JsonShape::object([...], optional: bool)`** for nested objects (dot-path errors, e.g. **`user.email`**). Use **`JsonShape::listOf(JsonShape::object([...]))`** or **`JsonShape::listOfObjects([...])`** for homogeneous object lists (errors like **`items.0.qty`**), and **`JsonShape::listOfPrimitive('int')`** (or **`'?int'`** for nullable elements) for homogeneous primitive lists (errors like **`ids.1`**). **`$request->bodyShapeResponse($shape)`** returns **`Response::validationFailed()`** or **`null`**.
 
+## JSON Schema (decoded array)
+
+**`JsonSchemaValidator::validateArray($body, $schema)`** validates against a JSON Schema (assoc array or decoded object). **`$request->bodyJsonSchemaResponse($schema)`** returns the same **`422`** **`validation_failed`** envelope when invalid. Violation keys are normalized to dot paths (**`items.0.id`**). Prefer **`JsonShape`** when a small structural check is enough; use JSON Schema when you want **`$ref`**, **`oneOf`**, **`format`**, and spec‑driven contracts.
+
 ## API versioning helpers
 
 - **`Request::splitVersionedPath($path)`** — detects **`/v{n}/...`** (case-insensitive **`v`**) and returns `[ version, innerPath ]`.

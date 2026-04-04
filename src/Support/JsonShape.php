@@ -8,7 +8,7 @@ use InvalidArgumentException;
 use Vortex\Validation\ValidationResult;
 
 /**
- * Lightweight structural checks for decoded JSON bodies (assoc arrays). Not JSON Schema.
+ * Lightweight structural checks for decoded JSON bodies (assoc arrays). Not JSON Schema; for spec validation use {@see JsonSchemaValidator}.
  *
  * Shape keys are field names; values are either:
  * - a type string: {@code string}, {@code int}, {@code float}, {@code bool}, {@code number}, {@code array}, {@code list}, {@code object}

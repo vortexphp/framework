@@ -8,6 +8,7 @@
         "php": "^8.2",
         "ext-mbstring": "*",
         "ext-pdo": "*",
+        "justinrainbow/json-schema": "^6",
         "psr/simple-cache": "^3.0",
         "twig/twig": "^3.0"
     },

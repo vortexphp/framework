@@ -26,12 +26,13 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 
 - **API cursor pagination** — **`QueryBuilder::cursorPaginate()`**, **`Cursor`** / **`CursorPaginator`**, **`toApiData()`** for JSON collections with **`Response::apiOk`**.
 - **ORM polymorphic relations** — **`morphTo`**, **`morphMany`**, **`morphOne`** (lazy + eager, nested eager under **`morphTo`** via per–concrete-class grouping).
+- **JSON Schema** — **`justinrainbow/json-schema`**, **`JsonSchemaValidator::validateArray()`**, **`Request::bodyJsonSchemaResponse()`** (request bodies; **`JsonShape`** remains the lightweight default).
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **HTTP & API** — optional JSON Schema validation for request/response (alongside **`JsonShape`**), when apps want a heavier contract layer.
+1. **Container** — optional **`Container::make()`** method injection (constructor + callback hints) or tagged services only if it stays small and justified.
 
 ## Core platform
 
@@ -48,7 +49,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 
 ## HTTP & API
 
-- **API conveniences** — Shipped: **`JsonResource`**, **`Response::apiOk`/`apiError`/`validationFailed`**, **`Request` validation + version + `JsonShape` helpers**, negotiated errors with **`error`** codes; **cursor pagination** (**`cursorPaginate`**, **`CursorPaginator::toApiData()`**). Optional: deeper transform pipelines, full JSON Schema.
+- **API conveniences** — Shipped: **`JsonResource`**, **`Response::apiOk`/`apiError`/`validationFailed`**, **`Request`** validation + version + **`JsonShape`** and JSON Schema (**`JsonSchemaValidator`**, **`Request::bodyJsonSchemaResponse()`**), negotiated errors with **`error`** codes; **cursor pagination** (**`QueryBuilder::cursorPaginate()`**, **`CursorPaginator::toApiData()`**). Optional: deeper transform pipelines, response-side schema checks.
 - **Routing DX** — Shipped: route model binding, custom `bind`, **`Route::resource`**, invokable class routes, **`middleware()`** on the last route, optional **`Controller`** base helpers.
 
 ## Developer experience

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **JSON Schema (request bodies):** dependency **`justinrainbow/json-schema`**; **`Vortex\Support\JsonSchemaValidator::validateArray()`**; **`Request::bodyJsonSchemaResponse()`** returns **`validation_failed`** like **`bodyShapeResponse()`**. Empty PHP array **`[]`** is treated as JSON **`{}`** when the schema root is object-shaped (PHP cannot distinguish them after **`json_decode(..., true)`**). Draft 3–7 as supported by the library.
 - **Polymorphic ORM:** **`Model::morphTo()`**, **`morphMany()`**, **`morphOne()`**; **`Relation::morphTo()`**, **`morphMany()`**, **`morphOne()`** for **`eagerRelations()`**. Eager loads batch on `{name}_type` + `{name}_id`; nested paths after **`morphTo`** run per concrete **`Model`** class.
 - **Cursor pagination (API):** **`Vortex\Pagination\Cursor`** (encode/decode opaque token), **`CursorPaginator`**, **`InvalidCursorException`**, **`QueryBuilder::cursorPaginate()`** (`next_cursor`, **`has_more`**, **`per_page`**; **`ASC`** / **`DESC`** on a single column). **`CursorPaginator::toApiData()`** for **`Response::apiOk()`** payloads.
 - **ORM `hasOne`:** **`Model::hasOne()`**, **`Relation::hasOne()`** eager spec, batched **`with()`** (first related row per parent by **`id`** when duplicates). **`hasMany`**-compatible FK layout on the child.
