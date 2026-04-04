@@ -96,6 +96,8 @@ Shapes:
 - **`['hasMany', Related::class, 'foreign_id', 'local_id?']`**
 - **`['belongsToMany', Related::class, 'pivot_table', 'foreign_pivot_key', 'related_pivot_key', 'parent_key?', 'related_key?']`**
 
+Nested relations use dot paths, for example **`->with(['author.country'])`** or **`->with('comments.author')`**. Each segment must exist on that level’s **`eagerRelations()`** map (or resolve via the per-model relation method when no map entry exists).
+
 ## Migrations
 
 - Migration files return classes extending `Schema\Migration`.

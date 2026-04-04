@@ -132,7 +132,7 @@ abstract class Model
     }
 
     /**
-     * Eager-load definitions for {@see QueryBuilder::with()}. Keys match public relation method names.
+     * Eager-load definitions for {@see QueryBuilder::with()}. Keys match public relation method names (use dot paths for nested eager loads, e.g. {@code author} on the root model and {@code country} on the related author model).
      *
      * Each value is one of:
      * - `['belongsTo', Related::class, foreignKey, ownerKey?]` (owner key defaults to {@code id})

@@ -51,6 +51,8 @@ PHP
         AppContext::set($container);
 
         TestAuthor::connection()->execute('CREATE TABLE test_authors (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        TestCountry::connection()->execute('CREATE TABLE test_countries (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL)');
+        TestAuthor::connection()->execute('ALTER TABLE test_authors ADD COLUMN test_country_id INTEGER');
         TestArticle::connection()->execute(
             'CREATE TABLE test_articles (id INTEGER PRIMARY KEY AUTOINCREMENT, test_author_id INTEGER NOT NULL, title TEXT NOT NULL)'
         );
@@ -171,6 +173,30 @@ PHP
         BadEagerSpecArticle::query()->with(['nope'])->get();
     }
 
+    public function testNestedWithLoadsDeepBelongsTo(): void
+    {
+        $country = TestCountry::create(['code' => 'US']);
+        $author = TestAuthor::create(['name' => 'Eve', 'test_country_id' => (int) $country->id]);
+        TestArticle::create(['test_author_id' => (int) $author->id, 'title' => 'Nested']);
+
+        $articles = TestArticle::query()->orderBy('id')->with(['author.country'])->get();
+        self::assertCount(1, $articles);
+        self::assertInstanceOf(TestAuthor::class, $articles[0]->author ?? null);
+        self::assertInstanceOf(TestCountry::class, $articles[0]->author->country ?? null);
+        self::assertSame('US', (string) ($articles[0]->author->country->code ?? ''));
+
+        $container = AppContext::container();
+        $real = $container->make(Connection::class);
+        $counter = new SqlCountingConnection($real);
+        $container->instance(Connection::class, $counter);
+        try {
+            TestArticle::query()->orderBy('id')->with(['author.country'])->get();
+            self::assertSame(3, $counter->selectCount, 'articles + authors + countries');
+        } finally {
+            $container->instance(Connection::class, $real);
+        }
+    }
+
     private function clearAppContext(): void
     {
         $ref = new \ReflectionClass(AppContext::class);
@@ -183,14 +209,23 @@ PHP
 final class TestAuthor extends Model
 {
     /** @var list<string> */
-    protected static array $fillable = ['name'];
+    protected static array $fillable = ['name', 'test_country_id'];
     protected static bool $timestamps = false;
 
     protected static function eagerRelations(): array
     {
         return [
             'articles' => ['hasMany', TestArticle::class, 'test_author_id'],
+            'country' => ['belongsTo', TestCountry::class, 'test_country_id'],
         ];
+    }
+
+    public function country(): ?TestCountry
+    {
+        /** @var TestCountry|null $c */
+        $c = $this->belongsTo(TestCountry::class, 'test_country_id');
+
+        return $c;
     }
 
     /**
@@ -248,6 +283,15 @@ final class TestTag extends Model
 {
     /** @var list<string> */
     protected static array $fillable = ['label'];
+    protected static bool $timestamps = false;
+}
+
+final class TestCountry extends Model
+{
+    protected static ?string $table = 'test_countries';
+
+    /** @var list<string> */
+    protected static array $fillable = ['code'];
     protected static bool $timestamps = false;
 }
 

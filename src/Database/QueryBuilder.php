@@ -652,15 +652,77 @@ final class QueryBuilder
             return;
         }
 
-        /** @var class-string<Model> $parentClass */
-        $parentClass = $this->modelClass;
-        foreach ($this->withRelations as $relation) {
-            $spec = $parentClass::eagerRelationSpec($relation);
-            if ($spec !== null) {
-                $this->eagerLoadWithSpec($models, $relation, $spec);
+        $this->eagerLoadPathsForModels($models, $this->modelClass, $this->withRelations);
+    }
 
+    /**
+     * @param list<string> $paths Dot-separated relation paths (e.g. {@code author.country}).
+     *
+     * @return array<string, list<string>> First segment => remainder paths to eager-load on the related model.
+     */
+    private function groupEagerPaths(array $paths): array
+    {
+        $grouped = [];
+        foreach ($paths as $raw) {
+            if (! is_string($raw)) {
                 continue;
             }
+            $raw = trim($raw);
+            if ($raw === '') {
+                continue;
+            }
+            $dot = strpos($raw, '.');
+            if ($dot === false) {
+                $first = $raw;
+                $suffix = null;
+            } else {
+                $first = substr($raw, 0, $dot);
+                $suffix = substr($raw, $dot + 1);
+                if ($first === '') {
+                    continue;
+                }
+            }
+            $grouped[$first] ??= [];
+            if ($suffix !== null && $suffix !== '') {
+                $grouped[$first][] = $suffix;
+            }
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * @param list<Model> $models
+     * @param class-string<Model> $modelClass
+     * @param list<string> $paths
+     */
+    private function eagerLoadPathsForModels(array $models, string $modelClass, array $paths): void
+    {
+        if ($models === [] || $paths === []) {
+            return;
+        }
+
+        foreach ($this->groupEagerPaths($paths) as $relation => $nestedSuffixes) {
+            $nestedSuffixes = array_values(array_unique($nestedSuffixes));
+            $this->eagerLoadRelationBranch($models, $modelClass, $relation, $nestedSuffixes);
+        }
+    }
+
+    /**
+     * @param list<Model> $models
+     * @param class-string<Model> $modelClass
+     * @param list<string> $nestedSuffixes Remainders after {@code $relation.} (may be empty).
+     */
+    private function eagerLoadRelationBranch(
+        array $models,
+        string $modelClass,
+        string $relation,
+        array $nestedSuffixes,
+    ): void {
+        $spec = $modelClass::eagerRelationSpec($relation);
+        if ($spec !== null) {
+            $this->eagerLoadWithSpec($models, $relation, $spec, $modelClass);
+        } else {
             foreach ($models as $model) {
                 if (! method_exists($model, $relation)) {
                     continue;
@@ -668,13 +730,79 @@ final class QueryBuilder
                 $model->{$relation} = $model->{$relation}();
             }
         }
+
+        if ($nestedSuffixes === []) {
+            return;
+        }
+
+        $relatedClass = $this->relatedClassFromEagerSpec($spec);
+        $children = $this->collectNestedRelatedModels($models, $relation);
+        if ($children === []) {
+            return;
+        }
+        if ($relatedClass === null) {
+            $relatedClass = $children[0]::class;
+        }
+        $this->eagerLoadPathsForModels($children, $relatedClass, $nestedSuffixes);
+    }
+
+    /**
+     * @param list<mixed>|null $spec
+     *
+     * @return class-string<Model>|null
+     */
+    private function relatedClassFromEagerSpec(?array $spec): ?string
+    {
+        if ($spec === null || ! isset($spec[1]) || ! is_string($spec[1])) {
+            return null;
+        }
+
+        /** @var class-string<Model> */
+        return $spec[1];
+    }
+
+    /**
+     * @param list<Model> $models
+     *
+     * @return list<Model>
+     */
+    private function collectNestedRelatedModels(array $models, string $relation): array
+    {
+        $out = [];
+        $seen = [];
+        foreach ($models as $m) {
+            $rel = $m->{$relation} ?? null;
+            if ($rel === null) {
+                continue;
+            }
+            if (is_array($rel)) {
+                foreach ($rel as $item) {
+                    if ($item instanceof Model) {
+                        $oid = spl_object_id($item);
+                        if (! isset($seen[$oid])) {
+                            $seen[$oid] = true;
+                            $out[] = $item;
+                        }
+                    }
+                }
+            } elseif ($rel instanceof Model) {
+                $oid = spl_object_id($rel);
+                if (! isset($seen[$oid])) {
+                    $seen[$oid] = true;
+                    $out[] = $rel;
+                }
+            }
+        }
+
+        return $out;
     }
 
     /**
      * @param list<Model> $models
      * @param list<mixed> $spec
+     * @param class-string<Model> $onClass
      */
-    private function eagerLoadWithSpec(array $models, string $relation, array $spec): void
+    private function eagerLoadWithSpec(array $models, string $relation, array $spec, string $onClass): void
     {
         $type = $spec[0] ?? null;
         match ($type) {
@@ -682,7 +810,7 @@ final class QueryBuilder
             'hasMany' => $this->eagerLoadHasMany($models, $relation, $spec),
             'belongsToMany' => $this->eagerLoadBelongsToMany($models, $relation, $spec),
             default => throw new InvalidArgumentException(
-                "Invalid eager relation type for \"{$relation}\" on {$this->modelClass}",
+                "Invalid eager relation type for \"{$relation}\" on {$onClass}",
             ),
         };
     }
