@@ -23,6 +23,7 @@ $app->run();
 
 Each top-level module has its own README with real usage snippets:
 
+- `Auth/README.md`
 - `Cache/README.md`
 - `Config/README.md`
 - `Console/README.md`

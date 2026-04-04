@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Vortex\Http;
 
+use Vortex\Auth\AuthorizationException;
 use Vortex\Config\Repository;
 use Vortex\Support\Log;
 use Vortex\View\View;
@@ -37,6 +38,12 @@ final class ErrorRenderer
 
     public function exception(Throwable $e): Response
     {
+        if ($e instanceof AuthorizationException) {
+            $message = $e->getMessage() !== '' ? $e->getMessage() : 'Forbidden';
+
+            return Response::error(403, $message, ['error' => 'forbidden']);
+        }
+
         Log::exception($e);
 
         $debug = (bool) Repository::get('app.debug', false);

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Vortex\View\Twig;
 
+use Vortex\Auth\Auth;
+use Vortex\Auth\Gate;
 use Vortex\Http\Session;
 use Vortex\Support\Benchmark;
 use Vortex\Support\HtmlHelp;
@@ -48,6 +50,16 @@ final class AppTwigExtension extends AbstractExtension
             }),
             new TwigFunction('session_flash', static function (string $key): mixed {
                 return Session::flash($key);
+            }),
+            new TwigFunction('auth_check', static fn (): bool => Auth::check()),
+            new TwigFunction('auth_id', static fn (): ?int => Auth::id()),
+            new TwigFunction('auth_user', static fn (): mixed => Auth::user()),
+            new TwigFunction('gate_allows', static function (string $ability, mixed $context = null): bool {
+                if (func_num_args() < 2) {
+                    return Gate::allows($ability);
+                }
+
+                return Gate::allows($ability, $context);
             }),
         ];
     }

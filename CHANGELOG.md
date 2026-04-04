@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`Vortex\Auth\Auth`** session facade: `loginUsingId`, `login` (`Authenticatable`), `logout`, `check`, `guest`, `id`, `user` with optional `resolveUserUsing` callback; `login` / `loginUsingId` accept `$remember` to set a signed remember cookie; `logout` clears the remember cookie.
+- **`Vortex\Auth\Gate`** — `define()`, `policy()`, `allows()`, `denies()`, `authorize()`; **`AuthorizationException`** for denied `authorize()` (rendered as 403 by **`ErrorRenderer`** without the full exception log path).
+- **`Vortex\Auth\RememberCookie`** — signed payload (requires **`APP_KEY`**); **`Vortex\Auth\Middleware\RememberFromCookie`** restores session from the cookie.
+- **`Vortex\Auth\PasswordResetBroker`** — hashed single-use tokens in SQL with configurable table name and TTL; `issueToken`, `tokenValid`, `verifyAndConsume`, `purgeExpired`.
+- **Middleware:** **`Vortex\Auth\Middleware\Authenticate`** (JSON 401 or redirect to `auth.login_path`); abstract **`AuthorizeAbility`** (403 when `Gate::denies`).
+- **`Vortex\Auth\AuthConfig`** reads `auth.login_path`, `auth.remember_cookie`, `auth.remember_seconds`, `auth.cookie_secure`, `auth.cookie_samesite` when the config repository is available.
+- Twig **`gate_allows`** (optional second argument for policy context; one-argument calls delegate to `Gate::allows($ability)` only).
+
 ## [0.7.0] - 2026-04-03
 
 ### Added

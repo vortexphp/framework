@@ -58,6 +58,16 @@ Route::get('/posts/{id}', static function (string $id): Response {
 Route::post('/posts', static fn (): Response => Response::redirect(route('home')));
 ```
 
+### Authentication
+
+- Use `Vortex\Auth\Auth` for session login/logout (`$remember` on login sets a signed cookie; requires `APP_KEY`).
+- `Vortex\Auth\Gate` for abilities and model policies; `Vortex\Auth\AuthorizationException` when using `Gate::authorize()` (handled as 403).
+- Middleware: `Authenticate`, `RememberFromCookie`, and subclass `AuthorizeAbility` for route protection; list class names under `app.middleware`.
+- `Vortex\Auth\PasswordResetBroker` for opaque reset tokens stored in SQL (you send mail and define routes).
+- In Twig: `auth_check()`, `auth_id()`, `auth_user()`, `gate_allows(...)`.
+
+See `src/Auth/README.md` for config keys, middleware order, and a minimal `password_reset_tokens` schema.
+
 ### Database model
 
 - Extend `Vortex\Database\Model` and declare `$fillable` for mass assignment.

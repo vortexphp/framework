@@ -79,7 +79,7 @@ use Vortex\Console\Command;
 use Vortex\Console\ConsoleApplication;
 use Vortex\Console\Input;
 return static function (ConsoleApplication $app): void {
-    $app->register(new class implements Command {
+    $app->register(new class($app->basePath()) extends Command {
         public function name(): string
         {
             return 'route-discovery-fixture';
@@ -90,7 +90,7 @@ return static function (ConsoleApplication $app): void {
             return 'test';
         }
 
-        public function run(Input $input): int
+        protected function execute(Input $input): int
         {
             return 42;
         }
