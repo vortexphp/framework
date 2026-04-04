@@ -9,6 +9,8 @@ use Vortex\Console\Input;
 
 final class {{CLASS}} extends Command
 {
+    // Other stubs in this folder: controller.stub — php ... make:controller <Name>
+
     public function description(): string
     {
         return 'TODO: one-line description';

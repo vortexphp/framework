@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **`Input`:** **`arguments()`**, **`argument()`**, **`options()`**, **`option()`**, **`hasOption()`**, **`flag()`** — POSIX-style long/short options, **`--`**, while **`tokens()`** remains the raw **`argv[2..]`** slice.
-- **Console codegen stubs:** **`Vortex\Console\Stub`** renders **`src/Console/stubs/*.stub`** with **`{{PLACEHOLDER}}`** substitution. **`make:command`**, **`make:migration`**, and new **`make:model`** use stubs. **`make:model`** writes **`App\Models\*`** (optional **`--table=`**); **`AppPaths`** adds **`models`** (default **`app/Models`**) alongside **`migrations`**.
+- **Console codegen stubs:** **`Vortex\Console\Stub`** renders **`src/Console/stubs/*.stub`** with **`{{PLACEHOLDER}}`** substitution. **`make:command`**, **`make:migration`**, **`make:model`**, and **`make:controller`** (invokable **`App\Http\Controllers\*`**, stub **`controller.stub`**) use stubs. **`make:model`** writes **`App\Models\*`** (optional **`--table=`**); **`AppPaths`** adds **`models`** (default **`app/Models`**) and **`controllers`** (default **`app/Http/Controllers`**) alongside **`migrations`**.
 
 ## [0.8.0] - 2026-04-04
 

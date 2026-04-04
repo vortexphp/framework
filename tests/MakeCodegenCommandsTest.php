@@ -6,6 +6,7 @@ namespace Vortex\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Vortex\Console\Commands\MakeCommandCommand;
+use Vortex\Console\Commands\MakeControllerCommand;
 use Vortex\Console\Commands\MakeMigrationCommand;
 use Vortex\Console\Commands\MakeModelCommand;
 use Vortex\Console\Input;
@@ -41,6 +42,11 @@ final class MakeCodegenCommandsTest extends TestCase
                 unlink($f);
             }
             @rmdir($this->base . '/app/Models');
+            foreach (glob($this->base . '/app/Http/Controllers/*.php') ?: [] as $f) {
+                unlink($f);
+            }
+            @rmdir($this->base . '/app/Http/Controllers');
+            @rmdir($this->base . '/app/Http');
             @rmdir($this->base . '/app');
             if (is_file($this->base . '/config/paths.php')) {
                 unlink($this->base . '/config/paths.php');
@@ -82,6 +88,20 @@ final class MakeCodegenCommandsTest extends TestCase
         self::assertFileExists($file);
         self::assertStringContainsString('namespace App\\Console\\Commands', (string) file_get_contents($file));
         self::assertStringContainsString('final class DemoWidgetCommand', (string) file_get_contents($file));
+    }
+
+    public function testMakeControllerScaffoldsInvokableController(): void
+    {
+        $cmd = new MakeControllerCommand();
+        $cmd->setBasePath($this->base);
+        self::assertSame(0, $cmd->run(Input::fromArgv(['vortex', 'make:controller', 'home'])));
+
+        $file = $this->base . '/app/Http/Controllers/HomeController.php';
+        self::assertFileExists($file);
+        $src = (string) file_get_contents($file);
+        self::assertStringContainsString('namespace App\\Http\\Controllers', $src);
+        self::assertStringContainsString('final class HomeController extends Controller', $src);
+        self::assertStringContainsString('function __invoke(Request $request): Response', $src);
     }
 
     public function testMakeModelScaffoldsFile(): void

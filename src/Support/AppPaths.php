@@ -8,13 +8,14 @@ use InvalidArgumentException;
 
 /**
  * Project path layout. Optional **`config/paths.php`** may return
- * **`['migrations' => '…', 'models' => '…']`** (paths relative to project root).
+ * **`['migrations' => '…', 'models' => '…', 'controllers' => '…']`** (paths relative to project root).
  */
 final class AppPaths
 {
     private function __construct(
         private readonly string $migrationsRelative,
         private readonly string $modelsRelative,
+        private readonly string $controllersRelative,
     ) {
     }
 
@@ -24,6 +25,7 @@ final class AppPaths
         $defaults = [
             'migrations' => 'db/migrations',
             'models' => 'app/Models',
+            'controllers' => 'app/Http/Controllers',
         ];
         $configFile = $basePath . '/config/paths.php';
         if (is_file($configFile)) {
@@ -36,10 +38,13 @@ final class AppPaths
                 if (isset($data['models']) && is_string($data['models']) && trim($data['models']) !== '') {
                     $defaults['models'] = self::normalizeRelativeKey($data['models'], 'models');
                 }
+                if (isset($data['controllers']) && is_string($data['controllers']) && trim($data['controllers']) !== '') {
+                    $defaults['controllers'] = self::normalizeRelativeKey($data['controllers'], 'controllers');
+                }
             }
         }
 
-        return new self($defaults['migrations'], $defaults['models']);
+        return new self($defaults['migrations'], $defaults['models'], $defaults['controllers']);
     }
 
     private static function normalizeRelativeKey(string $path, string $key): string
@@ -71,5 +76,15 @@ final class AppPaths
     public function modelsRelative(): string
     {
         return $this->modelsRelative;
+    }
+
+    public function controllersDirectory(string $basePath): string
+    {
+        return rtrim($basePath, '/\\') . '/' . $this->controllersRelative;
+    }
+
+    public function controllersRelative(): string
+    {
+        return $this->controllersRelative;
     }
 }

@@ -15,6 +15,13 @@ final class StubTest extends TestCase
         $out = Stub::render('command', ['CLASS' => 'DemoCommand']);
         self::assertStringContainsString('final class DemoCommand extends Command', $out);
         self::assertStringNotContainsString('{{CLASS}}', $out);
+
+        $ctrl = Stub::render('controller', [
+            'NAMESPACE' => 'App\\Http\\Controllers',
+            'CLASS' => 'DemoController',
+        ]);
+        self::assertStringContainsString('namespace App\\Http\\Controllers', $ctrl);
+        self::assertStringContainsString('final class DemoController extends Controller', $ctrl);
     }
 
     public function testMissingStubThrows(): void

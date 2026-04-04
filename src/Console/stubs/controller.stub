@@ -1,0 +1,17 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{NAMESPACE}};
+
+use Vortex\Http\Controller;
+use Vortex\Http\Request;
+use Vortex\Http\Response;
+
+final class {{CLASS}} extends Controller
+{
+    public function __invoke(Request $request): Response
+    {
+        return $this->json(['ok' => true]);
+    }
+}

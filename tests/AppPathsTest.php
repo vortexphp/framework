@@ -18,8 +18,10 @@ final class AppPathsTest extends TestCase
             $paths = AppPaths::forBase($base);
             self::assertSame('db/migrations', $paths->migrationsRelative());
             self::assertSame('app/Models', $paths->modelsRelative());
+            self::assertSame('app/Http/Controllers', $paths->controllersRelative());
             self::assertStringEndsWith('/db/migrations', str_replace('\\', '/', $paths->migrationsDirectory($base)));
             self::assertStringEndsWith('/app/Models', str_replace('\\', '/', $paths->modelsDirectory($base)));
+            self::assertStringEndsWith('/app/Http/Controllers', str_replace('\\', '/', $paths->controllersDirectory($base)));
         } finally {
             @rmdir($base);
         }
@@ -31,12 +33,13 @@ final class AppPathsTest extends TestCase
         mkdir($base . '/config', 0700, true);
         file_put_contents(
             $base . '/config/paths.php',
-            "<?php\n\ndeclare(strict_types=1);\n\nreturn [\n    'migrations' => 'schema/migrations',\n    'models' => 'src/Domain/Models',\n];\n",
+            "<?php\n\ndeclare(strict_types=1);\n\nreturn [\n    'migrations' => 'schema/migrations',\n    'models' => 'src/Domain/Models',\n    'controllers' => 'src/Http/Controllers',\n];\n",
         );
         try {
             $paths = AppPaths::forBase($base);
             self::assertSame('schema/migrations', $paths->migrationsRelative());
             self::assertSame('src/Domain/Models', $paths->modelsRelative());
+            self::assertSame('src/Http/Controllers', $paths->controllersRelative());
         } finally {
             unlink($base . '/config/paths.php');
             @rmdir($base . '/config');
