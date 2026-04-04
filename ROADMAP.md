@@ -8,13 +8,14 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **Database queue + worker** — `Vortex\Queue\Contracts\Job`, `DatabaseQueue`, `Queue::push`, `queue:work`, `queue:failed`, `queue:retry` (incl. `all`), `FailedJobStore` + optional `queue.failed_jobs_table`.
 - **Scheduling** — `config/schedule.php` tasks, `Schedule::register()`, five-field cron matching (`CronExpression`), CLI **`schedule:run`**.
 - **Cache: Redis** — `RedisCache` + `cache.stores.*` driver **`redis`** (phpredis / **ext-redis**).
+- **Cache: Memcached** — `MemcachedCache` + driver **`memcached`** (**ext-memcached**).
 - **Queue: Redis** — `RedisQueue`, `QueueDriver` contract, `queue.driver` / `queue.redis`, shared `PhpRedisConnect` with cache.
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **Optional Memcached cache store** — driver behind `Cache` / named stores if demand appears.
+1. **ORM depth (slice)** — model lifecycle hooks / observers, attribute casting, soft deletes, or global scopes (pick one small vertical first).
 
 ## Core platform
 
@@ -25,7 +26,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 
 ## Data & persistence
 
-- **Cache drivers** — **Redis** via phpredis behind `Cache`; file + null unchanged. Memcached / PSR-16 optional later.
+- **Cache drivers** — **Redis** (phpredis) and **Memcached** (ext-memcached) behind `Cache`; file + null unchanged. PSR-16 optional later.
 - **ORM depth** — Model observers/events, attribute casting, soft deletes, global scopes; richer relation API (lazy load, constrained eager loads) beyond current helpers + `QueryBuilder::with()`.
 - **Schema builder** — Broader column/index/foreign-key coverage and dialect-specific pieces where needed.
 

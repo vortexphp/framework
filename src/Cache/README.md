@@ -25,7 +25,7 @@ $claimed = Cache::add('schedule:job:7', 1, 600);
 ## Notes
 
 - `Cache::store('name')` returns a named store from `config/cache.php`.
-- Built-in drivers: `file`, `null`, and **`redis`** (requires **ext-redis** / phpredis). Use the multi-store config shape:
+- Built-in drivers: `file`, `null`, **`redis`** (ext-redis / phpredis), and **`memcached`** (ext-memcached). Use the multi-store config shape:
 
 ```php
 <?php
@@ -50,10 +50,19 @@ return [
             'timeout' => 0.0,
             'persistent' => false,
         ],
+        'memcached' => [
+            'driver' => 'memcached',
+            'host' => '127.0.0.1',
+            'port' => 11211,
+            'prefix' => 'app:',
+            'persistent_id' => '',
+        ],
     ],
 ];
 ```
 
-Legacy single-`driver` `cache.php` files support only `file` and `null`; add **`stores`** for Redis.
+Legacy single-`driver` `cache.php` files support only `file` and `null`; add **`stores`** for Redis or Memcached.
 
-Redis connections are created with **`Vortex\Support\PhpRedisConnect::connect()`** (shared with the queue Redis driver).
+Redis connections use **`PhpRedisConnect::connect()`** (shared with the queue Redis driver). Memcached pools use **`PhpMemcachedConnect::connect()`**; optional **`servers`** (`[[host, port, weight], ...]`) instead of `host`/`port`, optional **`sasl_user`** / **`sasl_password`**.
+
+For **`memcached`**, **`clear()`** increments an internal generation so existing prefixed keys are abandoned (they age out via LRU); it does not call `flushAll`.

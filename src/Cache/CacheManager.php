@@ -6,6 +6,7 @@ namespace Vortex\Cache;
 
 use InvalidArgumentException;
 use Vortex\Config\Repository;
+use Vortex\Support\PhpMemcachedConnect;
 use Vortex\Support\PhpRedisConnect;
 use Vortex\Contracts\Cache as CacheContract;
 
@@ -85,7 +86,7 @@ class CacheManager
     {
         $driver = strtolower(trim((string) ($cacheConfig['driver'] ?? 'file')));
         if ($driver !== 'file' && $driver !== 'null') {
-            throw new InvalidArgumentException("Unsupported cache driver [{$driver}]. Use file or null in legacy config, or the cache.stores map with driver redis.");
+            throw new InvalidArgumentException("Unsupported cache driver [{$driver}]. Use file or null in legacy config, or the cache.stores map (redis, memcached, …).");
         }
 
         $path = isset($cacheConfig['path']) && is_string($cacheConfig['path']) && $cacheConfig['path'] !== ''
@@ -155,6 +156,10 @@ class CacheManager
             ),
             'redis' => new RedisCache(
                 PhpRedisConnect::connect($cfg),
+                isset($cfg['prefix']) && is_string($cfg['prefix']) && $cfg['prefix'] !== '' ? $cfg['prefix'] : 'vortex:',
+            ),
+            'memcached' => new MemcachedCache(
+                PhpMemcachedConnect::connect($cfg),
                 isset($cfg['prefix']) && is_string($cfg['prefix']) && $cfg['prefix'] !== '' ? $cfg['prefix'] : 'vortex:',
             ),
             default => throw new InvalidArgumentException('Unknown cache driver [' . $driver . '].'),
