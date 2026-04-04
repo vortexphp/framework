@@ -34,7 +34,7 @@ abstract class Command
     final public function run(Input $input): int
     {
         if ($this->shouldBootApplication()) {
-            $this->bootApplication();
+            $this->application ??= $this->bootApplication();
         }
 
         return $this->execute($input);

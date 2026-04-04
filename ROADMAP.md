@@ -21,7 +21,7 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **Testing helpers** — `Vortex\Testing\KernelBrowser` for in-process `Kernel` dispatch + `Container::has()`.
 - **Schema builder** — extra column types (`decimal`, `json`, `date`, `floatType`, `char`, sized integers), `Schema::hasTable`, FK `ON UPDATE`, MySQL `UNSIGNED` on integers.
 - **HTTP controllers** — optional **`Controller`** base + invokable class routes + per-route **`middleware()`** chaining.
-- **CLI codegen** — **`make:migration`**, **`make:command`**.
+- **CLI codegen** — **`make:migration`**, **`make:command`**, **`repl`** (debug / **`--force`**).
 - **PSR-16 cache** — **`Psr16Cache`** + container **`Psr\SimpleCache\CacheInterface`**.
 
 - **API cursor pagination** — **`QueryBuilder::cursorPaginate()`**, **`Cursor`** / **`CursorPaginator`**, **`toApiData()`** for JSON collections with **`Response::apiOk`**.
@@ -34,7 +34,7 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **Tooling** — optional small **REPL** / debug helpers (no full debugbar by default).
+1. **Packaging** — document **composer.lock** policy for skeleton apps vs library consumers.
 
 ## Core platform
 
@@ -57,7 +57,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 ## Developer experience
 
 - **Container** — Shipped: **`make()`** constructor injection (incl. union / nullable / **`self`–`parent`**), **`call()`**, **`has()`**, **`tag()`** / **`tagged()`**, **`bindFor()`** (contextual). Optional: deeper binding DSL if justified.
-- **Tooling** — Shipped: **`make:migration`** / **`make:command`**. Optional: small REPL / debug helpers (no full debugbar by default).
+- **Tooling** — Shipped: **`make:migration`**, **`make:command`**, **`repl`** (eval loop; not PsySH). Optional: richer debugging (no full debugbar by default).
 - **Framework test kit** — Shipped: **`KernelBrowser`** (`Vortex\Testing`) for consuming app PHPUnit tests.
 
 ## Packaging

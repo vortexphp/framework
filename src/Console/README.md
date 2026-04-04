@@ -27,7 +27,7 @@ final class HelloCommand extends Command
 }
 ```
 
-Built-in commands include **`migrate`**, **`migrate:down`**, **`make:migration`**, **`make:command`**, **`queue:work`**, **`queue:failed`**, **`queue:retry`** (see `src/Queue/README.md`), **`schedule:run`** (see `src/Schedule/README.md`), **`doctor`**, **`serve`**, and others — run `php your-entrypoint help` for the list.
+Built-in commands include **`migrate`**, **`migrate:down`**, **`make:migration`**, **`make:command`**, **`repl`** (PHP eval with `$app` / `$c`; requires **`app.debug`** or **`--force`**), **`queue:work`**, **`queue:failed`**, **`queue:retry`** (see `src/Queue/README.md`), **`schedule:run`** (see `src/Schedule/README.md`), **`doctor`**, **`serve`**, and others — run `php your-entrypoint help` for the list.
 
 - **`make:migration <name>`** — creates `YYYYMMDDHHMMSS_<name>.php` under the migrations directory (from **`config/paths.php`** or default **`db/migrations`**).
 - **`make:command <name>`** — creates **`app/Console/Commands/{Name}Command.php`**; register the class from **`app/Routes/*Console.php`** as in the example below.
