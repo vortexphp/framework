@@ -137,6 +137,7 @@ abstract class Model
      * Each value is one of:
      * - `['belongsTo', Related::class, foreignKey, ownerKey?]` (owner key defaults to {@code id}), or {@see Relation::belongsTo()}
      * - `['hasMany', Related::class, foreignKey, localKey?]` (local key defaults to {@code id}), or {@see Relation::hasMany()}
+     * - `['hasOne', Related::class, foreignKey, localKey?]` (same as {@code hasMany} shape; at most one related model per parent), or {@see Relation::hasOne()}
      * - `['belongsToMany', Related::class, pivotTable, foreignPivotKey, relatedPivotKey, parentKey?, relatedKey?]`, or {@see Relation::belongsToMany()}
      *
      * @return array<string, list<mixed>>
@@ -326,6 +327,26 @@ abstract class Model
 
         /** @var list<TRelated> $related */
         $related = $relatedClass::query()->where($foreignKey, $localId)->get();
+
+        return $related;
+    }
+
+    /**
+     * Resolve a one-to-one relation where the related model holds the foreign key (inverse of {@see belongsTo()} on the child).
+     *
+     * @template TRelated of Model
+     * @param class-string<TRelated> $relatedClass
+     * @return TRelated|null
+     */
+    protected function hasOne(string $relatedClass, string $foreignKey, string $localKey = 'id'): ?Model
+    {
+        $localId = $this->{$localKey} ?? null;
+        if ($localId === null || $localId === '') {
+            return null;
+        }
+
+        /** @var TRelated|null $related */
+        $related = $relatedClass::query()->where($foreignKey, $localId)->orderBy('id')->first();
 
         return $related;
     }

@@ -818,6 +818,7 @@ final class QueryBuilder
         match ($type) {
             'belongsTo' => $this->eagerLoadBelongsTo($models, $relation, $spec),
             'hasMany' => $this->eagerLoadHasMany($models, $relation, $spec),
+            'hasOne' => $this->eagerLoadHasOne($models, $relation, $spec),
             'belongsToMany' => $this->eagerLoadBelongsToMany($models, $relation, $spec),
             default => throw new InvalidArgumentException(
                 "Invalid eager relation type for \"{$relation}\" on {$onClass}",
@@ -909,6 +910,52 @@ final class QueryBuilder
         foreach ($models as $m) {
             $id = (string) ($m->{$localKey} ?? '');
             $m->{$relation} = $grouped[$id] ?? [];
+        }
+    }
+
+    /**
+     * @param list<Model> $models
+     * @param list<mixed> $spec
+     */
+    private function eagerLoadHasOne(array $models, string $relation, array $spec): void
+    {
+        if (! isset($spec[1], $spec[2]) || ! is_string($spec[1]) || ! is_string($spec[2])) {
+            throw new InvalidArgumentException("Invalid hasOne spec for \"{$relation}\"");
+        }
+        /** @var class-string<Model> $relatedClass */
+        $relatedClass = $spec[1];
+        $foreignKey = $spec[2];
+        $localKey = isset($spec[3]) && is_string($spec[3]) && $spec[3] !== '' ? $spec[3] : 'id';
+
+        $parentIds = [];
+        foreach ($models as $m) {
+            $v = $m->{$localKey} ?? null;
+            if ($v !== null && $v !== '') {
+                $parentIds[] = $v;
+            }
+        }
+        $parentIds = array_values(array_unique($parentIds, SORT_REGULAR));
+        if ($parentIds === []) {
+            foreach ($models as $m) {
+                $m->{$relation} = null;
+            }
+
+            return;
+        }
+
+        /** @var list<Model> $children */
+        $children = $relatedClass::query()->whereIn($foreignKey, $parentIds)->orderBy('id')->get();
+        $grouped = [];
+        foreach ($children as $c) {
+            $pk = (string) ($c->{$foreignKey} ?? '');
+            if ($pk === '' || isset($grouped[$pk])) {
+                continue;
+            }
+            $grouped[$pk] = $c;
+        }
+        foreach ($models as $m) {
+            $id = (string) ($m->{$localKey} ?? '');
+            $m->{$relation} = $grouped[$id] ?? null;
         }
     }
 

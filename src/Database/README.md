@@ -94,11 +94,12 @@ Shapes:
 
 - **`['belongsTo', Related::class, 'foreign_id', 'owner_id?']`**
 - **`['hasMany', Related::class, 'foreign_id', 'local_id?']`**
+- **`['hasOne', Related::class, 'foreign_id', 'local_id?']`** — same FK layout as **`hasMany`**; eager load assigns a single related model (lowest **`id`** if duplicates exist).
 - **`['belongsToMany', Related::class, 'pivot_table', 'foreign_pivot_key', 'related_pivot_key', 'parent_key?', 'related_key?']`**
 
 Nested relations use dot paths, for example **`->with(['author.country'])`** or **`->with('comments.author')`**. Each segment must exist on that level’s **`eagerRelations()`** map (or resolve via the per-model relation method when no map entry exists).
 
-Use **`Vortex\Database\Relation::belongsTo()`**, **`Relation::hasMany()`**, and **`Relation::belongsToMany()`** to build the same arrays as the bullet shapes above (keeps keys aligned with your **`belongsTo()`** / **`hasMany()`** calls).
+Use **`Vortex\Database\Relation::belongsTo()`**, **`Relation::hasMany()`**, **`Relation::hasOne()`**, and **`Relation::belongsToMany()`** to build the same arrays as the bullet shapes above (keeps keys aligned with your relation methods).
 
 **`$model->load('author')`** or **`$model->load(['author', 'tags'])`** runs the same batched loader as **`QueryBuilder::with()`** on a single instance (including nested dot paths). For arbitrary collections, **`$query->with([...])->eagerLoadOnto($models)`** applies queued relation paths without executing the query.
 

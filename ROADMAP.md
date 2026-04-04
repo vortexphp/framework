@@ -14,7 +14,7 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **ORM: casts** — `$casts` on `Model` for int/float/bool/string/json/datetime.
 - **ORM: soft deletes** — `$softDeletes` / `$deletedAtColumn`, query scopes, `restore` / `forceDelete`.
 - **ORM: global scopes** — `addGlobalScope`, `withoutGlobalScope(s)`; `find` / `all` via `query()`.
-- **ORM: eager `with()`** — `Model::eagerRelations()` for batched `belongsTo` / `hasMany` / `belongsToMany`; nested dot paths (e.g. `author.country`); **`Relation`** spec builders, **`Model::load()`**, **`QueryBuilder::eagerLoadOnto()`**.
+- **ORM: eager `with()`** — `Model::eagerRelations()` for batched `belongsTo` / `hasMany` / `hasOne` / `belongsToMany`; nested dot paths (e.g. `author.country`); **`Relation`** spec builders, **`Model::load()`**, **`QueryBuilder::eagerLoadOnto()`**.
 - **Routing: model binding** — `Router::model` / `Router::bind` (+ `Route::model` / `Route::bind`); missing model or `null` resolver → 404.
 - **Routing: resource groups** — `Router::resource` / `Route::resource` (REST index/store/show/update/destroy; optional create/edit).
 - **HTTP: JSON API envelope** — `Response::apiOk` / `apiError`, `JsonResource`, `validationFailed(ValidationResult)`, `Request::validationResponse` / `bodyValidationResponse`, **`JsonShape`** / **`object`** / **`listOfObjects`** / **`listOfPrimitive`** + **`bodyShapeResponse`**, path/header API version helpers (`splitVersionedPath`, `resolvedApiVersion`, `withPath`), aligned negotiation errors + `ErrorRenderer` JSON.
@@ -28,7 +28,7 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **ORM / API** — relation conveniences (e.g. **`hasOne`**) or richer model helpers.
+1. **HTTP & API** — cursor-based pagination helper for JSON collections (optional).
 
 ## Core platform
 
@@ -40,7 +40,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 ## Data & persistence
 
 - **Cache drivers** — **Redis** (phpredis) and **Memcached** (ext-memcached) behind `Cache`; file + null unchanged. **PSR-16 `CacheInterface`** via **`Psr16Cache`** on the default store.
-- **ORM depth** — Shipped: model observers, attribute casts, soft deletes, global scopes, batched **`with()`** including nested dot paths. Remaining: relation objects or richer conveniences as needed.
+- **ORM depth** — Shipped: model observers, attribute casts, soft deletes, global scopes, batched **`with()`** (**`hasOne`** included), nested dot paths. Remaining: polymorphic / richer conveniences as needed.
 - **Schema builder** — Shipped: more column types (**`decimal`**, **`json`**, **`date`**, **`floatType`**, integer sizes, **`char`**), **`Schema::hasTable`**, FK **`ON UPDATE`**, MySQL **`UNSIGNED`** on integer columns.
 
 ## HTTP & API

@@ -64,6 +64,9 @@ PHP
         TestArticle::connection()->execute(
             'CREATE TABLE test_article_tags (id INTEGER PRIMARY KEY AUTOINCREMENT, test_article_id INTEGER NOT NULL, test_tag_id INTEGER NOT NULL)'
         );
+        TestAuthor::connection()->execute(
+            'CREATE TABLE test_author_profiles (id INTEGER PRIMARY KEY AUTOINCREMENT, test_author_id INTEGER NOT NULL, bio TEXT NOT NULL)'
+        );
     }
 
     protected function tearDown(): void
@@ -222,6 +225,45 @@ PHP
         self::assertSame('CA', (string) ($fresh->author->country->code ?? ''));
     }
 
+    public function testHasOneLazyAndEager(): void
+    {
+        $author = TestAuthor::create(['name' => 'Ivy']);
+        $profile = TestAuthorProfile::create(['test_author_id' => (int) $author->id, 'bio' => 'Hello']);
+
+        $p = $author->profile();
+        self::assertInstanceOf(TestAuthorProfile::class, $p);
+        self::assertSame('Hello', (string) ($p->bio ?? ''));
+
+        $fresh = TestAuthor::find((int) $author->id);
+        self::assertNotNull($fresh);
+        $authors = TestAuthor::query()->where('id', (int) $author->id)->with(['profile'])->get();
+        self::assertCount(1, $authors);
+        self::assertInstanceOf(TestAuthorProfile::class, $authors[0]->profile ?? null);
+        self::assertSame((int) $profile->id, (int) ($authors[0]->profile->id ?? 0));
+    }
+
+    public function testHasOneEagerUsesBatchedQuery(): void
+    {
+        $a1 = TestAuthor::create(['name' => 'J1']);
+        $a2 = TestAuthor::create(['name' => 'J2']);
+        TestAuthorProfile::create(['test_author_id' => (int) $a1->id, 'bio' => 'p1']);
+        TestAuthorProfile::create(['test_author_id' => (int) $a2->id, 'bio' => 'p2']);
+
+        $container = AppContext::container();
+        $real = $container->make(Connection::class);
+        $counter = new SqlCountingConnection($real);
+        $container->instance(Connection::class, $counter);
+        try {
+            $authors = TestAuthor::query()->whereIn('id', [(int) $a1->id, (int) $a2->id])->orderBy('id')->with(['profile'])->get();
+            self::assertCount(2, $authors);
+            self::assertSame('p1', (string) ($authors[0]->profile->bio ?? ''));
+            self::assertSame('p2', (string) ($authors[1]->profile->bio ?? ''));
+            self::assertSame(2, $counter->selectCount, 'authors + profiles');
+        } finally {
+            $container->instance(Connection::class, $real);
+        }
+    }
+
     public function testEagerLoadOntoMaterializedModels(): void
     {
         $author = TestAuthor::create(['name' => 'Hank']);
@@ -256,6 +298,7 @@ final class TestAuthor extends Model
         return [
             'articles' => Relation::hasMany(TestArticle::class, 'test_author_id'),
             'country' => Relation::belongsTo(TestCountry::class, 'test_country_id'),
+            'profile' => Relation::hasOne(TestAuthorProfile::class, 'test_author_id'),
         ];
     }
 
@@ -277,6 +320,23 @@ final class TestAuthor extends Model
 
         return $articles;
     }
+
+    public function profile(): ?TestAuthorProfile
+    {
+        /** @var TestAuthorProfile|null $p */
+        $p = $this->hasOne(TestAuthorProfile::class, 'test_author_id');
+
+        return $p;
+    }
+}
+
+final class TestAuthorProfile extends Model
+{
+    protected static ?string $table = 'test_author_profiles';
+
+    /** @var list<string> */
+    protected static array $fillable = ['test_author_id', 'bio'];
+    protected static bool $timestamps = false;
 }
 
 final class TestArticle extends Model

@@ -38,6 +38,20 @@ final class Relation
     }
 
     /**
+     * Parent has one related row (same FK layout as {@see hasMany()}; eager load keeps the first row per parent by {@code id}).
+     *
+     * @param class-string<Model> $related
+     *
+     * @return list<mixed>
+     */
+    public static function hasOne(string $related, string $foreignKey, string $localKey = 'id'): array
+    {
+        return $localKey === 'id'
+            ? ['hasOne', $related, $foreignKey]
+            : ['hasOne', $related, $foreignKey, $localKey];
+    }
+
+    /**
      * @param class-string<Model> $related
      *
      * @return list<mixed>
