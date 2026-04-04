@@ -131,6 +131,32 @@ abstract class Model
         return static::$timestamps;
     }
 
+    /**
+     * Eager-load definitions for {@see QueryBuilder::with()}. Keys match public relation method names.
+     *
+     * Each value is one of:
+     * - `['belongsTo', Related::class, foreignKey, ownerKey?]` (owner key defaults to {@code id})
+     * - `['hasMany', Related::class, foreignKey, localKey?]` (local key defaults to {@code id})
+     * - `['belongsToMany', Related::class, pivotTable, foreignPivotKey, relatedPivotKey, parentKey?, relatedKey?]`
+     *
+     * @return array<string, list<mixed>>
+     */
+    protected static function eagerRelations(): array
+    {
+        return [];
+    }
+
+    /**
+     * @internal
+     * @return list<mixed>|null
+     */
+    public static function eagerRelationSpec(string $name): ?array
+    {
+        $map = static::eagerRelations();
+
+        return $map[$name] ?? null;
+    }
+
     public static function table(): string
     {
         if (static::$table !== null && static::$table !== '') {

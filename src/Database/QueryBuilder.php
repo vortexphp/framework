@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Vortex\Database;
 
+use InvalidArgumentException;
 use Vortex\Pagination\Paginator;
 
 /**
@@ -651,13 +652,184 @@ final class QueryBuilder
             return;
         }
 
-        foreach ($models as $model) {
-            foreach ($this->withRelations as $relation) {
-                if (!method_exists($model, $relation)) {
+        /** @var class-string<Model> $parentClass */
+        $parentClass = $this->modelClass;
+        foreach ($this->withRelations as $relation) {
+            $spec = $parentClass::eagerRelationSpec($relation);
+            if ($spec !== null) {
+                $this->eagerLoadWithSpec($models, $relation, $spec);
+
+                continue;
+            }
+            foreach ($models as $model) {
+                if (! method_exists($model, $relation)) {
                     continue;
                 }
                 $model->{$relation} = $model->{$relation}();
             }
+        }
+    }
+
+    /**
+     * @param list<Model> $models
+     * @param list<mixed> $spec
+     */
+    private function eagerLoadWithSpec(array $models, string $relation, array $spec): void
+    {
+        $type = $spec[0] ?? null;
+        match ($type) {
+            'belongsTo' => $this->eagerLoadBelongsTo($models, $relation, $spec),
+            'hasMany' => $this->eagerLoadHasMany($models, $relation, $spec),
+            'belongsToMany' => $this->eagerLoadBelongsToMany($models, $relation, $spec),
+            default => throw new InvalidArgumentException(
+                "Invalid eager relation type for \"{$relation}\" on {$this->modelClass}",
+            ),
+        };
+    }
+
+    /**
+     * @param list<Model> $models
+     * @param list<mixed> $spec
+     */
+    private function eagerLoadBelongsTo(array $models, string $relation, array $spec): void
+    {
+        if (! isset($spec[1], $spec[2]) || ! is_string($spec[1]) || ! is_string($spec[2])) {
+            throw new InvalidArgumentException("Invalid belongsTo spec for \"{$relation}\"");
+        }
+        /** @var class-string<Model> $relatedClass */
+        $relatedClass = $spec[1];
+        $foreignKey = $spec[2];
+        $ownerKey = isset($spec[3]) && is_string($spec[3]) && $spec[3] !== '' ? $spec[3] : 'id';
+
+        $ids = [];
+        foreach ($models as $m) {
+            $v = $m->{$foreignKey} ?? null;
+            if ($v !== null && $v !== '') {
+                $ids[] = $v;
+            }
+        }
+        $ids = array_values(array_unique($ids, SORT_REGULAR));
+        if ($ids === []) {
+            foreach ($models as $m) {
+                $m->{$relation} = null;
+            }
+
+            return;
+        }
+
+        /** @var list<Model> $related */
+        $related = $relatedClass::query()->whereIn($ownerKey, $ids)->get();
+        $byOwner = [];
+        foreach ($related as $rm) {
+            $byOwner[(string) ($rm->{$ownerKey} ?? '')] = $rm;
+        }
+        foreach ($models as $m) {
+            $fk = $m->{$foreignKey} ?? null;
+            $m->{$relation} = ($fk !== null && $fk !== '')
+                ? ($byOwner[(string) $fk] ?? null)
+                : null;
+        }
+    }
+
+    /**
+     * @param list<Model> $models
+     * @param list<mixed> $spec
+     */
+    private function eagerLoadHasMany(array $models, string $relation, array $spec): void
+    {
+        if (! isset($spec[1], $spec[2]) || ! is_string($spec[1]) || ! is_string($spec[2])) {
+            throw new InvalidArgumentException("Invalid hasMany spec for \"{$relation}\"");
+        }
+        /** @var class-string<Model> $relatedClass */
+        $relatedClass = $spec[1];
+        $foreignKey = $spec[2];
+        $localKey = isset($spec[3]) && is_string($spec[3]) && $spec[3] !== '' ? $spec[3] : 'id';
+
+        $parentIds = [];
+        foreach ($models as $m) {
+            $v = $m->{$localKey} ?? null;
+            if ($v !== null && $v !== '') {
+                $parentIds[] = $v;
+            }
+        }
+        $parentIds = array_values(array_unique($parentIds, SORT_REGULAR));
+        if ($parentIds === []) {
+            foreach ($models as $m) {
+                $m->{$relation} = [];
+            }
+
+            return;
+        }
+
+        /** @var list<Model> $children */
+        $children = $relatedClass::query()->whereIn($foreignKey, $parentIds)->orderBy('id')->get();
+        $grouped = [];
+        foreach ($children as $c) {
+            $pk = (string) ($c->{$foreignKey} ?? '');
+            $grouped[$pk][] = $c;
+        }
+        foreach ($models as $m) {
+            $id = (string) ($m->{$localKey} ?? '');
+            $m->{$relation} = $grouped[$id] ?? [];
+        }
+    }
+
+    /**
+     * @param list<Model> $models
+     * @param list<mixed> $spec
+     */
+    private function eagerLoadBelongsToMany(array $models, string $relation, array $spec): void
+    {
+        if (! isset($spec[1], $spec[2], $spec[3], $spec[4])
+            || ! is_string($spec[1])
+            || ! is_string($spec[2])
+            || ! is_string($spec[3])
+            || ! is_string($spec[4])) {
+            throw new InvalidArgumentException("Invalid belongsToMany spec for \"{$relation}\"");
+        }
+        /** @var class-string<Model> $relatedClass */
+        $relatedClass = $spec[1];
+        $pivot = $spec[2];
+        $foreignPivotKey = $spec[3];
+        $relatedPivotKey = $spec[4];
+        $parentKey = isset($spec[5]) && is_string($spec[5]) && $spec[5] !== '' ? $spec[5] : 'id';
+        $relatedKey = isset($spec[6]) && is_string($spec[6]) && $spec[6] !== '' ? $spec[6] : 'id';
+
+        $parentIds = [];
+        foreach ($models as $m) {
+            $v = $m->{$parentKey} ?? null;
+            if ($v !== null && $v !== '') {
+                $parentIds[] = $v;
+            }
+        }
+        $parentIds = array_values(array_unique($parentIds, SORT_REGULAR));
+        if ($parentIds === []) {
+            foreach ($models as $m) {
+                $m->{$relation} = [];
+            }
+
+            return;
+        }
+
+        $table = $relatedClass::table();
+        $placeholders = implode(', ', array_fill(0, count($parentIds), '?'));
+        $alias = '__eager_parent';
+        $sql = 'SELECT r.*, p.' . $foreignPivotKey . ' AS ' . $alias
+            . ' FROM ' . $table . ' r'
+            . ' INNER JOIN ' . $pivot . ' p ON p.' . $relatedPivotKey . ' = r.' . $relatedKey
+            . ' WHERE p.' . $foreignPivotKey . ' IN (' . $placeholders . ')'
+            . ' ORDER BY p.' . $foreignPivotKey . ', p.' . $relatedPivotKey;
+        $rows = $relatedClass::connection()->select($sql, $parentIds);
+
+        $grouped = [];
+        foreach ($rows as $row) {
+            $pid = (string) ($row[$alias] ?? '');
+            unset($row[$alias]);
+            $grouped[$pid][] = $relatedClass::fromRow($row);
+        }
+        foreach ($models as $m) {
+            $id = (string) ($m->{$parentKey} ?? '');
+            $m->{$relation} = $grouped[$id] ?? [];
         }
     }
 }

@@ -14,13 +14,14 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **ORM: casts** — `$casts` on `Model` for int/float/bool/string/json/datetime.
 - **ORM: soft deletes** — `$softDeletes` / `$deletedAtColumn`, query scopes, `restore` / `forceDelete`.
 - **ORM: global scopes** — `addGlobalScope`, `withoutGlobalScope(s)`; `find` / `all` via `query()`.
+- **ORM: eager `with()`** — `Model::eagerRelations()` for batched `belongsTo` / `hasMany` / `belongsToMany`.
 - **Routing: model binding** — `Router::model` / `Router::bind` (+ `Route::model` / `Route::bind`); missing model or `null` resolver → 404.
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **ORM / HTTP** — richer relations (`QueryBuilder::with()` follow-ups) or API helpers (resources, error envelope).
+1. **ORM / HTTP** — nested `with()`, relation API polish, or API helpers (resources, error envelope).
 
 ## Core platform
 
@@ -32,7 +33,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 ## Data & persistence
 
 - **Cache drivers** — **Redis** (phpredis) and **Memcached** (ext-memcached) behind `Cache`; file + null unchanged. PSR-16 optional later.
-- **ORM depth** — Shipped: model observers, attribute casts, soft deletes, global scopes. Remaining: richer relation API beyond `QueryBuilder::with()`.
+- **ORM depth** — Shipped: model observers, attribute casts, soft deletes, global scopes, batched **`with()`** via **`Model::eagerRelations()`** (`belongsTo` / `hasMany` / `belongsToMany`). Remaining: nested `with('a.b')`, relation objects, or richer conveniences as needed.
 - **Schema builder** — Broader column/index/foreign-key coverage and dialect-specific pieces where needed.
 
 ## HTTP & API

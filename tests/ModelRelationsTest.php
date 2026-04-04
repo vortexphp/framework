@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Vortex\Tests;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Vortex\AppContext;
 use Vortex\Config\Repository;
@@ -52,6 +53,9 @@ PHP
         TestAuthor::connection()->execute('CREATE TABLE test_authors (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
         TestArticle::connection()->execute(
             'CREATE TABLE test_articles (id INTEGER PRIMARY KEY AUTOINCREMENT, test_author_id INTEGER NOT NULL, title TEXT NOT NULL)'
+        );
+        BadEagerSpecArticle::connection()->execute(
+            'CREATE TABLE bad_eager_articles (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL)'
         );
         TestTag::connection()->execute('CREATE TABLE test_tags (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT NOT NULL)');
         TestArticle::connection()->execute(
@@ -134,6 +138,39 @@ PHP
         self::assertSame('Eager', TestArticle::query()->value('title'));
     }
 
+    public function testWithAuthorEagerLoadsManyArticlesWithOneRelatedQuery(): void
+    {
+        $author = TestAuthor::create(['name' => 'Dana']);
+        TestArticle::create(['test_author_id' => (int) $author->id, 'title' => 'A']);
+        TestArticle::create(['test_author_id' => (int) $author->id, 'title' => 'B']);
+        TestArticle::create(['test_author_id' => (int) $author->id, 'title' => 'C']);
+
+        $container = AppContext::container();
+        $real = $container->make(Connection::class);
+        $counter = new SqlCountingConnection($real);
+        $container->instance(Connection::class, $counter);
+
+        try {
+            $authors = TestAuthor::query()->where('id', (int) $author->id)->with(['articles'])->get();
+            self::assertCount(1, $authors);
+            self::assertCount(3, $authors[0]->articles ?? []);
+            self::assertSame(['A', 'B', 'C'], array_map(
+                static fn (TestArticle $a): string => (string) $a->title,
+                $authors[0]->articles,
+            ));
+            self::assertSame(2, $counter->selectCount, 'parent row + batched hasMany');
+        } finally {
+            $container->instance(Connection::class, $real);
+        }
+    }
+
+    public function testInvalidEagerSpecThrows(): void
+    {
+        BadEagerSpecArticle::create(['title' => 'x']);
+        $this->expectException(InvalidArgumentException::class);
+        BadEagerSpecArticle::query()->with(['nope'])->get();
+    }
+
     private function clearAppContext(): void
     {
         $ref = new \ReflectionClass(AppContext::class);
@@ -148,6 +185,13 @@ final class TestAuthor extends Model
     /** @var list<string> */
     protected static array $fillable = ['name'];
     protected static bool $timestamps = false;
+
+    protected static function eagerRelations(): array
+    {
+        return [
+            'articles' => ['hasMany', TestArticle::class, 'test_author_id'],
+        ];
+    }
 
     /**
      * @return list<TestArticle>
@@ -166,6 +210,14 @@ final class TestArticle extends Model
     /** @var list<string> */
     protected static array $fillable = ['test_author_id', 'title'];
     protected static bool $timestamps = false;
+
+    protected static function eagerRelations(): array
+    {
+        return [
+            'author' => ['belongsTo', TestAuthor::class, 'test_author_id'],
+            'tags' => ['belongsToMany', TestTag::class, 'test_article_tags', 'test_article_id', 'test_tag_id'],
+        ];
+    }
 
     public function author(): ?TestAuthor
     {
@@ -197,4 +249,61 @@ final class TestTag extends Model
     /** @var list<string> */
     protected static array $fillable = ['label'];
     protected static bool $timestamps = false;
+}
+
+/** @internal */
+final class BadEagerSpecArticle extends Model
+{
+    protected static ?string $table = 'bad_eager_articles';
+
+    /** @var list<string> */
+    protected static array $fillable = ['title'];
+    protected static bool $timestamps = false;
+
+    protected static function eagerRelations(): array
+    {
+        return [
+            'nope' => ['unknown_type', self::class],
+        ];
+    }
+}
+
+/**
+ * Wraps a connection and counts SELECT statements (for eager-load batching tests).
+ *
+ * @internal
+ */
+final class SqlCountingConnection extends Connection
+{
+    public int $selectCount = 0;
+
+    public function __construct(private Connection $inner)
+    {
+        parent::__construct($inner->pdo());
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function select(string $sql, array $bindings = []): array
+    {
+        ++$this->selectCount;
+
+        return $this->inner->select($sql, $bindings);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function selectOne(string $sql, array $bindings = []): ?array
+    {
+        ++$this->selectCount;
+
+        return $this->inner->selectOne($sql, $bindings);
+    }
+
+    public function execute(string $sql, array $bindings = []): int
+    {
+        return $this->inner->execute($sql, $bindings);
+    }
 }

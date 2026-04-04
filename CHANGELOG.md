@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **ORM eager loading:** **`Model::eagerRelations()`** maps relation method names to **`belongsTo`**, **`hasMany`**, or **`belongsToMany`** specs so **`QueryBuilder::with()`** batches related queries. Without a map entry, **`with()`** still resolves by calling the relation method on each model. Invalid spec entries throw **`InvalidArgumentException`**.
 - **Route model binding:** **`Router::model($parameter, $modelClass, $column = 'id')`** and **`Router::bind($parameter, Closure $resolver)`**; **`Route::model`** / **`Route::bind`** delegate to the active router. Resolvers run before the action; missing model or resolver returning **`null`** yields **`ErrorRenderer::notFound()`** (404). Model class must extend **`Model`**.
 - **Model global scopes:** **`Model::addGlobalScope()`** registers named callbacks applied when building **`query()`**; **`QueryBuilder::withoutGlobalScope()`** / **`withoutGlobalScopes()`**; **`all()`** and **`find()`** use **`query()`** so scopes apply (breaking if you relied on unscoped direct SQL).
 - **Model soft deletes:** **`$softDeletes`**, **`$deletedAtColumn`**; **`find()`** / **`all()`** / **`QueryBuilder`** exclude trashed by default; **`withTrashed()`**, **`onlyTrashed()`**; instance **`delete()`** / **`restore()`** / **`forceDelete()`**; mass soft delete via query **`delete()`**; **`onlyTrashed()->delete()`** hard-deletes. **`updateRecord()`** adds **`deleted_at IS NULL`** when soft deletes are enabled.

@@ -86,6 +86,16 @@ final class Article extends Model
 
 Scopes run in **`applyGlobalScope()`**; **`where*`** calls inside the callback are tagged so you can remove them with **`withoutGlobalScope('active')`** or **`withoutGlobalScopes()`** on the builder. Constraints added outside a scope callback are not removed.
 
+## Eager loading (`with`)
+
+Declare **`protected static function eagerRelations(): array`** on the parent model. Keys are the same as your public relation method names; values describe **`belongsTo`**, **`hasMany`**, or **`belongsToMany`** so **`QueryBuilder::with()`** can load related rows in batches (otherwise **`with()`** falls back to calling each relation method per model).
+
+Shapes:
+
+- **`['belongsTo', Related::class, 'foreign_id', 'owner_id?']`**
+- **`['hasMany', Related::class, 'foreign_id', 'local_id?']`**
+- **`['belongsToMany', Related::class, 'pivot_table', 'foreign_pivot_key', 'related_pivot_key', 'parent_key?', 'related_key?']`**
+
 ## Migrations
 
 - Migration files return classes extending `Schema\Migration`.
