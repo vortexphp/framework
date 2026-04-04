@@ -210,6 +210,81 @@ abstract class Model
     }
 
     /**
+     * Re-hydrate this instance from the database (same primary key). Uses {@see withTrashed()} when soft deletes are enabled.
+     *
+     * @return $this
+     */
+    public function refresh(): static
+    {
+        $id = $this->id ?? null;
+        if ($id === null || $id === '') {
+            throw new LogicException('Cannot refresh a model without primary key.');
+        }
+
+        $q = static::query()->where('id', $id);
+        if (static::usesSoftDeletes()) {
+            $q = $q->withTrashed();
+        }
+
+        $fresh = $q->first();
+        if ($fresh === null) {
+            throw new LogicException('Could not refresh model: row not found.');
+        }
+
+        foreach (get_object_vars($fresh) as $key => $value) {
+            $this->{$key} = $value;
+        }
+
+        return $this;
+    }
+
+    /**
+     * First model matching {@code $attributes}, else {@see create()} with {@code $attributes} + {@code $values}.
+     *
+     * @param array<string, mixed> $attributes columns used for lookup and passed into create
+     * @param array<string, mixed> $values merged into create only when a new row is inserted
+     */
+    public static function firstOrCreate(array $attributes, array $values = []): static
+    {
+        $found = static::query();
+        foreach ($attributes as $key => $value) {
+            $found = $found->where((string) $key, $value);
+        }
+
+        $model = $found->first();
+        if ($model !== null) {
+            return $model;
+        }
+
+        return static::create([...$attributes, ...$values]);
+    }
+
+    /**
+     * First model matching {@code $attributes}; if found, {@see update()} with {@code $values}, else {@see create()} with merge.
+     *
+     * @param array<string, mixed> $attributes
+     * @param array<string, mixed> $values
+     */
+    public static function updateOrCreate(array $attributes, array $values = []): static
+    {
+        $q = static::query();
+        foreach ($attributes as $key => $value) {
+            $q = $q->where((string) $key, $value);
+        }
+
+        $model = $q->first();
+        if ($model !== null) {
+            if ($values !== []) {
+                $model->update($values);
+            }
+
+            return $model;
+        }
+
+        return static::create([...$attributes, ...$values]);
+    }
+
+    /**
      * @param array<string, mixed> $attributes
      */
     public static function create(array $attributes): static

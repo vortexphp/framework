@@ -32,6 +32,12 @@ $published = Post::query()
     ->get();
 ```
 
+## Refresh and upsert-style helpers
+
+- **`$model->refresh()`** — reload the row by primary key into this instance (throws if missing **`id`** or row deleted). With soft deletes, uses **`withTrashed()`** so trashed rows still refresh.
+- **`Post::firstOrCreate(['slug' => $slug], ['title' => $title])`** — finds the first row matching the first array (AND **`where`**), or **`create()`** with both arrays merged.
+- **`Post::updateOrCreate(['slug' => $slug], ['title' => $title])`** — same lookup; if found, **`update()`** with the second array; otherwise **`create()`** with merge.
+
 ## Model observers
 
 Register listeners on a concrete model class; implement any subset of **`saving`**, **`creating`**, **`updating`**, **`deleting`** (before the query) and **`saved`**, **`created`**, **`updated`**, **`deleted`** (after). Pass an object or a class name (constructed with `new`).

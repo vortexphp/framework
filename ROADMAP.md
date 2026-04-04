@@ -28,6 +28,7 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 
 - **API cursor pagination** — **`QueryBuilder::cursorPaginate()`**, **`Cursor`** / **`CursorPaginator`**, **`toApiData()`** for JSON collections with **`Response::apiOk`**.
 - **ORM polymorphic relations** — **`morphTo`**, **`morphMany`**, **`morphOne`** (lazy + eager, nested eager under **`morphTo`** via per–concrete-class grouping); **`MorphMap`** aliases for **`_type`** columns + **`getMorphClass()`**.
+- **ORM persistence helpers** — **`Model::refresh()`**, **`firstOrCreate()`**, **`updateOrCreate()`**.
 - **JSON Schema** — **`justinrainbow/json-schema`**, **`JsonSchemaValidator::validateArray()`** / **`validateDecoded()`**, **`Request::bodyJsonSchemaResponse()`** (requests); **`Response::apiOkValidated()`** / **`jsonValidated()`**, **`JsonResource::toValidatedResponse()`** / **`collectionValidatedResponse()`** (responses; **`JsonShape`** remains the lightweight default for bodies).
 - **Container** — **`Container::call()`**; constructor unions, **`self` / `parent`**, nullable / interface failures; **`tag`** / **`tagged`**, **`bindFor`** (contextual bindings).
 - **Real-time** — **SSE** (**`Response::serverSentEvents()`**, **`SseEmitter`**); **`Broadcaster`** (**`SyncBroadcaster`**, **`RedisBroadcaster`** + **`broadcasting.driver`** **`redis`**).
@@ -36,7 +37,7 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **ORM / platform** — conveniences from **Data & persistence** / **Core platform** section lists as needed (no single mandatory chunk).
+1. **ORM / platform** — further conveniences from **Data & persistence** as needed (e.g. **`chunk`**, custom primary keys).
 
 ## Core platform
 
@@ -48,7 +49,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 ## Data & persistence
 
 - **Cache drivers** — **Redis** (phpredis) and **Memcached** (ext-memcached) behind `Cache`; file + null unchanged. **PSR-16 `CacheInterface`** via **`Psr16Cache`** on the default store.
-- **ORM depth** — Shipped: model observers, attribute casts, soft deletes, global scopes, batched **`with()`** (**`hasOne`**, **`morphTo` / `morphMany` / `morphOne`**, **`MorphMap`**), nested dot paths (**`morphTo`** nests per concrete type). Remaining: richer conveniences as needed.
+- **ORM depth** — Shipped: model observers, attribute casts, soft deletes, global scopes, batched **`with()`** (**`hasOne`**, **`morphTo` / `morphMany` / `morphOne`**, **`MorphMap`**), nested dot paths (**`morphTo`** nests per concrete type), **`refresh()`**, **`firstOrCreate()`**, **`updateOrCreate()`**. Remaining: richer conveniences as needed.
 - **Schema builder** — Shipped: more column types (**`decimal`**, **`json`**, **`date`**, **`floatType`**, integer sizes, **`char`**), **`Schema::hasTable`**, FK **`ON UPDATE`**, MySQL **`UNSIGNED`** on integer columns.
 
 ## HTTP & API
