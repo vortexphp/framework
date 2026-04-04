@@ -23,31 +23,39 @@ final class Route
     }
 
     /**
-     * @param Closure|array{0: class-string, 1: string} $action
+     * @param Closure|array{0: class-string, 1: string}|class-string $action
      * @param list<string> $middleware
      */
-    public static function get(string $pattern, Closure|array $action, array $middleware = []): Router
+    public static function get(string $pattern, Closure|array|string $action, array $middleware = []): Router
     {
         return self::router()->get($pattern, $action, $middleware);
     }
 
     /**
-     * @param Closure|array{0: class-string, 1: string} $action
+     * @param Closure|array{0: class-string, 1: string}|class-string $action
      * @param list<string> $middleware
      */
-    public static function post(string $pattern, Closure|array $action, array $middleware = []): Router
+    public static function post(string $pattern, Closure|array|string $action, array $middleware = []): Router
     {
         return self::router()->post($pattern, $action, $middleware);
     }
 
     /**
      * @param list<string> $methods
-     * @param Closure|array{0: class-string, 1: string} $action
+     * @param Closure|array{0: class-string, 1: string}|class-string $action
      * @param list<string> $middleware
      */
-    public static function add(array $methods, string $pattern, Closure|array $action, array $middleware = []): Router
+    public static function add(array $methods, string $pattern, Closure|array|string $action, array $middleware = []): Router
     {
         return self::router()->add($methods, $pattern, $action, $middleware);
+    }
+
+    /**
+     * @param list<string>|string $middleware
+     */
+    public static function middleware(string|array $middleware): Router
+    {
+        return self::router()->middleware($middleware);
     }
 
     public static function name(string $name): Router

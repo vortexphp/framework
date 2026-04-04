@@ -17,7 +17,7 @@ use Throwable;
 final class Router
 {
     /**
-     * @var list<array{methods: list<string>, pattern: string, regex: string, paramNames: list<string>, action: mixed, middleware: list<string>, name: ?string}>
+     * @var list<array{methods: list<string>, pattern: string, regex: string, paramNames: list<string>, action: Closure|array{0: class-string, 1: string}, middleware: list<string>, name: ?string}>
      */
     private array $routes = [];
 
@@ -37,11 +37,15 @@ final class Router
     }
 
     /**
-     * @param Closure|array{0: class-string, 1: string} $action
+     * @param Closure|array{0: class-string, 1: string}|class-string $action Invokable: pass the class name (must define {@code __invoke}).
      * @param list<string> $middleware
      */
-    public function add(array $methods, string $pattern, Closure|array $action, array $middleware = []): self
+    public function add(array $methods, string $pattern, Closure|array|string $action, array $middleware = []): self
     {
+        if (is_string($action)) {
+            $action = [$action, '__invoke'];
+        }
+
         $paramNames = [];
         $regex = preg_replace_callback(
             '/\{([a-zA-Z_][a-zA-Z0-9_]*)(\.\.\.)?\}/',
@@ -62,6 +66,31 @@ final class Router
             'middleware' => $middleware,
             'name' => null,
         ];
+
+        return $this;
+    }
+
+    /**
+     * Attach middleware to the route registered most recently (after {@see add} / {@see get} / {@see post}).
+     *
+     * @param list<string>|string $middleware Fully-qualified {@see \Vortex\Contracts\Middleware} classes.
+     */
+    public function middleware(string|array $middleware): self
+    {
+        if ($this->routes === []) {
+            throw new RuntimeException('Cannot attach middleware: no route registered yet.');
+        }
+
+        $items = is_array($middleware) ? $middleware : [$middleware];
+        $i = count($this->routes) - 1;
+        foreach ($items as $mw) {
+            if (! is_string($mw) || $mw === '') {
+                continue;
+            }
+            if (! in_array($mw, $this->routes[$i]['middleware'], true)) {
+                $this->routes[$i]['middleware'][] = $mw;
+            }
+        }
 
         return $this;
     }
@@ -140,12 +169,12 @@ final class Router
         return $result;
     }
 
-    public function get(string $pattern, Closure|array $action, array $middleware = []): self
+    public function get(string $pattern, Closure|array|string $action, array $middleware = []): self
     {
         return $this->add(['GET'], $pattern, $action, $middleware);
     }
 
-    public function post(string $pattern, Closure|array $action, array $middleware = []): self
+    public function post(string $pattern, Closure|array|string $action, array $middleware = []): self
     {
         return $this->add(['POST'], $pattern, $action, $middleware);
     }

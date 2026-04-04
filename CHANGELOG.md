@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **HTTP / routing conventions:** abstract **`Vortex\Http\Controller`** with small **`Response`** helpers; invokable controllers (**`Route::get('/path', MyController::class)`** → **`__invoke`**); **`Router::middleware()`** / **`Route::middleware()`** to attach middleware to the route registered immediately before (class names; de-duplicated).
 - **Schema builder:** **`Blueprint`** additions — **`bigInteger`**, **`smallInteger`**, **`decimal`**, **`floatType`**, **`date`**, **`dateTime`**, **`json`**, **`char`**; **`ColumnDefinition::unsigned()`** (MySQL integer family); foreign key **`onUpdate`** actions (**`cascadeOnUpdate`**, **`restrictOnUpdate`**, **`nullOnUpdate`**, **`noActionOnUpdate`**). **`Schema::hasTable()`** for SQLite / MySQL / PostgreSQL.
 - **Testing:** **`Vortex\Testing\KernelBrowser`** — **`boot()`**, **`get()`** / **`post()`** / **`postJson()`** / **`request()`**, **`decodeJson()`**, **`resetRequestContext()`** for in-process kernel tests. **`Container::has()`** reports explicit bindings or instances.
 - **ORM relation polish:** **`Vortex\Database\Relation`** — **`belongsTo()`**, **`hasMany()`**, **`belongsToMany()`** return **`eagerRelations()`** spec arrays. **`Model::load()`** eager-loads relations on an already-fetched instance (dot paths supported). **`QueryBuilder::eagerLoadOnto()`** runs the same batched loader on a list of models using the builder’s **`with()`** paths.

@@ -20,12 +20,13 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **HTTP: JSON API envelope** — `Response::apiOk` / `apiError`, `JsonResource`, `validationFailed(ValidationResult)`, `Request::validationResponse` / `bodyValidationResponse`, **`JsonShape`** / **`object`** / **`listOfObjects`** / **`listOfPrimitive`** + **`bodyShapeResponse`**, path/header API version helpers (`splitVersionedPath`, `resolvedApiVersion`, `withPath`), aligned negotiation errors + `ErrorRenderer` JSON.
 - **Testing helpers** — `Vortex\Testing\KernelBrowser` for in-process `Kernel` dispatch + `Container::has()`.
 - **Schema builder** — extra column types (`decimal`, `json`, `date`, `floatType`, `char`, sized integers), `Schema::hasTable`, FK `ON UPDATE`, MySQL `UNSIGNED` on integers.
+- **HTTP controllers** — optional **`Controller`** base + invokable class routes + per-route **`middleware()`** chaining.
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **HTTP & API** — stronger controller / middleware conventions (optional slice).
+1. **Developer experience** — optional codegen (`make:command`, `make:migration`) or small REPL.
 
 ## Core platform
 
@@ -43,7 +44,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 ## HTTP & API
 
 - **API conveniences** — Shipped: **`JsonResource`**, **`Response::apiOk`/`apiError`/`validationFailed`**, **`Request` validation + version + `JsonShape` helpers**, negotiated errors with **`error`** codes. Optional: deeper transform pipelines, full JSON Schema.
-- **Routing DX** — Shipped: route model binding, custom `bind`, and **`Route::resource`**. Remaining: stronger controller + middleware conventions if we keep growing past closure/`[Class, 'method']` style.
+- **Routing DX** — Shipped: route model binding, custom `bind`, **`Route::resource`**, invokable class routes, **`middleware()`** on the last route, optional **`Controller`** base helpers.
 
 ## Developer experience
 

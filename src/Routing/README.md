@@ -9,6 +9,7 @@ Route registration, route discovery, and URL generation.
 ```php
 <?php
 
+use Vortex\Auth\Middleware\Authenticate;
 use Vortex\Http\Response;
 use Vortex\Routing\Route;
 
@@ -16,7 +17,14 @@ Route::get('/', static fn (): Response => Response::html('Home'))->name('home');
 
 Route::get('/users/{id}', static fn (string $id): Response => Response::json(['id' => $id]))
     ->name('users.show');
+
+Route::get('/account', [AccountController::class, 'show'])
+    ->middleware([Authenticate::class]);
 ```
+
+Pass a **class-string** for a single **`__invoke`** action. Chain **`->middleware($class)`** or **`->middleware([...])`** (fully-qualified **`Middleware`** classes) on the route you just registered—same pattern as **`->name()`**.
+
+Optional **`Vortex\Http\Controller`** base class adds **`json()`**, **`html()`**, **`redirect()`**, **`apiOk()`**, and **`view()`** (Twig via **`View::html()`**) for class-based actions.
 
 ## Model and custom binding
 
