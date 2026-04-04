@@ -25,7 +25,7 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **PSR-16 cache** — **`Psr16Cache`** + container **`Psr\SimpleCache\CacheInterface`**.
 
 - **API cursor pagination** — **`QueryBuilder::cursorPaginate()`**, **`Cursor`** / **`CursorPaginator`**, **`toApiData()`** for JSON collections with **`Response::apiOk`**.
-- **ORM polymorphic relations** — **`morphTo`**, **`morphMany`**, **`morphOne`** (lazy + eager, nested eager under **`morphTo`** via per–concrete-class grouping).
+- **ORM polymorphic relations** — **`morphTo`**, **`morphMany`**, **`morphOne`** (lazy + eager, nested eager under **`morphTo`** via per–concrete-class grouping); **`MorphMap`** aliases for **`_type`** columns + **`getMorphClass()`**.
 - **JSON Schema** — **`justinrainbow/json-schema`**, **`JsonSchemaValidator::validateArray()`**, **`Request::bodyJsonSchemaResponse()`** (request bodies; **`JsonShape`** remains the lightweight default).
 - **Container** — **`Container::call()`** for method-style injection; constructor unions, **`self` / `parent`**, nullable / interface failures aligned with **`RuntimeException`**.
 - **Real-time** — **SSE** (**`Response::serverSentEvents()`**, **`SseEmitter`**); **`Broadcaster`** + **`SyncBroadcaster`** (replace binding for Redis / other fan-out).
@@ -34,7 +34,7 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **ORM** — morph **`morphMap`** / shorter **`*_type`** column aliases (Laravel-style) on top of existing **`morphTo` / `morphMany` / `morphOne`**.
+1. **HTTP & API** — response-side schema validation or deeper **`JsonResource`** pipelines (when needed).
 
 ## Core platform
 
@@ -46,7 +46,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 ## Data & persistence
 
 - **Cache drivers** — **Redis** (phpredis) and **Memcached** (ext-memcached) behind `Cache`; file + null unchanged. **PSR-16 `CacheInterface`** via **`Psr16Cache`** on the default store.
-- **ORM depth** — Shipped: model observers, attribute casts, soft deletes, global scopes, batched **`with()`** (**`hasOne`**, **`morphTo` / `morphMany` / `morphOne`**), nested dot paths (**`morphTo`** nests per concrete type). Remaining: morph maps / aliases, richer conveniences as needed.
+- **ORM depth** — Shipped: model observers, attribute casts, soft deletes, global scopes, batched **`with()`** (**`hasOne`**, **`morphTo` / `morphMany` / `morphOne`**, **`MorphMap`**), nested dot paths (**`morphTo`** nests per concrete type). Remaining: richer conveniences as needed.
 - **Schema builder** — Shipped: more column types (**`decimal`**, **`json`**, **`date`**, **`floatType`**, integer sizes, **`char`**), **`Schema::hasTable`**, FK **`ON UPDATE`**, MySQL **`UNSIGNED`** on integer columns.
 
 ## HTTP & API

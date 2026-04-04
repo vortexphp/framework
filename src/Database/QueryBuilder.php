@@ -1120,22 +1120,23 @@ final class QueryBuilder
         /** @var array<class-string<Model>, list<mixed>> $idsByClass */
         $idsByClass = [];
         foreach ($models as $m) {
-            $cls = $m->{$typeKey} ?? null;
+            $stored = $m->{$typeKey} ?? null;
             $rid = $m->{$idKey} ?? null;
-            if (! is_string($cls) || $cls === '' || $rid === null || $rid === '') {
+            if (! is_string($stored) || $stored === '' || $rid === null || $rid === '') {
                 continue;
             }
-            if (! is_subclass_of($cls, Model::class)) {
+            $resolved = MorphMap::resolveClass($stored);
+            if ($resolved === null) {
                 continue;
             }
-            $idsByClass[$cls][(string) $rid] = $rid;
+            $idsByClass[$resolved][(string) $rid] = $rid;
         }
         foreach ($idsByClass as $cls => $ids) {
             $idsByClass[$cls] = array_values(array_unique(array_values($ids), SORT_REGULAR));
         }
 
-        /** @var array<string, Model> $cache */
-        $cache = [];
+        /** @var array<class-string<Model>, array<string, Model>> $rowsByClass */
+        $rowsByClass = [];
         foreach ($idsByClass as $cls => $ids) {
             if ($ids === []) {
                 continue;
@@ -1145,25 +1146,26 @@ final class QueryBuilder
             foreach ($rows as $rm) {
                 $pk = $rm->id ?? null;
                 if ($pk !== null && $pk !== '') {
-                    $cache[$cls . '::' . (string) $pk] = $rm;
+                    $rowsByClass[$cls][(string) $pk] = $rm;
                 }
             }
         }
 
         foreach ($models as $m) {
-            $cls = $m->{$typeKey} ?? null;
+            $stored = $m->{$typeKey} ?? null;
             $rid = $m->{$idKey} ?? null;
-            if (! is_string($cls) || $cls === '' || $rid === null || $rid === '') {
+            if (! is_string($stored) || $stored === '' || $rid === null || $rid === '') {
                 $m->{$relation} = null;
 
                 continue;
             }
-            if (! is_subclass_of($cls, Model::class)) {
+            $resolved = MorphMap::resolveClass($stored);
+            if ($resolved === null) {
                 $m->{$relation} = null;
 
                 continue;
             }
-            $m->{$relation} = $cache[$cls . '::' . (string) $rid] ?? null;
+            $m->{$relation} = $rowsByClass[$resolved][(string) $rid] ?? null;
         }
     }
 
@@ -1183,8 +1185,7 @@ final class QueryBuilder
         $typeCol = $morphName . '_type';
         $idCol = $morphName . '_id';
 
-        /** @var class-string<Model> $parentClass */
-        $parentClass = $models[0]::class;
+        $parentMorph = $models[0]::getMorphClass();
 
         $parentIds = [];
         foreach ($models as $m) {
@@ -1204,7 +1205,7 @@ final class QueryBuilder
 
         /** @var list<Model> $children */
         $children = $relatedClass::query()
-            ->where($typeCol, $parentClass)
+            ->where($typeCol, $parentMorph)
             ->whereIn($idCol, $parentIds)
             ->orderBy('id')
             ->get();
@@ -1235,8 +1236,7 @@ final class QueryBuilder
         $typeCol = $morphName . '_type';
         $idCol = $morphName . '_id';
 
-        /** @var class-string<Model> $parentClass */
-        $parentClass = $models[0]::class;
+        $parentMorph = $models[0]::getMorphClass();
 
         $parentIds = [];
         foreach ($models as $m) {
@@ -1256,7 +1256,7 @@ final class QueryBuilder
 
         /** @var list<Model> $children */
         $children = $relatedClass::query()
-            ->where($typeCol, $parentClass)
+            ->where($typeCol, $parentMorph)
             ->whereIn($idCol, $parentIds)
             ->orderBy('id')
             ->get();

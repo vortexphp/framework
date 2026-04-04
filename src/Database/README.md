@@ -96,8 +96,12 @@ Shapes:
 - **`['hasMany', Related::class, 'foreign_id', 'local_id?']`**
 - **`['hasOne', Related::class, 'foreign_id', 'local_id?']`** — same FK layout as **`hasMany`**; eager load assigns a single related model (lowest **`id`** if duplicates exist).
 - **`['belongsToMany', Related::class, 'pivot_table', 'foreign_pivot_key', 'related_pivot_key', 'parent_key?', 'related_key?']`**
-- **`['morphTo', 'name']`** — columns **`{name}_type`** (parent **`Model::class`**) and **`{name}_id`**.
-- **`['morphMany', Related::class, 'morph_name', 'local_key?']`** / **`['morphOne', ...]`** — child columns **`{morph_name}_type`** and **`{morph_name}_id`** pointing at this model.
+- **`['morphTo', 'name']`** — columns **`{name}_type`** (**`MorphMap`** alias or FQCN) and **`{name}_id`**.
+- **`['morphMany', Related::class, 'morph_name', 'local_key?']`** / **`['morphOne', ...]`** — child columns **`{morph_name}_type`** and **`{morph_name}_id`**; the parent type value is **`Model::getMorphClass()`** (alias when registered).
+
+## Morph map (optional)
+
+Call **`MorphMap::register(['posts' => Post::class, ...])`** at boot so **`{m}_type`** columns store short keys instead of FQCNs. **`getMorphClass()`** returns the alias for registered models; **`resolveClass()`** maps stored values when loading **`morphTo`**. Unmapped models still use their class name.
 
 Nested relations use dot paths, for example **`->with(['author.country'])`** or **`->with('comments.author')`**. After a **`morphTo`**, nested segments are loaded separately for each concrete related class (e.g. **`attachable.category`** when **`attachable`** may be **`Post`** or **`Article`**). Each segment must exist on that level’s **`eagerRelations()`** map (or resolve via the per-model relation method when no map entry exists).
 

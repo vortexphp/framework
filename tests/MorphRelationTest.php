@@ -11,6 +11,7 @@ use Vortex\Container;
 use Vortex\Database\Connection;
 use Vortex\Database\DatabaseManager;
 use Vortex\Database\Model;
+use Vortex\Database\MorphMap;
 use Vortex\Database\Relation;
 
 final class MorphRelationTest extends TestCase
@@ -75,6 +76,7 @@ PHP
 
     protected function tearDown(): void
     {
+        MorphMap::clearForTesting();
         $this->clearAppContext();
         Repository::forgetInstance();
         if ($this->configDir !== '' && is_file($this->configDir . '/database.php')) {

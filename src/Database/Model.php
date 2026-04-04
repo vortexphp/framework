@@ -113,6 +113,14 @@ abstract class Model
         return $q;
     }
 
+    /**
+     * Class / alias stored in polymorphic {@code morph_type} columns for this model (see {@see MorphMap::register()}).
+     */
+    public static function getMorphClass(): string
+    {
+        return MorphMap::morphAliasFor(static::class);
+    }
+
     public static function usesSoftDeletes(): bool
     {
         return static::$softDeletes;
@@ -139,7 +147,7 @@ abstract class Model
      * - `['hasMany', Related::class, foreignKey, localKey?]` (local key defaults to {@code id}), or {@see Relation::hasMany()}
      * - `['hasOne', Related::class, foreignKey, localKey?]` (same as {@code hasMany} shape; at most one related model per parent), or {@see Relation::hasOne()}
      * - `['belongsToMany', Related::class, pivotTable, foreignPivotKey, relatedPivotKey, parentKey?, relatedKey?]`, or {@see Relation::belongsToMany()}
-     * - `['morphTo', namePrefix]` — columns `{namePrefix}_type` / `{namePrefix}_id` (type column holds parent {@see Model} class names), or {@see Relation::morphTo()}
+     * - `['morphTo', namePrefix]` — columns `{namePrefix}_type` / `{namePrefix}_id` (type column holds {@see MorphMap} aliases or FQCNs), or {@see Relation::morphTo()}
      * - `['morphMany', Related::class, morphName, localKey?]` — child columns `{morphName}_type` / `{morphName}_id`, or {@see Relation::morphMany()}
      * - `['morphOne', Related::class, morphName, localKey?]`, or {@see Relation::morphOne()}
      *
@@ -355,7 +363,7 @@ abstract class Model
     }
 
     /**
-     * Polymorphic inverse: `{name}_type` must be a {@see Model} class name and `{name}_id` that model’s primary key (default {@code id}).
+     * Polymorphic inverse: `{name}_type` is a {@see MorphMap} alias or FQCN; `{name}_id` is that model’s primary key (default {@code id}).
      *
      * @template TRelated of Model
      * @return TRelated|null
@@ -364,12 +372,13 @@ abstract class Model
     {
         $typeKey = $name . '_type';
         $idKey = $name . '_id';
-        $relatedClass = $this->{$typeKey} ?? null;
+        $stored = $this->{$typeKey} ?? null;
         $foreignId = $this->{$idKey} ?? null;
-        if (! is_string($relatedClass) || $relatedClass === '' || $foreignId === null || $foreignId === '') {
+        if (! is_string($stored) || $stored === '' || $foreignId === null || $foreignId === '') {
             return null;
         }
-        if (! is_subclass_of($relatedClass, Model::class)) {
+        $relatedClass = MorphMap::resolveClass($stored);
+        if ($relatedClass === null) {
             return null;
         }
 
@@ -398,7 +407,7 @@ abstract class Model
 
         /** @var list<TRelated> $related */
         $related = $relatedClass::query()
-            ->where($typeCol, static::class)
+            ->where($typeCol, static::getMorphClass())
             ->where($idCol, $localId)
             ->orderBy('id')
             ->get();
@@ -422,7 +431,7 @@ abstract class Model
 
         /** @var TRelated|null $related */
         $related = $relatedClass::query()
-            ->where($typeCol, static::class)
+            ->where($typeCol, static::getMorphClass())
             ->where($idCol, $localId)
             ->orderBy('id')
             ->first();
