@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Cache:** `redis` driver in `config/cache.php` **`stores`** map (`RedisCache`, `CacheManager::connectRedis`); requires **ext-redis**. Values are PHP-serialized; `clear()` uses `SCAN` + `DEL` for the key prefix.
 - **Schedule:** `Vortex\Schedule\Schedule` loads `config/schedule.php` (`tasks` with `cron` + `class`), supports `Schedule::register()` during `Application::boot()`, **`CronExpression::isDue()`** (five fields: `*`, integer, or `*/step`), CLI **`schedule:run`**, and **`app.timezone`** for “now”.
 - **Queue:** `Vortex\Queue\Contracts\Job`, `DatabaseQueue` (SQL table + reservation / stale reclaim), static `Vortex\Queue\Queue::push()`, `DatabaseQueue::pushSerialized()`, CLI **`queue:work`**, **`queue:failed`**, **`queue:retry`**, and **`FailedJobStore`** (permanent failures recorded when `queue.failed_jobs_table` is set; empty string disables recording). Config: `queue.table`, `queue.default`, `queue.tries`, `queue.stale_reserve_seconds`, `queue.idle_sleep_ms`, `queue.failed_jobs_table`.
 - **`Vortex\Auth\Auth`** session facade: `loginUsingId`, `login` (`Authenticatable`), `logout`, `check`, `guest`, `id`, `user` with optional `resolveUserUsing` callback; `login` / `loginUsingId` accept `$remember` to set a signed remember cookie; `logout` clears the remember cookie.

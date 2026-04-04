@@ -64,7 +64,7 @@ final class CacheManagerTest extends TestCase
         $mgr = CacheManager::fromConfig('/tmp', [
             'default' => 'x',
             'stores' => [
-                'x' => ['driver' => 'redis'],
+                'x' => ['driver' => 'unknown_driver_xyz'],
             ],
         ]);
         $this->expectException(InvalidArgumentException::class);

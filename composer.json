@@ -25,7 +25,8 @@
         }
     },
     "suggest": {
-        "ext-openssl": "SMTP STARTTLS / ssl:// (MAIL_ENCRYPTION tls or ssl)"
+        "ext-openssl": "SMTP STARTTLS / ssl:// (MAIL_ENCRYPTION tls or ssl)",
+        "ext-redis": "Redis cache store (phpredis) for config cache.stores.* driver redis"
     },
     "config": {
         "sort-packages": true
