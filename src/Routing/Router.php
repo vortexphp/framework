@@ -8,6 +8,7 @@ use Closure;
 use InvalidArgumentException;
 use RuntimeException;
 use Vortex\Container;
+use Vortex\Database\Model;
 use Vortex\Http\ErrorRenderer;
 use Vortex\Http\Request;
 use Vortex\Http\Response;
@@ -22,6 +23,13 @@ final class Router
 
     /** @var array<string, int> name => index in $routes */
     private array $named = [];
+
+    /**
+     * Route parameter resolvers keyed by placeholder name ({@see model}, {@see bind}).
+     *
+     * @var array<string, Closure|array{kind: 'model', class: class-string<Model>, column: string}>
+     */
+    private array $parameterBindings = [];
 
     public function __construct(
         private readonly Container $container,
@@ -142,6 +150,39 @@ final class Router
         return $this->add(['POST'], $pattern, $action, $middleware);
     }
 
+    /**
+     * Resolve a route parameter to a model instance (404 when missing).
+     *
+     * @param class-string<Model> $modelClass
+     */
+    public function model(string $parameter, string $modelClass, string $column = 'id'): self
+    {
+        if (! is_subclass_of($modelClass, Model::class)) {
+            throw new InvalidArgumentException(
+                sprintf('Route model binding expects a %s subclass, got %s.', Model::class, $modelClass),
+            );
+        }
+        $this->parameterBindings[$parameter] = [
+            'kind' => 'model',
+            'class' => $modelClass,
+            'column' => $column,
+        ];
+
+        return $this;
+    }
+
+    /**
+     * Custom resolution; return null to abort with 404.
+     *
+     * @param Closure(string): mixed $resolver
+     */
+    public function bind(string $parameter, Closure $resolver): self
+    {
+        $this->parameterBindings[$parameter] = $resolver;
+
+        return $this;
+    }
+
     public function match(string $method, string $path): ?array
     {
         foreach ($this->routes as $route) {
@@ -201,6 +242,12 @@ final class Router
      */
     private function runAction(Closure|array $action, array $params): Response
     {
+        $resolved = $this->resolveRouteParameters($params);
+        if ($resolved === null) {
+            return $this->container->make(ErrorRenderer::class)->notFound();
+        }
+        $params = $resolved;
+
         try {
             if ($action instanceof Closure) {
                 $result = $action(...array_values($params));
@@ -226,5 +273,45 @@ final class Router
         }
 
         return Response::make('');
+    }
+
+    /**
+     * @param array<string, string|null> $params
+     * @return array<string, mixed>|null
+     */
+    private function resolveRouteParameters(array $params): ?array
+    {
+        foreach ($params as $key => $value) {
+            if (! isset($this->parameterBindings[$key])) {
+                continue;
+            }
+            if ($value === null || $value === '') {
+                return null;
+            }
+            $binding = $this->parameterBindings[$key];
+            if ($binding instanceof Closure) {
+                $resolved = $binding((string) $value);
+                if ($resolved === null) {
+                    return null;
+                }
+                $params[$key] = $resolved;
+
+                continue;
+            }
+
+            $class = $binding['class'];
+            $column = $binding['column'];
+            if ($column === 'id') {
+                $model = $class::find($value);
+            } else {
+                $model = $class::query()->where($column, $value)->first();
+            }
+            if ($model === null) {
+                return null;
+            }
+            $params[$key] = $model;
+        }
+
+        return $params;
     }
 }

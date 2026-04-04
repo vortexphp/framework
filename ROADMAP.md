@@ -14,12 +14,13 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **ORM: casts** — `$casts` on `Model` for int/float/bool/string/json/datetime.
 - **ORM: soft deletes** — `$softDeletes` / `$deletedAtColumn`, query scopes, `restore` / `forceDelete`.
 - **ORM: global scopes** — `addGlobalScope`, `withoutGlobalScope(s)`; `find` / `all` via `query()`.
+- **Routing: model binding** — `Router::model` / `Router::bind` (+ `Route::model` / `Route::bind`); missing model or `null` resolver → 404.
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **ORM / HTTP** — richer relations (`QueryBuilder::with()` follow-ups) or route model binding / API helpers.
+1. **ORM / HTTP** — richer relations (`QueryBuilder::with()` follow-ups) or API helpers (resources, error envelope).
 
 ## Core platform
 
@@ -37,7 +38,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 ## HTTP & API
 
 - **API conveniences** — Optional JSON resource/transform layer, versioning helpers, consistent error envelope for APIs (beyond `Response::json()` + `Request::wantsJson()`).
-- **Routing DX** — Route model binding, resource route groups, stronger controller + middleware conventions if we keep growing past closure/`[Class, 'method']` style.
+- **Routing DX** — Shipped: route model binding and custom `bind`. Remaining: resource route groups, stronger controller + middleware conventions if we keep growing past closure/`[Class, 'method']` style.
 
 ## Developer experience
 

@@ -6,6 +6,7 @@ namespace Vortex\Routing;
 
 use Closure;
 use RuntimeException;
+use Vortex\Database\Model;
 
 /**
  * Static entry point for route files. {@see \Vortex\Application::boot()} binds the active {@see Router}
@@ -52,6 +53,22 @@ final class Route
     public static function name(string $name): Router
     {
         return self::router()->name($name);
+    }
+
+    /**
+     * @param class-string<Model> $modelClass
+     */
+    public static function model(string $parameter, string $modelClass, string $column = 'id'): Router
+    {
+        return self::router()->model($parameter, $modelClass, $column);
+    }
+
+    /**
+     * @param Closure(string): mixed $resolver
+     */
+    public static function bind(string $parameter, Closure $resolver): Router
+    {
+        return self::router()->bind($parameter, $resolver);
     }
 
     private static function router(): Router

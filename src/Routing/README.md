@@ -18,6 +18,15 @@ Route::get('/users/{id}', static fn (string $id): Response => Response::json(['i
     ->name('users.show');
 ```
 
+## Model and custom binding
+
+On the active router (often via `Route::useRouter()` during bootstrap), register resolvers for path parameters before defining routes:
+
+- **`$router->model('post', Post::class)`** — loads `Post` by `id` (or pass a third argument for another unique column, e.g. `'slug'`). Missing row → **404**.
+- **`$router->bind('token', fn (string $value): ?array => ...)`** — custom resolution; return **`null`** for **404**.
+
+`Route::model(...)` and `Route::bind(...)` forward to the same router instance.
+
 ## Generate a URL
 
 ```php
