@@ -108,4 +108,53 @@ final class JsonShapeTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         JsonShape::validate([], ['x' => ['y' => 'string']]);
     }
+
+    public function testListOfObjects(): void
+    {
+        $shape = ['items' => JsonShape::listOfObjects(['id' => 'int', 'label' => 'string'])];
+        $ok = JsonShape::validate([
+            'items' => [
+                ['id' => 1, 'label' => 'a'],
+                ['id' => 2, 'label' => 'b'],
+            ],
+        ], $shape);
+        self::assertFalse($ok->failed());
+
+        $bad = JsonShape::validate(['items' => [['id' => 'nope', 'label' => 'a']]], $shape);
+        self::assertTrue($bad->failed());
+        self::assertNotNull($bad->first('items.0.id'));
+    }
+
+    public function testListMustBeSequential(): void
+    {
+        $r = JsonShape::validate(
+            ['items' => ['a' => 1, 'b' => 2]],
+            ['items' => JsonShape::listOfObjects(['x' => 'int'])],
+        );
+        self::assertTrue($r->failed());
+        self::assertStringContainsString('list', (string) $r->first('items'));
+    }
+
+    public function testListOfRequiresObject(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        JsonShape::listOf(['x' => 'string']);
+    }
+
+    public function testNestedListInsideObject(): void
+    {
+        $shape = [
+            'cart' => JsonShape::object([
+                'lines' => JsonShape::listOfObjects(['sku' => 'string', 'qty' => 'int']),
+            ]),
+        ];
+        $data = [
+            'cart' => [
+                'lines' => [
+                    ['sku' => 'A', 'qty' => 2],
+                ],
+            ],
+        ];
+        self::assertFalse(JsonShape::validate($data, $shape)->failed());
+    }
 }

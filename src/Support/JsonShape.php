@@ -14,6 +14,7 @@ use Vortex\Validation\ValidationResult;
  * - a type string: {@code string}, {@code int}, {@code float}, {@code bool}, {@code number}, {@code array}, {@code list}, {@code object}
  *   (prefix {@code ?} for optional keys; {@code null} skips type check when optional), or
  * - {@see object() nested object} (recursive shapes).
+ * - {@see listOf() list of objects} with the same object schema per index (errors use {@code items.0.field} paths).
  *
  * Note: JSON {@code {}} and {@code []} both decode to PHP {@code []}; nested {@code object()} treats empty {@code []} as an empty object.
  */
@@ -29,6 +30,30 @@ final class JsonShape
     public static function object(array $fields, bool $optional = false): array
     {
         return ['_shape' => 'object', 'optional' => $optional, 'fields' => $fields];
+    }
+
+    /**
+     * Sequential list where every item matches the given {@see object()} schema.
+     *
+     * @return array{_shape: 'list', optional: bool, element: array<string, mixed>}
+     */
+    public static function listOf(array $elementObject, bool $optional = false): array
+    {
+        if (($elementObject['_shape'] ?? '') !== 'object') {
+            throw new InvalidArgumentException('JsonShape::listOf() expects JsonShape::object([...]).');
+        }
+
+        return ['_shape' => 'list', 'optional' => $optional, 'element' => $elementObject];
+    }
+
+    /**
+     * @param array<string, string|array> $fields Per-item object fields (same as {@see object()}).
+     *
+     * @return array{_shape: 'list', optional: bool, element: array<string, mixed>}
+     */
+    public static function listOfObjects(array $fields, bool $optional = false): array
+    {
+        return self::listOf(self::object($fields), $optional);
     }
 
     /**
@@ -49,6 +74,12 @@ final class JsonShape
         $errors = [];
         foreach ($shape as $field => $spec) {
             $path = $prefix === '' ? $field : $prefix . '.' . $field;
+
+            if (is_array($spec) && ($spec['_shape'] ?? '') === 'list') {
+                self::walkList($data, $field, $path, $spec, $errors);
+
+                continue;
+            }
 
             if (is_array($spec) && ($spec['_shape'] ?? '') === 'object') {
                 self::walkObject($data, $field, $path, $spec, $errors);
@@ -116,6 +147,55 @@ final class JsonShape
         $inner = self::validateAt($value, $innerShape, $path);
         foreach ($inner->errors() as $key => $message) {
             $errors[$key] = $message;
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $spec
+     * @param array<string, string> $errors
+     */
+    private static function walkList(array $data, string $field, string $path, array $spec, array &$errors): void
+    {
+        $optional = $spec['optional'] ?? false;
+        $elementObject = $spec['element'];
+        if (($elementObject['_shape'] ?? '') !== 'object') {
+            throw new InvalidArgumentException('JsonShape list element must be JsonShape::object([...]).');
+        }
+        /** @var array<string, string|array> $innerFields */
+        $innerFields = $elementObject['fields'];
+
+        if (! array_key_exists($field, $data)) {
+            if (! $optional) {
+                $errors[$path] = self::requiredMessage($path);
+            }
+
+            return;
+        }
+
+        $value = $data[$field];
+        if ($optional && $value === null) {
+            return;
+        }
+
+        if (! is_array($value) || ! array_is_list($value)) {
+            $attr = str_replace('_', ' ', $path);
+            $errors[$path] = "The {$attr} must be a list.";
+
+            return;
+        }
+
+        foreach ($value as $i => $item) {
+            $ip = $path . '.' . $i;
+            if (! self::isJsonObjectArray($item)) {
+                $errors[$ip] = self::objectTypeMessage($ip);
+
+                continue;
+            }
+            /** @var array<string, mixed> $item */
+            $inner = self::validateAt($item, $innerFields, $ip);
+            foreach ($inner->errors() as $key => $message) {
+                $errors[$key] = $message;
+            }
         }
     }
 

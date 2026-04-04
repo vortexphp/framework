@@ -83,6 +83,10 @@ $user = JsonShape::validate(
     ['user' => ['name' => 'Ada']],
     ['user' => JsonShape::object(['name' => 'string'])],
 );
+$rows = JsonShape::validate(
+    ['rows' => [['id' => 1]]],
+    ['rows' => JsonShape::listOfObjects(['id' => 'int'])],
+);
 ```
 
 ## Other helpers
