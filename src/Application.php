@@ -6,6 +6,8 @@ namespace Vortex;
 
 use Psr\SimpleCache\CacheInterface as Psr16CacheInterface;
 use Vortex\Cache\CacheManager;
+use Vortex\Broadcasting\Contracts\Broadcaster;
+use Vortex\Broadcasting\SyncBroadcaster;
 use Vortex\Cache\Psr16Cache;
 use Vortex\Config\Repository;
 use Vortex\Contracts\Cache as CacheContract;
@@ -98,6 +100,7 @@ final class Application
         $container->singleton(CacheContract::class, static fn (Container $c): CacheContract => $c->make(CacheManager::class)->store());
         $container->singleton(Psr16CacheInterface::class, static fn (Container $c): Psr16CacheInterface => new Psr16Cache($c->make(CacheContract::class)));
         $container->singleton(Dispatcher::class, static fn (Container $c): Dispatcher => DispatcherFactory::make($c));
+        $container->singleton(Broadcaster::class, static fn (): Broadcaster => new SyncBroadcaster());
         $container->singleton(Mailer::class, static fn (): Mailer => MailFactory::make($basePath));
         $container->singleton(SessionManager::class, static fn (): SessionManager => SessionManager::fromRepository());
         $container->singleton(Session::class, static fn (Container $c): Session => new Session($c->make(SessionManager::class)->store()));

@@ -28,19 +28,20 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **ORM polymorphic relations** — **`morphTo`**, **`morphMany`**, **`morphOne`** (lazy + eager, nested eager under **`morphTo`** via per–concrete-class grouping).
 - **JSON Schema** — **`justinrainbow/json-schema`**, **`JsonSchemaValidator::validateArray()`**, **`Request::bodyJsonSchemaResponse()`** (request bodies; **`JsonShape`** remains the lightweight default).
 - **Container** — **`Container::call()`** for method-style injection; constructor unions, **`self` / `parent`**, nullable / interface failures aligned with **`RuntimeException`**.
+- **Real-time** — **SSE** (**`Response::serverSentEvents()`**, **`SseEmitter`**); **`Broadcaster`** + **`SyncBroadcaster`** (replace binding for Redis / other fan-out).
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **Core platform** — optional **real-time** layer (WebSockets / SSE / thin broadcaster) if product demand appears.
+1. **ORM** — morph **`morphMap`** / shorter **`*_type`** column aliases (Laravel-style) on top of existing **`morphTo` / `morphMany` / `morphOne`**.
 
 ## Core platform
 
 - **Authentication & authorization** — Shipped for the current scope (session login, remember-me cookie, gates/policies, reset token broker; apps wire mail and routes).
 - **Queues & workers** — Shipped: SQL + Redis drivers, worker CLI, failed-job persistence + replay.
 - **Scheduling** — Shipped: `schedule:run`, config + programmatic tasks, cron lists/ranges, overlap guard via **`Cache::add`** and **`schedule.mutex_store`** (use a Redis-backed store for distributed mutexes).
-- **Real-time** — Optional WebSockets/SSE or a thin broadcasting abstraction (channels, publish) if demand appears.
+- **Real-time** — Shipped: **SSE** + in-process **`Broadcaster`**. Optional later: WebSockets, Redis fan-out **`Broadcaster`**, or full pub/sub.
 
 ## Data & persistence
 

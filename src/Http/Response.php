@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Vortex\Http;
 
+use Closure;
 use LogicException;
 use Vortex\Support\JsonHelp;
 use Vortex\Validation\ValidationResult;
@@ -17,6 +18,7 @@ final class Response
         private string $content = '',
         private int $status = 200,
         private array $headers = [],
+        private ?Closure $streamWriter = null,
     ) {
     }
 
@@ -40,6 +42,37 @@ final class Response
         $body = JsonHelp::encode($data);
 
         return new self($body, $status, ['Content-Type' => 'application/json; charset=utf-8']);
+    }
+
+    /**
+     * Server-Sent Events: {@code Content-Type: text/event-stream}. The callable receives an {@see SseEmitter}; run a
+     * long loop or exit when the client disconnects. Headers can be merged; defaults include {@code Cache-Control: no-cache}
+     * and {@code X-Accel-Buffering: no} for nginx.
+     *
+     * @param callable(SseEmitter): void $writer
+     * @param array<string, string|string[]> $headers
+     */
+    public static function serverSentEvents(callable $writer, int $status = 200, array $headers = []): self
+    {
+        $base = [
+            'Content-Type' => 'text/event-stream; charset=utf-8',
+            'Cache-Control' => 'no-cache',
+            'Connection' => 'keep-alive',
+            'X-Accel-Buffering' => 'no',
+        ];
+        $stream = Closure::fromCallable(static function () use ($writer): void {
+            $writer(new SseEmitter());
+        });
+
+        return new self('', $status, [...$base, ...$headers], $stream);
+    }
+
+    /**
+     * True when {@see send()} runs a streaming callback instead of echoing {@see body()}.
+     */
+    public function isStreamResponse(): bool
+    {
+        return $this->streamWriter !== null;
     }
 
     /**
@@ -252,6 +285,11 @@ final class Response
             } else {
                 header("{$name}: {$value}");
             }
+        }
+        if ($this->streamWriter !== null) {
+            ($this->streamWriter)();
+
+            return;
         }
         echo $this->content;
     }
