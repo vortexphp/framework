@@ -34,7 +34,7 @@ return Response::redirect('/login')
 - **`Response::apiOk($data)`** — `{ "ok": true, "data": ... }`.
 - **`Response::apiError($status, $errorCode, $message, $extra = [])`** — `{ "ok": false, "error", "message", ... }` (always JSON).
 - **`Response::validationFailed($result)`** — **`422`** (by default) with **`error: validation_failed`** and **`errors`** (field → message from **`ValidationResult`**).
-- **`JsonResource`** — implement `toArray()`; **`toResponse()`** / **`collectionResponse()`** build **`apiOk`**-wrapped responses. **`toValidatedResponse($schema)`** and **`collectionValidatedResponse($items, $class, $schema)`** run JSON Schema on the encoded payload; mismatch → **500** **`response_schema_mismatch`** (same as **`Response::apiOkValidated`** / **`jsonValidated`** on arbitrary data).
+- **`JsonResource`** — implement **`toArray()`**; optional **`transformResponse(array $data)`** post-processes the array before JSON (**`resolve()`** runs **`transformResponse($this->toArray())`**; default transform is a no-op). **`toResponse()`** / **`collectionResponse()`** use **`resolve()`** and wrap with **`apiOk`**. **`toValidatedResponse($schema)`** and **`collectionValidatedResponse($items, $class, $schema)`** validate **`resolve()`** output; mismatch → **500** **`response_schema_mismatch`** (same as **`Response::apiOkValidated`** / **`jsonValidated`** on arbitrary data).
 
 For HTML vs JSON negotiation, **`Response::notFound()`**, **`forbidden()`**, **`unauthorized()`**, and **`error()`** include **`ok`**, **`error`** (machine code), and **`message`** when **`Request::wantsJson()`** is true.
 

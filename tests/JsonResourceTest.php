@@ -36,6 +36,30 @@ final class JsonResourceTest extends TestCase
         self::assertSame([['x' => 1], ['x' => 2]], $rows);
     }
 
+    public function testResolveAppliesTransformResponse(): void
+    {
+        $r = new class (['id' => 1]) extends JsonResource {
+            public function toArray(): array
+            {
+                return is_array($this->resource) ? $this->resource : [];
+            }
+
+            protected function transformResponse(array $data): array
+            {
+                $data['meta'] = 'x';
+
+                return $data;
+            }
+        };
+
+        self::assertSame(['id' => 1, 'meta' => 'x'], $r->resolve());
+        $wrapped = $r->toResponse();
+        self::assertSame('{"ok":true,"data":{"id":1,"meta":"x"}}', $wrapped->body());
+
+        $collected = JsonResource::collect([['id' => 2]], $r::class);
+        self::assertSame([['id' => 2, 'meta' => 'x']], $collected);
+    }
+
     public function testCollectionResponseWrapsList(): void
     {
         $r = JsonResource::collectionResponse(

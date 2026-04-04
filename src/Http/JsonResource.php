@@ -21,21 +21,43 @@ abstract class JsonResource
     abstract public function toArray(): array;
 
     /**
-     * @param bool $wrap When true, body is {@see Response::apiOk}; otherwise raw {@see toArray()} as JSON object.
+     * Base mapping from {@see $resource} — passed through {@see transformResponse()} for API output.
+     *
+     * @return array<string, mixed>
+     */
+    public function resolve(): array
+    {
+        return $this->transformResponse($this->toArray());
+    }
+
+    /**
+     * Override to append metadata, strip fields for certain clients, or run small transforms without growing {@see toArray()}.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    protected function transformResponse(array $data): array
+    {
+        return $data;
+    }
+
+    /**
+     * @param bool $wrap When true, body is {@see Response::apiOk}; otherwise JSON for {@see resolve()} output.
      */
     public function toResponse(int $status = 200, bool $wrap = true): Response
     {
-        $payload = $this->toArray();
+        $payload = $this->resolve();
 
         return $wrap ? Response::apiOk($payload, $status) : Response::json($payload, $status);
     }
 
     /**
-     * @param array<string, mixed>|object $schema JSON Schema for {@see toArray()} output
+     * @param array<string, mixed>|object $schema JSON Schema for {@see resolve()} output
      */
     public function toValidatedResponse(array|object $schema, int $status = 200, bool $wrap = true): Response
     {
-        $payload = $this->toArray();
+        $payload = $this->resolve();
         $result = JsonSchemaValidator::validateDecoded($payload, $schema);
         if ($result->failed()) {
             return Response::apiError(500, 'response_schema_mismatch', 'Response failed JSON Schema validation', [
@@ -58,7 +80,7 @@ abstract class JsonResource
     {
         $out = [];
         foreach ($items as $item) {
-            $out[] = (new $class($item))->toArray();
+            $out[] = (new $class($item))->resolve();
         }
 
         return $out;
