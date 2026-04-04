@@ -80,4 +80,42 @@ final class Relation
 
         return $spec;
     }
+
+    /**
+     * Inverse polymorphic: child holds `{name}_type` (parent class name) and `{name}_id`.
+     *
+     * @return list<mixed>
+     */
+    public static function morphTo(string $name): array
+    {
+        return ['morphTo', $name];
+    }
+
+    /**
+     * Parent-owned one-to-many: related rows use `{morphName}_type` (this model class) and `{morphName}_id` (local key).
+     *
+     * @param class-string<Model> $related
+     *
+     * @return list<mixed>
+     */
+    public static function morphMany(string $related, string $morphName, string $localKey = 'id'): array
+    {
+        return $localKey === 'id'
+            ? ['morphMany', $related, $morphName]
+            : ['morphMany', $related, $morphName, $localKey];
+    }
+
+    /**
+     * Same as {@see morphMany()} but at most one related model per parent (lowest {@code id} wins when eager-loading).
+     *
+     * @param class-string<Model> $related
+     *
+     * @return list<mixed>
+     */
+    public static function morphOne(string $related, string $morphName, string $localKey = 'id'): array
+    {
+        return $localKey === 'id'
+            ? ['morphOne', $related, $morphName]
+            : ['morphOne', $related, $morphName, $localKey];
+    }
 }

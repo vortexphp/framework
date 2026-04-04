@@ -139,6 +139,9 @@ abstract class Model
      * - `['hasMany', Related::class, foreignKey, localKey?]` (local key defaults to {@code id}), or {@see Relation::hasMany()}
      * - `['hasOne', Related::class, foreignKey, localKey?]` (same as {@code hasMany} shape; at most one related model per parent), or {@see Relation::hasOne()}
      * - `['belongsToMany', Related::class, pivotTable, foreignPivotKey, relatedPivotKey, parentKey?, relatedKey?]`, or {@see Relation::belongsToMany()}
+     * - `['morphTo', namePrefix]` — columns `{namePrefix}_type` / `{namePrefix}_id` (type column holds parent {@see Model} class names), or {@see Relation::morphTo()}
+     * - `['morphMany', Related::class, morphName, localKey?]` — child columns `{morphName}_type` / `{morphName}_id`, or {@see Relation::morphMany()}
+     * - `['morphOne', Related::class, morphName, localKey?]`, or {@see Relation::morphOne()}
      *
      * @return array<string, list<mixed>>
      */
@@ -347,6 +350,82 @@ abstract class Model
 
         /** @var TRelated|null $related */
         $related = $relatedClass::query()->where($foreignKey, $localId)->orderBy('id')->first();
+
+        return $related;
+    }
+
+    /**
+     * Polymorphic inverse: `{name}_type` must be a {@see Model} class name and `{name}_id` that model’s primary key (default {@code id}).
+     *
+     * @template TRelated of Model
+     * @return TRelated|null
+     */
+    protected function morphTo(string $name): ?Model
+    {
+        $typeKey = $name . '_type';
+        $idKey = $name . '_id';
+        $relatedClass = $this->{$typeKey} ?? null;
+        $foreignId = $this->{$idKey} ?? null;
+        if (! is_string($relatedClass) || $relatedClass === '' || $foreignId === null || $foreignId === '') {
+            return null;
+        }
+        if (! is_subclass_of($relatedClass, Model::class)) {
+            return null;
+        }
+
+        /** @var class-string<Model> $relatedClass */
+        /** @var TRelated|null $related */
+        $related = $relatedClass::query()->where('id', $foreignId)->first();
+
+        return $related;
+    }
+
+    /**
+     * One-to-many polymorphic: related rows store this model’s class in `{morphName}_type` and the local key in `{morphName}_id`.
+     *
+     * @template TRelated of Model
+     * @param class-string<TRelated> $relatedClass
+     * @return list<TRelated>
+     */
+    protected function morphMany(string $relatedClass, string $morphName, string $localKey = 'id'): array
+    {
+        $localId = $this->{$localKey} ?? null;
+        if ($localId === null || $localId === '') {
+            return [];
+        }
+        $typeCol = $morphName . '_type';
+        $idCol = $morphName . '_id';
+
+        /** @var list<TRelated> $related */
+        $related = $relatedClass::query()
+            ->where($typeCol, static::class)
+            ->where($idCol, $localId)
+            ->orderBy('id')
+            ->get();
+
+        return $related;
+    }
+
+    /**
+     * @template TRelated of Model
+     * @param class-string<TRelated> $relatedClass
+     * @return TRelated|null
+     */
+    protected function morphOne(string $relatedClass, string $morphName, string $localKey = 'id'): ?Model
+    {
+        $localId = $this->{$localKey} ?? null;
+        if ($localId === null || $localId === '') {
+            return null;
+        }
+        $typeCol = $morphName . '_type';
+        $idCol = $morphName . '_id';
+
+        /** @var TRelated|null $related */
+        $related = $relatedClass::query()
+            ->where($typeCol, static::class)
+            ->where($idCol, $localId)
+            ->orderBy('id')
+            ->first();
 
         return $related;
     }

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Polymorphic ORM:** **`Model::morphTo()`**, **`morphMany()`**, **`morphOne()`**; **`Relation::morphTo()`**, **`morphMany()`**, **`morphOne()`** for **`eagerRelations()`**. Eager loads batch on `{name}_type` + `{name}_id`; nested paths after **`morphTo`** run per concrete **`Model`** class.
 - **Cursor pagination (API):** **`Vortex\Pagination\Cursor`** (encode/decode opaque token), **`CursorPaginator`**, **`InvalidCursorException`**, **`QueryBuilder::cursorPaginate()`** (`next_cursor`, **`has_more`**, **`per_page`**; **`ASC`** / **`DESC`** on a single column). **`CursorPaginator::toApiData()`** for **`Response::apiOk()`** payloads.
 - **ORM `hasOne`:** **`Model::hasOne()`**, **`Relation::hasOne()`** eager spec, batched **`with()`** (first related row per parent by **`id`** when duplicates). **`hasMany`**-compatible FK layout on the child.
 - **PSR-16 cache:** dependency **`psr/simple-cache`**; **`Vortex\Cache\Psr16Cache`** implements **`Psr\SimpleCache\CacheInterface`** over **`Vortex\Contracts\Cache`**; **`SimpleCacheInvalidArgumentException`** for illegal keys. **`Application`** registers **`CacheInterface`** against the default cache store.

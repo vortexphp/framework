@@ -25,12 +25,13 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **PSR-16 cache** — **`Psr16Cache`** + container **`Psr\SimpleCache\CacheInterface`**.
 
 - **API cursor pagination** — **`QueryBuilder::cursorPaginate()`**, **`Cursor`** / **`CursorPaginator`**, **`toApiData()`** for JSON collections with **`Response::apiOk`**.
+- **ORM polymorphic relations** — **`morphTo`**, **`morphMany`**, **`morphOne`** (lazy + eager, nested eager under **`morphTo`** via per–concrete-class grouping).
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **ORM** — polymorphic relations (`morphTo` / `morphMany` / `morphOne`) when apps need them.
+1. **HTTP & API** — optional JSON Schema validation for request/response (alongside **`JsonShape`**), when apps want a heavier contract layer.
 
 ## Core platform
 
@@ -42,7 +43,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 ## Data & persistence
 
 - **Cache drivers** — **Redis** (phpredis) and **Memcached** (ext-memcached) behind `Cache`; file + null unchanged. **PSR-16 `CacheInterface`** via **`Psr16Cache`** on the default store.
-- **ORM depth** — Shipped: model observers, attribute casts, soft deletes, global scopes, batched **`with()`** (**`hasOne`** included), nested dot paths. Remaining: polymorphic / richer conveniences as needed.
+- **ORM depth** — Shipped: model observers, attribute casts, soft deletes, global scopes, batched **`with()`** (**`hasOne`**, **`morphTo` / `morphMany` / `morphOne`**), nested dot paths (**`morphTo`** nests per concrete type). Remaining: morph maps / aliases, richer conveniences as needed.
 - **Schema builder** — Shipped: more column types (**`decimal`**, **`json`**, **`date`**, **`floatType`**, integer sizes, **`char`**), **`Schema::hasTable`**, FK **`ON UPDATE`**, MySQL **`UNSIGNED`** on integer columns.
 
 ## HTTP & API

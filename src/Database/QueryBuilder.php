@@ -810,10 +810,14 @@ final class QueryBuilder
         if ($children === []) {
             return;
         }
-        if ($relatedClass === null) {
-            $relatedClass = $children[0]::class;
+        if ($relatedClass !== null) {
+            $this->eagerLoadPathsForModels($children, $relatedClass, $nestedSuffixes);
+
+            return;
         }
-        $this->eagerLoadPathsForModels($children, $relatedClass, $nestedSuffixes);
+        foreach ($this->groupModelsByConcreteClass($children) as $class => $group) {
+            $this->eagerLoadPathsForModels($group, $class, $nestedSuffixes);
+        }
     }
 
     /**
@@ -826,9 +830,28 @@ final class QueryBuilder
         if ($spec === null || ! isset($spec[1]) || ! is_string($spec[1])) {
             return null;
         }
+        if (! is_subclass_of($spec[1], Model::class)) {
+            return null;
+        }
 
         /** @var class-string<Model> */
         return $spec[1];
+    }
+
+    /**
+     * @param list<Model> $models
+     *
+     * @return array<class-string<Model>, list<Model>>
+     */
+    private function groupModelsByConcreteClass(array $models): array
+    {
+        $out = [];
+        foreach ($models as $m) {
+            $class = $m::class;
+            $out[$class][] = $m;
+        }
+
+        return $out;
     }
 
     /**
@@ -880,6 +903,9 @@ final class QueryBuilder
             'hasMany' => $this->eagerLoadHasMany($models, $relation, $spec),
             'hasOne' => $this->eagerLoadHasOne($models, $relation, $spec),
             'belongsToMany' => $this->eagerLoadBelongsToMany($models, $relation, $spec),
+            'morphTo' => $this->eagerLoadMorphTo($models, $relation, $spec),
+            'morphMany' => $this->eagerLoadMorphMany($models, $relation, $spec),
+            'morphOne' => $this->eagerLoadMorphOne($models, $relation, $spec),
             default => throw new InvalidArgumentException(
                 "Invalid eager relation type for \"{$relation}\" on {$onClass}",
             ),
@@ -1075,6 +1101,176 @@ final class QueryBuilder
         foreach ($models as $m) {
             $id = (string) ($m->{$parentKey} ?? '');
             $m->{$relation} = $grouped[$id] ?? [];
+        }
+    }
+
+    /**
+     * @param list<Model> $models
+     * @param list<mixed> $spec
+     */
+    private function eagerLoadMorphTo(array $models, string $relation, array $spec): void
+    {
+        if (! isset($spec[1]) || ! is_string($spec[1]) || $spec[1] === '') {
+            throw new InvalidArgumentException("Invalid morphTo spec for \"{$relation}\"");
+        }
+        $name = $spec[1];
+        $typeKey = $name . '_type';
+        $idKey = $name . '_id';
+
+        /** @var array<class-string<Model>, list<mixed>> $idsByClass */
+        $idsByClass = [];
+        foreach ($models as $m) {
+            $cls = $m->{$typeKey} ?? null;
+            $rid = $m->{$idKey} ?? null;
+            if (! is_string($cls) || $cls === '' || $rid === null || $rid === '') {
+                continue;
+            }
+            if (! is_subclass_of($cls, Model::class)) {
+                continue;
+            }
+            $idsByClass[$cls][(string) $rid] = $rid;
+        }
+        foreach ($idsByClass as $cls => $ids) {
+            $idsByClass[$cls] = array_values(array_unique(array_values($ids), SORT_REGULAR));
+        }
+
+        /** @var array<string, Model> $cache */
+        $cache = [];
+        foreach ($idsByClass as $cls => $ids) {
+            if ($ids === []) {
+                continue;
+            }
+            /** @var list<Model> $rows */
+            $rows = $cls::query()->whereIn('id', $ids)->get();
+            foreach ($rows as $rm) {
+                $pk = $rm->id ?? null;
+                if ($pk !== null && $pk !== '') {
+                    $cache[$cls . '::' . (string) $pk] = $rm;
+                }
+            }
+        }
+
+        foreach ($models as $m) {
+            $cls = $m->{$typeKey} ?? null;
+            $rid = $m->{$idKey} ?? null;
+            if (! is_string($cls) || $cls === '' || $rid === null || $rid === '') {
+                $m->{$relation} = null;
+
+                continue;
+            }
+            if (! is_subclass_of($cls, Model::class)) {
+                $m->{$relation} = null;
+
+                continue;
+            }
+            $m->{$relation} = $cache[$cls . '::' . (string) $rid] ?? null;
+        }
+    }
+
+    /**
+     * @param list<Model> $models
+     * @param list<mixed> $spec
+     */
+    private function eagerLoadMorphMany(array $models, string $relation, array $spec): void
+    {
+        if (! isset($spec[1], $spec[2]) || ! is_string($spec[1]) || ! is_string($spec[2])) {
+            throw new InvalidArgumentException("Invalid morphMany spec for \"{$relation}\"");
+        }
+        /** @var class-string<Model> $relatedClass */
+        $relatedClass = $spec[1];
+        $morphName = $spec[2];
+        $localKey = isset($spec[3]) && is_string($spec[3]) && $spec[3] !== '' ? $spec[3] : 'id';
+        $typeCol = $morphName . '_type';
+        $idCol = $morphName . '_id';
+
+        /** @var class-string<Model> $parentClass */
+        $parentClass = $models[0]::class;
+
+        $parentIds = [];
+        foreach ($models as $m) {
+            $v = $m->{$localKey} ?? null;
+            if ($v !== null && $v !== '') {
+                $parentIds[] = $v;
+            }
+        }
+        $parentIds = array_values(array_unique($parentIds, SORT_REGULAR));
+        if ($parentIds === []) {
+            foreach ($models as $m) {
+                $m->{$relation} = [];
+            }
+
+            return;
+        }
+
+        /** @var list<Model> $children */
+        $children = $relatedClass::query()
+            ->where($typeCol, $parentClass)
+            ->whereIn($idCol, $parentIds)
+            ->orderBy('id')
+            ->get();
+        $grouped = [];
+        foreach ($children as $c) {
+            $pk = (string) ($c->{$idCol} ?? '');
+            $grouped[$pk][] = $c;
+        }
+        foreach ($models as $m) {
+            $id = (string) ($m->{$localKey} ?? '');
+            $m->{$relation} = $grouped[$id] ?? [];
+        }
+    }
+
+    /**
+     * @param list<Model> $models
+     * @param list<mixed> $spec
+     */
+    private function eagerLoadMorphOne(array $models, string $relation, array $spec): void
+    {
+        if (! isset($spec[1], $spec[2]) || ! is_string($spec[1]) || ! is_string($spec[2])) {
+            throw new InvalidArgumentException("Invalid morphOne spec for \"{$relation}\"");
+        }
+        /** @var class-string<Model> $relatedClass */
+        $relatedClass = $spec[1];
+        $morphName = $spec[2];
+        $localKey = isset($spec[3]) && is_string($spec[3]) && $spec[3] !== '' ? $spec[3] : 'id';
+        $typeCol = $morphName . '_type';
+        $idCol = $morphName . '_id';
+
+        /** @var class-string<Model> $parentClass */
+        $parentClass = $models[0]::class;
+
+        $parentIds = [];
+        foreach ($models as $m) {
+            $v = $m->{$localKey} ?? null;
+            if ($v !== null && $v !== '') {
+                $parentIds[] = $v;
+            }
+        }
+        $parentIds = array_values(array_unique($parentIds, SORT_REGULAR));
+        if ($parentIds === []) {
+            foreach ($models as $m) {
+                $m->{$relation} = null;
+            }
+
+            return;
+        }
+
+        /** @var list<Model> $children */
+        $children = $relatedClass::query()
+            ->where($typeCol, $parentClass)
+            ->whereIn($idCol, $parentIds)
+            ->orderBy('id')
+            ->get();
+        $grouped = [];
+        foreach ($children as $c) {
+            $pk = (string) ($c->{$idCol} ?? '');
+            if ($pk === '' || isset($grouped[$pk])) {
+                continue;
+            }
+            $grouped[$pk] = $c;
+        }
+        foreach ($models as $m) {
+            $id = (string) ($m->{$localKey} ?? '');
+            $m->{$relation} = $grouped[$id] ?? null;
         }
     }
 }
