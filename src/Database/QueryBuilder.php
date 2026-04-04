@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Vortex\Database;
 
 use InvalidArgumentException;
+use Vortex\Pagination\Cursor;
+use Vortex\Pagination\CursorPaginator;
+use Vortex\Pagination\InvalidCursorException;
 use Vortex\Pagination\Paginator;
 
 /**
@@ -535,6 +538,63 @@ final class QueryBuilder
         $items = $clone->offset($offset)->limit($perPage)->get();
 
         return new Paginator($items, $total, $page, $perPage, $lastPage);
+    }
+
+    /**
+     * Cursor-based page using a single sort column (stable {@code ORDER BY} on that column).
+     * Fetches {@code perPage + 1} rows to set {@see CursorPaginator::$has_more} and {@see CursorPaginator::$next_cursor}.
+     *
+     * {@see Cursor::decode()} must yield a JSON object that includes {@code $column} (e.g. {@code {"id": 7}}).
+     *
+     * @return CursorPaginator rows in {@see CursorPaginator::$items} are instances of this builder’s model
+     *
+     * @throws InvalidCursorException When {@code $cursor} is non-empty but invalid or missing {@code $column}
+     */
+    public function cursorPaginate(
+        ?string $cursor = null,
+        int $perPage = 15,
+        string $column = 'id',
+        string $direction = 'ASC',
+    ): CursorPaginator {
+        $perPage = max(1, min(100, $perPage));
+        $dir = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
+        $bound = null;
+        if ($cursor !== null && $cursor !== '') {
+            $payload = Cursor::decode($cursor);
+            if (! array_key_exists($column, $payload)) {
+                throw new InvalidCursorException(sprintf('Cursor is missing "%s"', $column));
+            }
+            $bound = $payload[$column];
+        }
+
+        $clone = clone $this;
+        if ($bound !== null) {
+            $op = $dir === 'ASC' ? '>' : '<';
+            $clone->where($column, $op, $bound);
+        }
+        $clone->orderBy($column, $dir);
+        $clone->limit($perPage + 1);
+        /** @var list<Model> $rows */
+        $rows = $clone->get();
+        $hasMore = count($rows) > $perPage;
+        if ($hasMore) {
+            array_pop($rows);
+        }
+        $next = null;
+        if ($hasMore && $rows !== []) {
+            $last = $rows[array_key_last($rows)];
+            $lastVal = self::cursorValueFromModel($last, $column);
+            $next = Cursor::encode([$column => $lastVal]);
+        }
+
+        return new CursorPaginator($rows, $next, $hasMore, $perPage);
+    }
+
+    private static function cursorValueFromModel(Model $model, string $column): mixed
+    {
+        $key = str_contains($column, '.') ? substr($column, (int) strrpos($column, '.') + 1) : $column;
+
+        return $model->{$key};
     }
 
     /**

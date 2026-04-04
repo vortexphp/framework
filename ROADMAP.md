@@ -24,11 +24,13 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **CLI codegen** — **`make:migration`**, **`make:command`**.
 - **PSR-16 cache** — **`Psr16Cache`** + container **`Psr\SimpleCache\CacheInterface`**.
 
+- **API cursor pagination** — **`QueryBuilder::cursorPaginate()`**, **`Cursor`** / **`CursorPaginator`**, **`toApiData()`** for JSON collections with **`Response::apiOk`**.
+
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **HTTP & API** — cursor-based pagination helper for JSON collections (optional).
+1. **ORM** — polymorphic relations (`morphTo` / `morphMany` / `morphOne`) when apps need them.
 
 ## Core platform
 
@@ -45,7 +47,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 
 ## HTTP & API
 
-- **API conveniences** — Shipped: **`JsonResource`**, **`Response::apiOk`/`apiError`/`validationFailed`**, **`Request` validation + version + `JsonShape` helpers**, negotiated errors with **`error`** codes. Optional: deeper transform pipelines, full JSON Schema.
+- **API conveniences** — Shipped: **`JsonResource`**, **`Response::apiOk`/`apiError`/`validationFailed`**, **`Request` validation + version + `JsonShape` helpers**, negotiated errors with **`error`** codes; **cursor pagination** (**`cursorPaginate`**, **`CursorPaginator::toApiData()`**). Optional: deeper transform pipelines, full JSON Schema.
 - **Routing DX** — Shipped: route model binding, custom `bind`, **`Route::resource`**, invokable class routes, **`middleware()`** on the last route, optional **`Controller`** base helpers.
 
 ## Developer experience
