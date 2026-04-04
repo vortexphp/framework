@@ -27,14 +27,14 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **API cursor pagination** — **`QueryBuilder::cursorPaginate()`**, **`Cursor`** / **`CursorPaginator`**, **`toApiData()`** for JSON collections with **`Response::apiOk`**.
 - **ORM polymorphic relations** — **`morphTo`**, **`morphMany`**, **`morphOne`** (lazy + eager, nested eager under **`morphTo`** via per–concrete-class grouping); **`MorphMap`** aliases for **`_type`** columns + **`getMorphClass()`**.
 - **JSON Schema** — **`justinrainbow/json-schema`**, **`JsonSchemaValidator::validateArray()`** / **`validateDecoded()`**, **`Request::bodyJsonSchemaResponse()`** (requests); **`Response::apiOkValidated()`** / **`jsonValidated()`**, **`JsonResource::toValidatedResponse()`** / **`collectionValidatedResponse()`** (responses; **`JsonShape`** remains the lightweight default for bodies).
-- **Container** — **`Container::call()`** for method-style injection; constructor unions, **`self` / `parent`**, nullable / interface failures aligned with **`RuntimeException`**.
+- **Container** — **`Container::call()`**; constructor unions, **`self` / `parent`**, nullable / interface failures; **`tag`** / **`tagged`**, **`bindFor`** (contextual bindings).
 - **Real-time** — **SSE** (**`Response::serverSentEvents()`**, **`SseEmitter`**); **`Broadcaster`** (**`SyncBroadcaster`**, **`RedisBroadcaster`** + **`broadcasting.driver`** **`redis`**).
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **Container** — optional tagged services / contextual bindings if app complexity justifies them.
+1. **Tooling** — optional small **REPL** / debug helpers (no full debugbar by default).
 
 ## Core platform
 
@@ -56,7 +56,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 
 ## Developer experience
 
-- **Container** — Shipped: **`make()`** constructor injection (incl. union / nullable / **`self`–`parent`**), **`call()`** for closures and invokables, **`has()`**. Optional: tagged services or contextual binding if complexity stays justified.
+- **Container** — Shipped: **`make()`** constructor injection (incl. union / nullable / **`self`–`parent`**), **`call()`**, **`has()`**, **`tag()`** / **`tagged()`**, **`bindFor()`** (contextual). Optional: deeper binding DSL if justified.
 - **Tooling** — Shipped: **`make:migration`** / **`make:command`**. Optional: small REPL / debug helpers (no full debugbar by default).
 - **Framework test kit** — Shipped: **`KernelBrowser`** (`Vortex\Testing`) for consuming app PHPUnit tests.
 

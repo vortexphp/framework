@@ -7,9 +7,14 @@ namespace Vortex\Tests;
 use PHPUnit\Framework\TestCase;
 use Vortex\Container;
 use Vortex\Tests\Fixtures\AltLeaf;
+use Vortex\Tests\Fixtures\HostAlpha;
+use Vortex\Tests\Fixtures\HostBeta;
 use Vortex\Tests\Fixtures\InvokableSum;
 use Vortex\Tests\Fixtures\NeedsNoDeps;
 use Vortex\Tests\Fixtures\NoDeps;
+use Vortex\Tests\Fixtures\Port;
+use Vortex\Tests\Fixtures\PortBlue;
+use Vortex\Tests\Fixtures\PortRed;
 use Vortex\Tests\Fixtures\OrphanInterface;
 use Vortex\Tests\Fixtures\StaticAdd;
 use Vortex\Tests\Fixtures\UnionLeafCtor;
@@ -124,5 +129,40 @@ final class ContainerTest extends TestCase
         $got = $c->call(static fn (?OrphanInterface $x = null) => $x);
 
         self::assertNull($got);
+    }
+
+    public function testTaggedResolvesClassesAndClosures(): void
+    {
+        $c = new Container();
+        $c->singleton(NoDeps::class, NoDeps::class);
+        $c->tag('handlers', NoDeps::class);
+        $c->tag('handlers', static fn (Container $ct) => $ct->make(NoDeps::class));
+
+        $group = $c->tagged('handlers');
+        self::assertCount(2, $group);
+        self::assertInstanceOf(NoDeps::class, $group[0]);
+        self::assertInstanceOf(NoDeps::class, $group[1]);
+        self::assertSame($group[0], $group[1]);
+    }
+
+    public function testBindForUsesConcreteWhenBuildingContextClass(): void
+    {
+        $c = new Container();
+        $c->bindFor(HostAlpha::class, Port::class, PortRed::class);
+        $c->bindFor(HostBeta::class, Port::class, PortBlue::class);
+
+        $a = $c->make(HostAlpha::class);
+        $b = $c->make(HostBeta::class);
+
+        self::assertSame('red', $a->port->mark());
+        self::assertSame('blue', $b->port->mark());
+    }
+
+    public function testBindForClosureFactory(): void
+    {
+        $c = new Container();
+        $c->bindFor(HostAlpha::class, Port::class, static fn (): Port => new PortRed());
+
+        self::assertSame('red', $c->make(HostAlpha::class)->port->mark());
     }
 }

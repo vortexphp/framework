@@ -16,6 +16,10 @@ use ReflectionParameter;
 use ReflectionUnionType;
 use RuntimeException;
 
+/**
+ * IoC container: {@see make()}, {@see bind()}/{@see singleton()}, {@see tag()}/{@see tagged()}, {@see bindFor()} for
+ * contextual resolution, {@see call()} for method injection.
+ */
 final class Container
 {
     /** @var array<string, Closure|object|string> */
@@ -23,6 +27,17 @@ final class Container
 
     /** @var array<string, object> */
     private array $instances = [];
+
+    /** @var array<string, list<string|Closure>> */
+    private array $tags = [];
+
+    /**
+     * When building {@code $contextClass} (constructor or {@see call()}), resolve {@code $abstract} with this
+     * concrete class name or factory instead of the global binding.
+     *
+     * @var array<class-string, array<string, Closure|string>>
+     */
+    private array $contextual = [];
 
     public function instance(string $abstract, object $instance): void
     {
@@ -47,6 +62,40 @@ final class Container
     public function bind(string $abstract, Closure|string $concrete): void
     {
         $this->bindings[$abstract] = $concrete;
+    }
+
+    /**
+     * Register a service under a string tag. {@see tagged()} resolves each entry (class via {@see make()},
+     * {@see Closure} with the container).
+     *
+     * @param class-string|Closure(Container): object $definition
+     */
+    public function tag(string $tag, string|Closure $definition): void
+    {
+        $this->tags[$tag][] = $definition;
+    }
+
+    /**
+     * @return list<object>
+     */
+    public function tagged(string $tag): array
+    {
+        $out = [];
+        foreach ($this->tags[$tag] ?? [] as $definition) {
+            $out[] = $definition instanceof Closure ? $definition($this) : $this->make($definition);
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param class-string $contextClass Class whose dependencies are being resolved (the consumer).
+     * @param class-string $abstract Dependency type-hint (interface or class).
+     * @param class-string|Closure(Container): object $concrete
+     */
+    public function bindFor(string $contextClass, string $abstract, Closure|string $concrete): void
+    {
+        $this->contextual[$contextClass][$abstract] = $concrete;
     }
 
     /**
@@ -208,6 +257,9 @@ final class Container
                     continue;
                 }
                 $name = $this->normalizeTypeName($part->getName(), $declaringClass);
+                if ($this->tryContextual($declaringClass, $name)) {
+                    return $this->makeContextual($declaringClass, $name);
+                }
                 try {
                     return $this->make($name);
                 } catch (RuntimeException $e) {
@@ -229,6 +281,9 @@ final class Container
 
         if ($type instanceof ReflectionNamedType && ! $type->isBuiltin()) {
             $name = $this->normalizeTypeName($type->getName(), $declaringClass);
+            if ($this->tryContextual($declaringClass, $name)) {
+                return $this->makeContextual($declaringClass, $name);
+            }
             try {
                 return $this->make($name);
             } catch (RuntimeException $e) {
@@ -284,5 +339,24 @@ final class Container
         }
 
         return $parent->getName();
+    }
+
+    /**
+     * @param class-string $needType
+     */
+    private function tryContextual(?string $declaringClass, string $needType): bool
+    {
+        return $declaringClass !== null && isset($this->contextual[$declaringClass][$needType]);
+    }
+
+    /**
+     * @param class-string $declaringClass
+     * @param class-string $needType
+     */
+    private function makeContextual(string $declaringClass, string $needType): mixed
+    {
+        $concrete = $this->contextual[$declaringClass][$needType];
+
+        return $concrete instanceof Closure ? $concrete($this) : $this->make($concrete);
     }
 }
