@@ -16,7 +16,7 @@ $app->run();
 ## Core runtime classes in `src/`
 
 - `Application` - boots container singletons and loads routes.
-- `Container` - DI container for `bind`, `singleton`, and `make`.
+- `Container` - DI container for `bind`, `singleton`, `make`, and `call` (auto-wired closures / invokables / `Class::method` with optional named overrides). Constructor injection resolves union types, `self` / `parent`, nullable dependencies, and refuses abstract / interface targets unless bound.
 - `AppContext` - global container access point for facades/helpers.
 
 ## Module directories

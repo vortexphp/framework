@@ -27,12 +27,13 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **API cursor pagination** — **`QueryBuilder::cursorPaginate()`**, **`Cursor`** / **`CursorPaginator`**, **`toApiData()`** for JSON collections with **`Response::apiOk`**.
 - **ORM polymorphic relations** — **`morphTo`**, **`morphMany`**, **`morphOne`** (lazy + eager, nested eager under **`morphTo`** via per–concrete-class grouping).
 - **JSON Schema** — **`justinrainbow/json-schema`**, **`JsonSchemaValidator::validateArray()`**, **`Request::bodyJsonSchemaResponse()`** (request bodies; **`JsonShape`** remains the lightweight default).
+- **Container** — **`Container::call()`** for method-style injection; constructor unions, **`self` / `parent`**, nullable / interface failures aligned with **`RuntimeException`**.
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **Container** — optional **`Container::make()`** method injection (constructor + callback hints) or tagged services only if it stays small and justified.
+1. **Core platform** — optional **real-time** layer (WebSockets / SSE / thin broadcaster) if product demand appears.
 
 ## Core platform
 
@@ -54,7 +55,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 
 ## Developer experience
 
-- **Container** — Method injection, tagged services, or contextual binding only if complexity stays justified for Vortex’s size.
+- **Container** — Shipped: **`make()`** constructor injection (incl. union / nullable / **`self`–`parent`**), **`call()`** for closures and invokables, **`has()`**. Optional: tagged services or contextual binding if complexity stays justified.
 - **Tooling** — Shipped: **`make:migration`** / **`make:command`**. Optional: small REPL / debug helpers (no full debugbar by default).
 - **Framework test kit** — Shipped: **`KernelBrowser`** (`Vortex\Testing`) for consuming app PHPUnit tests.
 
