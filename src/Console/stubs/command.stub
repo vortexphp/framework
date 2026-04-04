@@ -9,11 +9,6 @@ use Vortex\Console\Input;
 
 final class {{CLASS}} extends Command
 {
-    public function __construct(string $basePath)
-    {
-        parent::__construct($basePath);
-    }
-
     public function description(): string
     {
         return 'TODO: one-line description';
