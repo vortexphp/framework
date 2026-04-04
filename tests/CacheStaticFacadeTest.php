@@ -64,4 +64,11 @@ final class CacheStaticFacadeTest extends TestCase
         self::assertSame(5, $b);
         self::assertSame(1, $n);
     }
+
+    public function testAddDelegatesToStore(): void
+    {
+        self::assertTrue(Cache::add('flag', 1, 30));
+        self::assertFalse(Cache::add('flag', 2, 30));
+        self::assertSame(1, Cache::get('flag'));
+    }
 }

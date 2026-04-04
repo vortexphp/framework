@@ -55,6 +55,16 @@ final class RedisCache implements CacheContract
         }
     }
 
+    public function add(string $key, mixed $value, int $ttlSeconds): bool
+    {
+        $payload = serialize($value);
+        $k = $this->namespacedKey($key);
+        $ttl = max(1, $ttlSeconds);
+        $result = $this->redis->set($k, $payload, ['nx', 'ex' => $ttl]);
+
+        return $result === true;
+    }
+
     public function forget(string $key): void
     {
         $this->redis->del($this->namespacedKey($key));

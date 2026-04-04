@@ -20,6 +20,11 @@ final class NullCache implements Cache
     {
     }
 
+    public function add(string $key, mixed $value, int $ttlSeconds): bool
+    {
+        return true;
+    }
+
     public function forget(string $key): void
     {
     }

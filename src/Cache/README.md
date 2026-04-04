@@ -17,6 +17,9 @@ $profile = Cache::remember('user:7', 300, static function (): array {
 });
 
 Cache::forget('users.count');
+
+// Only set if the key is absent (NX); returns whether this call stored the value.
+$claimed = Cache::add('schedule:job:7', 1, 600);
 ```
 
 ## Notes

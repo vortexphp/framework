@@ -26,4 +26,11 @@ final class NullCacheTest extends TestCase
         }));
         self::assertSame(2, $n);
     }
+
+    public function testAddAlwaysReportsSuccess(): void
+    {
+        $c = new NullCache();
+        self::assertTrue($c->add('k', 1, 10));
+        self::assertTrue($c->add('k', 2, 10));
+    }
 }

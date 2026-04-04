@@ -95,4 +95,12 @@ final class FileCacheTest extends TestCase
         self::assertSame('one', $a->get('same'));
         self::assertSame('two', $b->get('same'));
     }
+
+    public function testAddSetsOnlyWhenMissing(): void
+    {
+        $c = new FileCache($this->dir, 't:');
+        self::assertTrue($c->add('nx', 'first', 60));
+        self::assertFalse($c->add('nx', 'second', 60));
+        self::assertSame('first', $c->get('nx'));
+    }
 }

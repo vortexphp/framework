@@ -10,6 +10,9 @@ interface Cache
 
     public function set(string $key, mixed $value, ?int $ttlSeconds = null): void;
 
+    /** Store the value only if the key does not exist yet; implementations clamp TTL to at least 1 second. */
+    public function add(string $key, mixed $value, int $ttlSeconds): bool;
+
     public function forget(string $key): void;
 
     /**

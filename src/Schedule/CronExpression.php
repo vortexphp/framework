@@ -10,7 +10,8 @@ use InvalidArgumentException;
 /**
  * Minimal five-field cron (minute hour day-of-month month day-of-week).
  *
- * Supported per field: {@code *}, a plain integer, or a step {@code * / n} (no space before slash). Lists and ranges are not supported.
+ * Supported per field: {@code *}, a plain integer, a step {@code * / n} (no space before slash),
+ * comma lists (e.g. {@code 1,15,30}), and hyphen ranges (e.g. {@code 1-5}). Steps inside ranges are not supported.
  */
 final class CronExpression
 {
@@ -47,10 +48,31 @@ final class CronExpression
             return $value % $step === 0;
         }
 
+        if (str_contains($part, ',')) {
+            foreach (explode(',', $part) as $segment) {
+                $segment = trim($segment);
+                if ($segment === '') {
+                    continue;
+                }
+                if (self::matchPart($segment, $value)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        if (preg_match('#^(\d+)-(\d+)$#', $part, $m)) {
+            $a = (int) $m[1];
+            $b = (int) $m[2];
+
+            return $value >= min($a, $b) && $value <= max($a, $b);
+        }
+
         if (ctype_digit($part)) {
             return $value === (int) $part;
         }
 
-        throw new InvalidArgumentException('Unsupported cron field value [' . $part . ']; use *, an integer, or */step.');
+        throw new InvalidArgumentException('Unsupported cron field value [' . $part . ']; use *, an integer, */step, a-b, or lists.');
     }
 }

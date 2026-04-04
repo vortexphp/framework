@@ -36,6 +36,17 @@ final class FileCache implements Cache
         $this->write($key, $value, $expiresAt);
     }
 
+    public function add(string $key, mixed $value, int $ttlSeconds): bool
+    {
+        if ($this->readRaw($key) !== null) {
+            return false;
+        }
+
+        $this->set($key, $value, max(1, $ttlSeconds));
+
+        return true;
+    }
+
     public function forget(string $key): void
     {
         $path = $this->path($key);

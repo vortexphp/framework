@@ -37,6 +37,11 @@ final class Repository
         self::$instance = null;
     }
 
+    public static function initialized(): bool
+    {
+        return self::$instance !== null;
+    }
+
     private static function resolved(): self
     {
         if (self::$instance === null) {

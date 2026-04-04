@@ -115,4 +115,20 @@ final class RedisCacheTest extends TestCase
         $cache = new RedisCache($redis, 'pre:');
         $cache->clear();
     }
+
+    public function testAddUsesNxWithExpiry(): void
+    {
+        if (! class_exists(Redis::class)) {
+            self::markTestSkipped('phpredis not available.');
+        }
+
+        $redis = Mockery::mock(Redis::class);
+        $redis->shouldReceive('set')
+            ->once()
+            ->with('pre:lock', serialize(1), ['nx', 'ex' => 120])
+            ->andReturn(true);
+
+        $cache = new RedisCache($redis, 'pre:');
+        self::assertTrue($cache->add('lock', 1, 120));
+    }
 }

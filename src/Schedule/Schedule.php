@@ -10,6 +10,7 @@ use InvalidArgumentException;
 use Throwable;
 use TypeError;
 use Vortex\AppContext;
+use Vortex\Cache\CacheManager;
 use Vortex\Config\Repository;
 use Vortex\Container;
 use Vortex\Support\Log;
@@ -29,15 +30,20 @@ final class Schedule
 
     /**
      * @param class-string $handlerClass
+     * @param array{without_overlapping?: bool, mutex_ttl?: int, mutex_ttl_seconds?: int} $options
      */
-    public static function register(string $cron, string $handlerClass): void
+    public static function register(string $cron, string $handlerClass, array $options = []): void
     {
         $cron = trim($cron);
         if ($cron === '' || ! class_exists($handlerClass)) {
             return;
         }
 
-        self::$tasks[] = new ScheduledTask($cron, $handlerClass);
+        $withoutOverlapping = (bool) ($options['without_overlapping'] ?? false);
+        $mutexTtl = (int) ($options['mutex_ttl'] ?? $options['mutex_ttl_seconds'] ?? 3600);
+        $mutexTtl = max(30, min(86400, $mutexTtl));
+
+        self::$tasks[] = new ScheduledTask($cron, $handlerClass, $withoutOverlapping, $mutexTtl);
     }
 
     public static function loadFromRepository(): void
@@ -62,7 +68,11 @@ final class Schedule
                 continue;
             }
 
-            self::$tasks[] = new ScheduledTask($cron, $class);
+            $withoutOverlapping = (bool) ($row['without_overlapping'] ?? false);
+            $mutexTtl = (int) ($row['mutex_ttl'] ?? $row['mutex_ttl_seconds'] ?? 3600);
+            $mutexTtl = max(30, min(86400, $mutexTtl));
+
+            self::$tasks[] = new ScheduledTask($cron, $class, $withoutOverlapping, $mutexTtl);
         }
     }
 
@@ -81,6 +91,16 @@ final class Schedule
             $at = new DateTimeImmutable('now', $tz);
         }
 
+        $scheduleConfig = [];
+        if (Repository::initialized()) {
+            $raw = Repository::get('schedule', []);
+            $scheduleConfig = is_array($raw) ? $raw : [];
+        }
+
+        $mutexStoreName = isset($scheduleConfig['mutex_store']) && is_string($scheduleConfig['mutex_store']) && $scheduleConfig['mutex_store'] !== ''
+            ? $scheduleConfig['mutex_store']
+            : null;
+
         $ran = 0;
         foreach (self::$tasks as $task) {
             try {
@@ -95,8 +115,32 @@ final class Schedule
                 continue;
             }
 
-            try {
+            $run = static function () use ($container, $task): void {
                 self::invokeHandler($container, $task->handlerClass);
+            };
+
+            if ($task->withoutOverlapping) {
+                $mutexCache = $container->make(CacheManager::class)->store($mutexStoreName);
+                $key = 'schedule:mutex:' . hash('sha256', $task->cron . "\0" . $task->handlerClass);
+                if (! $mutexCache->add($key, 1, $task->mutexTtlSeconds)) {
+                    continue;
+                }
+                try {
+                    try {
+                        $run();
+                        ++$ran;
+                    } catch (Throwable $e) {
+                        Log::exception($e);
+                    }
+                } finally {
+                    $mutexCache->forget($key);
+                }
+
+                continue;
+            }
+
+            try {
+                $run();
                 ++$ran;
             } catch (Throwable $e) {
                 Log::exception($e);

@@ -46,4 +46,28 @@ final class CronExpressionTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         CronExpression::isDue('* * * *', new DateTimeImmutable('now'));
     }
+
+    public function testCommaListMinute(): void
+    {
+        $hit = new DateTimeImmutable('2026-02-02 08:07:00', new DateTimeZone('UTC'));
+        self::assertTrue(CronExpression::isDue('2,7,12 * * * *', $hit));
+        $miss = new DateTimeImmutable('2026-02-02 08:05:00', new DateTimeZone('UTC'));
+        self::assertFalse(CronExpression::isDue('2,7,12 * * * *', $miss));
+    }
+
+    public function testHyphenRangeHour(): void
+    {
+        $inRange = new DateTimeImmutable('2026-05-05 14:30:00', new DateTimeZone('UTC'));
+        self::assertTrue(CronExpression::isDue('30 9-17 * * *', $inRange));
+        $outOfRange = new DateTimeImmutable('2026-05-05 18:30:00', new DateTimeZone('UTC'));
+        self::assertFalse(CronExpression::isDue('30 9-17 * * *', $outOfRange));
+    }
+
+    public function testListAndRangeCombined(): void
+    {
+        $ok = new DateTimeImmutable('2026-01-01 11:15:00', new DateTimeZone('UTC'));
+        self::assertTrue(CronExpression::isDue('15 10-12,14 * * *', $ok));
+        $badHour = new DateTimeImmutable('2026-01-01 13:15:00', new DateTimeZone('UTC'));
+        self::assertFalse(CronExpression::isDue('15 10-12,14 * * *', $badHour));
+    }
 }

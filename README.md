@@ -154,7 +154,7 @@ $result = Validator::make($data, [
 
 ### Scheduler
 
-- Add `config/schedule.php` with `tasks` (`cron` + handler `class`) and run **`php vortex schedule:run`** from cron each minute (see `src/Schedule/README.md`). Optional `app.timezone` for due-time evaluation.
+- Add `config/schedule.php` with `tasks` (`cron` + handler `class`; optional `without_overlapping`, `mutex_ttl`, and top-level `mutex_store` for cache-backed overlap guards) and run **`php vortex schedule:run`** from cron each minute (see `src/Schedule/README.md`). Optional `app.timezone` for due-time evaluation.
 
 ### Queue
 

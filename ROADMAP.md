@@ -14,13 +14,13 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **Richer cron / schedule mutex** — cron lists/ranges, overlap guards, optional Redis lock; optional Memcached cache store.
+1. **Optional Memcached cache store** — driver behind `Cache` / named stores if demand appears.
 
 ## Core platform
 
 - **Authentication & authorization** — Shipped for the current scope (session login, remember-me cookie, gates/policies, reset token broker; apps wire mail and routes).
 - **Queues & workers** — Shipped: SQL + Redis drivers, worker CLI, failed-job persistence + replay.
-- **Scheduling** — Shipped: `schedule:run`, config + programmatic tasks, minimal cron. Remaining: mutex / overlap, optional Redis for distributed locks.
+- **Scheduling** — Shipped: `schedule:run`, config + programmatic tasks, cron lists/ranges, overlap guard via **`Cache::add`** and **`schedule.mutex_store`** (use a Redis-backed store for distributed mutexes).
 - **Real-time** — Optional WebSockets/SSE or a thin broadcasting abstraction (channels, publish) if demand appears.
 
 ## Data & persistence

@@ -12,6 +12,8 @@ final readonly class ScheduledTask
     public function __construct(
         public string $cron,
         public string $handlerClass,
+        public bool $withoutOverlapping = false,
+        public int $mutexTtlSeconds = 3600,
     ) {
     }
 }

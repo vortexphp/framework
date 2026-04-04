@@ -32,6 +32,11 @@ final class Cache
         self::defaultStore()->set($key, $value, $ttlSeconds);
     }
 
+    public static function add(string $key, mixed $value, int $ttlSeconds): bool
+    {
+        return self::defaultStore()->add($key, $value, $ttlSeconds);
+    }
+
     public static function forget(string $key): void
     {
         self::defaultStore()->forget($key);
