@@ -69,6 +69,7 @@ $migrationsDir = $paths->migrationsDirectory(__DIR__);
 <?php
 
 use Vortex\Support\JsonHelp;
+use Vortex\Support\JsonShape;
 use Vortex\Support\PathHelp;
 
 $full = PathHelp::join('/var/www', 'storage', 'logs', 'app.log');
@@ -76,8 +77,11 @@ $inside = PathHelp::isBelowBase('/var/www/public', '/var/www/public/uploads');
 
 $json = JsonHelp::encode(['ok' => true]);
 $data = JsonHelp::tryDecodeArray($json); // ['ok' => true]
+
+$result = JsonShape::validate($data, ['ok' => 'bool']);
 ```
 
 ## Other helpers
 
 - `StringHelp`, `ArrayHelp`, `UrlHelp`, `HtmlHelp`, `DateHelp`, `NumberHelp`, `CollectionHelp`.
+- `JsonShape` — flat type checks for decoded JSON bodies (see Http module README); not JSON Schema.

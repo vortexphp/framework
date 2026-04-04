@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vortex\Http;
 
 use Vortex\Support\JsonHelp;
+use Vortex\Support\JsonShape;
 use Vortex\Validation\Validator;
 
 final class Request
@@ -166,6 +167,21 @@ final class Request
     public function bodyValidationResponse(array $rules, array $messages = [], array $attributes = []): ?Response
     {
         $result = Validator::make($this->body, $rules, $messages, $attributes);
+        if (! $result->failed()) {
+            return null;
+        }
+
+        return Response::validationFailed($result);
+    }
+
+    /**
+     * Validate {@see $this->body} with {@see JsonShape}; returns {@see Response::validationFailed()} or {@code null}.
+     *
+     * @param array<string, string> $shape
+     */
+    public function bodyShapeResponse(array $shape): ?Response
+    {
+        $result = JsonShape::validate($this->body, $shape);
         if (! $result->failed()) {
             return null;
         }

@@ -42,6 +42,10 @@ For HTML vs JSON negotiation, **`Response::notFound()`**, **`forbidden()`**, **`
 
 On a **`Request`** instance, **`validationResponse($rules, $messages = [], $attributes = [])`** runs **`Validator::make`** on query + body (body wins on duplicate keys) and returns **`Response::validationFailed()`** or **`null`**. **`bodyValidationResponse(...)`** uses only **`$request->body`**. With a stack request, call **`Request::current()->validationResponse(...)`**.
 
+## JSON body shape (decoded array)
+
+**`JsonShape::validate($body, $shape)`** in **`Vortex\Support`** checks required keys and primitive/list/object **`types`** for API JSON (not a full JSON Schema). **`$request->bodyShapeResponse($shape)`** returns **`Response::validationFailed()`** or **`null`**.
+
 ## API versioning helpers
 
 - **`Request::splitVersionedPath($path)`** — detects **`/v{n}/...`** (case-insensitive **`v`**) and returns `[ version, innerPath ]`.
