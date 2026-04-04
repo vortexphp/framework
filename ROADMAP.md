@@ -24,6 +24,8 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **CLI codegen** — **`make:migration`**, **`make:command`**, **`repl`** (debug / **`--force`**).
 - **PSR-16 cache** — **`Psr16Cache`** + container **`Psr\SimpleCache\CacheInterface`**.
 
+- **Packaging** — **`composer.lock`** policy for apps vs library vs skeleton (root **`README`**).
+
 - **API cursor pagination** — **`QueryBuilder::cursorPaginate()`**, **`Cursor`** / **`CursorPaginator`**, **`toApiData()`** for JSON collections with **`Response::apiOk`**.
 - **ORM polymorphic relations** — **`morphTo`**, **`morphMany`**, **`morphOne`** (lazy + eager, nested eager under **`morphTo`** via per–concrete-class grouping); **`MorphMap`** aliases for **`_type`** columns + **`getMorphClass()`**.
 - **JSON Schema** — **`justinrainbow/json-schema`**, **`JsonSchemaValidator::validateArray()`** / **`validateDecoded()`**, **`Request::bodyJsonSchemaResponse()`** (requests); **`Response::apiOkValidated()`** / **`jsonValidated()`**, **`JsonResource::toValidatedResponse()`** / **`collectionValidatedResponse()`** (responses; **`JsonShape`** remains the lightweight default for bodies).
@@ -34,7 +36,7 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **Packaging** — document **composer.lock** policy for skeleton apps vs library consumers.
+1. **ORM / platform** — conveniences from **Data & persistence** / **Core platform** section lists as needed (no single mandatory chunk).
 
 ## Core platform
 
@@ -62,6 +64,6 @@ Concrete follow-ups; each is a shippable vertical slice:
 
 ## Packaging
 
-- **Lockfile policy** — Library consumers lock in their apps; optional documented template or `composer.lock` for the **skeleton** app only (framework package may stay unlocked).
+- **Lockfile policy** — Shipped: documented in root **`README.md`** (**Packaging and composer.lock**). Apps commit a lock; the framework package omits it; skeleton apps should commit one for reproducible installs.
 
 Items are not ordered by release; pick by impact and maintenance cost.

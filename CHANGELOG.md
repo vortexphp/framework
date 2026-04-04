@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- **Packaging:** root **`README`** — when to commit **`composer.lock`** (deployed apps, skeletons) vs omitting it (library package).
+
 ### Added
 
 - **ORM morph map:** **`MorphMap::register()`** (alias → **`Model`** class), **`resolveClass()`**, **`Model::getMorphClass()`**; **`morphTo`** / eager **`morphTo`** resolve aliases; **`morphMany`** / **`morphOne`** and their eager loads use **`getMorphClass()`** for the **`_type`** filter. FQCNs in the database remain valid when no alias is registered.

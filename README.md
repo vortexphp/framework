@@ -166,6 +166,12 @@ Use the `Vortex\` namespace for framework types. See the test suite under `tests
 
 **Testing HTTP in-process:** `Kernel::handle(Request::make('GET', '/path'))` returns a `Response` without sending output; register `ErrorRenderer` on the container when using the full error stack (see `tests/KernelHandleTest.php`).
 
+## Packaging and `composer.lock`
+
+- **Your application** (anything you deploy) should **commit `composer.lock`**. Run `composer install` in CI and production so installs match what you tested.
+- **This package** (`vortexphp/framework`) is a **library**: it normally **does not commit** a root `composer.lock`. Downstream apps resolve compatible versions from `composer.json` when they `composer require vortexphp/framework`, and their own lock pins the tree.
+- **Skeleton or template apps** you ship (starter repos) **should** include a committed `composer.lock` so `composer install` reproduces the same dependency set for every new checkout, unless you intentionally want floating minors on each clone.
+
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md).
