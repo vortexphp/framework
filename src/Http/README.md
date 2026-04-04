@@ -29,6 +29,14 @@ return Response::redirect('/login')
     ->withInput();
 ```
 
+## JSON API envelope
+
+- **`Response::apiOk($data)`** — `{ "ok": true, "data": ... }`.
+- **`Response::apiError($status, $errorCode, $message, $extra = [])`** — `{ "ok": false, "error", "message", ... }` (always JSON).
+- **`JsonResource`** — implement `toArray()`; **`toResponse()`** / **`collectionResponse()`** build **`apiOk`**-wrapped responses.
+
+For HTML vs JSON negotiation, **`Response::notFound()`**, **`forbidden()`**, **`unauthorized()`**, and **`error()`** include **`ok`**, **`error`** (machine code), and **`message`** when **`Request::wantsJson()`** is true.
+
 ## Notes
 
 - `Request::wantsJson()` is true for `Accept: application/json` and `X-Requested-With: XMLHttpRequest`.

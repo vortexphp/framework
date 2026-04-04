@@ -41,6 +41,28 @@ final class Response
     }
 
     /**
+     * JSON API success envelope: {@code { "ok": true, "data": ... }}.
+     */
+    public static function apiOk(mixed $data, int $status = 200): self
+    {
+        return self::json(['ok' => true, 'data' => $data], $status);
+    }
+
+    /**
+     * JSON API error envelope (always JSON). Use from API routes that always return JSON.
+     *
+     * @param array<string, mixed> $extra
+     */
+    public static function apiError(int $status, string $error, string $message, array $extra = []): self
+    {
+        return self::json(array_merge([
+            'ok' => false,
+            'error' => $error,
+            'message' => $message,
+        ], $extra), $status);
+    }
+
+    /**
      * Return an error response in HTML or JSON based on current request expectations.
      *
      * @param array<string, mixed> $jsonPayload
@@ -48,10 +70,15 @@ final class Response
     public static function error(int $status, string $message, array $jsonPayload = []): self
     {
         if (self::expectsJson()) {
+            $error = $jsonPayload['error'] ?? 'http_error';
+            $rest = $jsonPayload;
+            unset($rest['error']);
+
             return self::json(array_merge([
                 'ok' => false,
+                'error' => $error,
                 'message' => $message,
-            ], $jsonPayload), $status);
+            ], $rest), $status);
         }
 
         return self::html($message, $status);
@@ -62,7 +89,7 @@ final class Response
      */
     public static function notFound(string $message = 'Not Found', array $jsonPayload = []): self
     {
-        return self::error(404, $message, $jsonPayload);
+        return self::error(404, $message, array_merge(['error' => 'not_found'], $jsonPayload));
     }
 
     /**
@@ -70,7 +97,7 @@ final class Response
      */
     public static function forbidden(string $message = 'Forbidden', array $jsonPayload = []): self
     {
-        return self::error(403, $message, $jsonPayload);
+        return self::error(403, $message, array_merge(['error' => 'forbidden'], $jsonPayload));
     }
 
     /**
@@ -78,7 +105,7 @@ final class Response
      */
     public static function unauthorized(string $message = 'Unauthorized', array $jsonPayload = []): self
     {
-        return self::error(401, $message, $jsonPayload);
+        return self::error(401, $message, array_merge(['error' => 'unauthorized'], $jsonPayload));
     }
 
     public static function redirect(string $to, int $status = 302): self

@@ -119,7 +119,7 @@ final class ResponseTest extends TestCase
         $r = Response::notFound();
 
         self::assertSame(404, $r->httpStatus());
-        self::assertSame('{"ok":false,"message":"Not Found"}', $r->body());
+        self::assertSame('{"ok":false,"error":"not_found","message":"Not Found"}', $r->body());
         self::assertSame('application/json; charset=utf-8', $this->headerValue($r, 'Content-Type'));
     }
 

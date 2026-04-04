@@ -16,12 +16,13 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **ORM: global scopes** — `addGlobalScope`, `withoutGlobalScope(s)`; `find` / `all` via `query()`.
 - **ORM: eager `with()`** — `Model::eagerRelations()` for batched `belongsTo` / `hasMany` / `belongsToMany`; nested dot paths (e.g. `author.country`).
 - **Routing: model binding** — `Router::model` / `Router::bind` (+ `Route::model` / `Route::bind`); missing model or `null` resolver → 404.
+- **HTTP: JSON API envelope** — `Response::apiOk` / `apiError`, `JsonResource`, aligned negotiation errors + `ErrorRenderer` JSON.
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **ORM / HTTP** — relation API polish or API helpers (resources, error envelope).
+1. **ORM / HTTP** — relation API polish, API versioning, or validation-to-JSON helpers.
 
 ## Core platform
 
@@ -38,7 +39,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 
 ## HTTP & API
 
-- **API conveniences** — Optional JSON resource/transform layer, versioning helpers, consistent error envelope for APIs (beyond `Response::json()` + `Request::wantsJson()`).
+- **API conveniences** — Shipped: **`JsonResource`**, **`Response::apiOk`/`apiError`**, negotiated errors with **`error`** codes. Optional: versioning headers/prefix helpers, deeper transform pipelines.
 - **Routing DX** — Shipped: route model binding and custom `bind`. Remaining: resource route groups, stronger controller + middleware conventions if we keep growing past closure/`[Class, 'method']` style.
 
 ## Developer experience

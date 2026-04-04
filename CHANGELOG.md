@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **HTTP JSON API helpers:** **`Response::apiOk()`** / **`Response::apiError()`** for stable success and error envelopes; abstract **`JsonResource`** with **`toArray()`**, **`toResponse()`**, **`collect()`**, and **`collectionResponse()`**. **`ErrorRenderer`** JSON **`notFound`** uses **`Response::notFound()`**; 500 JSON uses **`apiError()`**.
 - **ORM eager loading:** **`Model::eagerRelations()`** maps relation method names to **`belongsTo`**, **`hasMany`**, or **`belongsToMany`** specs so **`QueryBuilder::with()`** batches related queries. Nested relations use dot paths (e.g. **`author.country`**). Without a map entry, **`with()`** still resolves by calling the relation method on each model. Invalid spec entries throw **`InvalidArgumentException`**.
 - **Route model binding:** **`Router::model($parameter, $modelClass, $column = 'id')`** and **`Router::bind($parameter, Closure $resolver)`**; **`Route::model`** / **`Route::bind`** delegate to the active router. Resolvers run before the action; missing model or resolver returning **`null`** yields **`ErrorRenderer::notFound()`** (404). Model class must extend **`Model`**.
 - **Model global scopes:** **`Model::addGlobalScope()`** registers named callbacks applied when building **`query()`**; **`QueryBuilder::withoutGlobalScope()`** / **`withoutGlobalScopes()`**; **`all()`** and **`find()`** use **`query()`** so scopes apply (breaking if you relied on unscoped direct SQL).
@@ -26,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Middleware:** **`Vortex\Auth\Middleware\Authenticate`** (JSON 401 or redirect to `auth.login_path`); abstract **`AuthorizeAbility`** (403 when `Gate::denies`).
 - **`Vortex\Auth\AuthConfig`** reads `auth.login_path`, `auth.remember_cookie`, `auth.remember_seconds`, `auth.cookie_secure`, `auth.cookie_samesite` when the config repository is available.
 - Twig **`gate_allows`** (optional second argument for policy context; one-argument calls delegate to `Gate::allows($ability)` only).
+
+### Changed
+
+- **Breaking:** When **`Request::wantsJson()`**, **`Response::error()`** (including **`notFound()`**, **`forbidden()`**, **`unauthorized()`**) JSON now always includes **`error`** (machine-readable code; shortcuts set values such as **`not_found`**, default **`http_error`**) with **`ok`** and **`message`**.
 
 ## [0.7.0] - 2026-04-03
 

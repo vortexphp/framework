@@ -15,10 +15,7 @@ final class ErrorRenderer
     public function notFound(): Response
     {
         if (Request::wantsJson()) {
-            return Response::json([
-                'error' => 'not_found',
-                'message' => \trans('errors.json.not_found'),
-            ], 404);
+            return Response::notFound(\trans('errors.json.not_found'));
         }
 
         try {
@@ -49,18 +46,16 @@ final class ErrorRenderer
         $debug = (bool) Repository::get('app.debug', false);
 
         if (Request::wantsJson()) {
-            $payload = [
-                'error' => 'server_error',
-                'message' => $debug ? $e->getMessage() : \trans('errors.json.server_error'),
-            ];
+            $message = $debug ? $e->getMessage() : \trans('errors.json.server_error');
+            $extra = [];
             if ($debug) {
-                $payload['exception'] = $e::class;
-                $payload['file'] = $e->getFile();
-                $payload['line'] = $e->getLine();
-                $payload['trace'] = explode("\n", $e->getTraceAsString());
+                $extra['exception'] = $e::class;
+                $extra['file'] = $e->getFile();
+                $extra['line'] = $e->getLine();
+                $extra['trace'] = explode("\n", $e->getTraceAsString());
             }
 
-            return Response::json($payload, 500);
+            return Response::apiError(500, 'server_error', $message, $extra);
         }
 
         try {
