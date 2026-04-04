@@ -22,12 +22,6 @@ use Vortex\Support\Log;
  */
 final class QueueWorkCommand extends Command
 {
-    public function __construct(
-        private readonly string $basePath,
-    ) {
-        parent::__construct($basePath);
-    }
-
     public function name(): string
     {
         return 'queue:work';

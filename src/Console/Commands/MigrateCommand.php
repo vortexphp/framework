@@ -14,12 +14,6 @@ use Throwable;
 
 final class MigrateCommand extends Command
 {
-    public function __construct(
-        private readonly string $basePath,
-    ) {
-        parent::__construct($basePath);
-    }
-
     public function name(): string
     {
         return 'migrate';
@@ -33,7 +27,7 @@ final class MigrateCommand extends Command
     protected function execute(Input $input): int
     {
         try {
-            $paths = AppPaths::forBase($this->basePath);
+            $paths = AppPaths::forBase($this->basePath());
         } catch (\InvalidArgumentException $e) {
             fwrite(STDERR, Term::style('1;31', 'Invalid config/paths.php:') . ' ' . $e->getMessage() . "\n");
 
@@ -42,7 +36,7 @@ final class MigrateCommand extends Command
 
         try {
             $container = $this->app()->container();
-            $migrator = new SchemaMigrator($this->basePath, $container->make(Connection::class));
+            $migrator = new SchemaMigrator($this->basePath(), $container->make(Connection::class));
             $ran = $migrator->up();
             fwrite(STDERR, Term::style('1;32', 'OK') . ' — applied ' . $ran . " migration(s)\n");
         } catch (Throwable $e) {

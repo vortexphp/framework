@@ -59,7 +59,8 @@ final class QueueIntegrationTest extends TestCase
         DatabaseQueueCountingJob::$total = 0;
         Queue::push(new DatabaseQueueCountingJob(11));
 
-        $cmd = new QueueWorkCommand($this->tempBase);
+        $cmd = new QueueWorkCommand();
+        $cmd->setBasePath($this->tempBase);
         $exit = $cmd->run(Input::fromArgv(['vortex', 'queue:work', 'once']));
         self::assertSame(0, $exit);
         self::assertSame(11, DatabaseQueueCountingJob::$total);

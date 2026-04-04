@@ -37,6 +37,8 @@ Codegen uses **`*.stub`** files under **`src/Console/stubs/`** (`{{PLACEHOLDER}}
 
 ## Register from console routes
 
+**`ConsoleApplication::register()`** assigns the project root via **`Command::setBasePath()`** (use **`$command->basePath()`** in **`execute()`**). No need to pass the path into your command’s constructor.
+
 `app/Routes/AppConsole.php`:
 
 ```php
@@ -46,6 +48,6 @@ use App\Console\HelloCommand;
 use Vortex\Console\ConsoleApplication;
 
 return static function (ConsoleApplication $app): void {
-    $app->register(new HelloCommand($app->basePath()));
+    $app->register(new HelloCommand());
 };
 ```

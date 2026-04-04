@@ -79,7 +79,7 @@ use Vortex\Console\Command;
 use Vortex\Console\ConsoleApplication;
 use Vortex\Console\Input;
 return static function (ConsoleApplication $app): void {
-    $app->register(new class($app->basePath()) extends Command {
+    $app->register(new class extends Command {
         public function name(): string
         {
             return 'route-discovery-fixture';

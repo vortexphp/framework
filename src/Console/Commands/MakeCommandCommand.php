@@ -10,12 +10,6 @@ use Vortex\Console\Stub;
 
 final class MakeCommandCommand extends Command
 {
-    public function __construct(
-        private readonly string $basePath,
-    ) {
-        parent::__construct($basePath);
-    }
-
     public function description(): string
     {
         return 'Scaffold a Command subclass under app/Console/Commands (register it from app/Routes/*Console.php).';
@@ -41,7 +35,7 @@ final class MakeCommandCommand extends Command
         $className = str_ends_with($base, 'Command') ? $base : $base . 'Command';
 
         $relDir = 'app/Console/Commands';
-        $dir = $this->basePath . '/' . $relDir;
+        $dir = $this->basePath() . '/' . $relDir;
         if (! is_dir($dir) && ! mkdir($dir, 0775, true) && ! is_dir($dir)) {
             $this->error('Cannot create directory: ' . $dir);
 
@@ -66,7 +60,7 @@ final class MakeCommandCommand extends Command
         }
 
         $this->info('Created ' . $file);
-        $this->line('Register with: $app->register(new \\App\\Console\\Commands\\' . $className . '($app->basePath()));');
+        $this->line('Register with: $app->register(new \\App\\Console\\Commands\\' . $className . '());');
 
         return 0;
     }

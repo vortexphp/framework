@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`Command`:** no constructor argument; **`ConsoleApplication::register()`** calls **`setBasePath()`** so custom commands use **`$app->register(new MyCommand())`**. Invoke **`setBasePath()`** yourself when constructing commands outside the console app.
+
 ### Added
 
 - **Console codegen stubs:** **`Vortex\Console\Stub`** renders **`src/Console/stubs/*.stub`** with **`{{PLACEHOLDER}}`** substitution. **`make:command`**, **`make:migration`**, and new **`make:model`** use stubs. **`make:model`** writes **`App\Models\*`** (optional **`--table=`**); **`AppPaths`** adds **`models`** (default **`app/Models`**) alongside **`migrations`**.

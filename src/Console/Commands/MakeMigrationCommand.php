@@ -11,12 +11,6 @@ use Vortex\Support\AppPaths;
 
 final class MakeMigrationCommand extends Command
 {
-    public function __construct(
-        private readonly string $basePath,
-    ) {
-        parent::__construct($basePath);
-    }
-
     public function description(): string
     {
         return 'Create a new migration class under the configured migrations directory (config/paths.php).';
@@ -39,14 +33,14 @@ final class MakeMigrationCommand extends Command
         }
 
         try {
-            $paths = AppPaths::forBase($this->basePath);
+            $paths = AppPaths::forBase($this->basePath());
         } catch (\InvalidArgumentException $e) {
             $this->error('Invalid config/paths.php: ' . $e->getMessage());
 
             return 1;
         }
 
-        $dir = $paths->migrationsDirectory($this->basePath);
+        $dir = $paths->migrationsDirectory($this->basePath());
         if (! is_dir($dir) && ! mkdir($dir, 0775, true) && ! is_dir($dir)) {
             $this->error('Cannot create migrations directory: ' . $dir);
 

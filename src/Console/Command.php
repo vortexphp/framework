@@ -11,9 +11,8 @@ abstract class Command
     private string $basePath = '';
     private ?Application $application = null;
 
-    public function __construct(
-        string $basePath = '',
-    ) {
+    final public function setBasePath(string $basePath): void
+    {
         $this->basePath = rtrim($basePath, '/');
     }
 

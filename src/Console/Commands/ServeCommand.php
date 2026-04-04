@@ -10,12 +10,6 @@ use Vortex\Console\Term;
 
 final class ServeCommand extends Command
 {
-    public function __construct(
-        private readonly string $basePath,
-    ) {
-        parent::__construct($basePath);
-    }
-
     public function name(): string
     {
         return 'serve';
@@ -61,7 +55,7 @@ final class ServeCommand extends Command
             return 1;
         }
 
-        $public = $this->basePath . '/public';
+        $public = $this->basePath() . '/public';
         if (! is_dir($public)) {
             fwrite(STDERR, Term::style('1;31', 'Error:') . ' Public directory not found:' . "\n  " . $public . "\n");
 

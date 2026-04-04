@@ -17,12 +17,6 @@ use Vortex\Queue\FailedJobStore;
  */
 final class QueueRetryCommand extends Command
 {
-    public function __construct(
-        private readonly string $basePath,
-    ) {
-        parent::__construct($basePath);
-    }
-
     public function name(): string
     {
         return 'queue:retry';

@@ -47,7 +47,8 @@ final class FailedJobsIntegrationTest extends TestCase
 
         Queue::push(new FailOnceJob());
 
-        $work = new QueueWorkCommand($this->tempBase);
+        $work = new QueueWorkCommand();
+        $work->setBasePath($this->tempBase);
         self::assertSame(0, $work->run(Input::fromArgv(['vortex', 'queue:work', 'once'])));
 
         $app = Application::boot($this->tempBase);
@@ -57,7 +58,8 @@ final class FailedJobsIntegrationTest extends TestCase
         $jobs = $conn->selectOne('SELECT COUNT(*) AS c FROM jobs', []);
         self::assertSame(0, (int) $jobs['c']);
 
-        $retry = new QueueRetryCommand($this->tempBase);
+        $retry = new QueueRetryCommand();
+        $retry->setBasePath($this->tempBase);
         self::assertSame(0, $retry->run(Input::fromArgv(['vortex', 'queue:retry', '1'])));
 
         $jobs = $conn->selectOne('SELECT COUNT(*) AS c FROM jobs', []);

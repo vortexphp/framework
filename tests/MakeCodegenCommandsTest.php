@@ -53,7 +53,8 @@ final class MakeCodegenCommandsTest extends TestCase
 
     public function testMakeMigrationWritesRunnableClass(): void
     {
-        $cmd = new MakeMigrationCommand($this->base);
+        $cmd = new MakeMigrationCommand();
+        $cmd->setBasePath($this->base);
         self::assertSame(0, $cmd->run(Input::fromArgv(['vortex', 'make:migration', 'demo_table'])));
 
         $files = glob($this->base . '/db/migrations/*_demo_table.php') ?: [];
@@ -66,13 +67,15 @@ final class MakeCodegenCommandsTest extends TestCase
 
     public function testMakeMigrationRequiresName(): void
     {
-        $cmd = new MakeMigrationCommand($this->base);
+        $cmd = new MakeMigrationCommand();
+        $cmd->setBasePath($this->base);
         self::assertSame(1, $cmd->run(Input::fromArgv(['vortex', 'make:migration'])));
     }
 
     public function testMakeCommandScaffoldsFile(): void
     {
-        $cmd = new MakeCommandCommand($this->base);
+        $cmd = new MakeCommandCommand();
+        $cmd->setBasePath($this->base);
         self::assertSame(0, $cmd->run(Input::fromArgv(['vortex', 'make:command', 'demo-widget'])));
 
         $file = $this->base . '/app/Console/Commands/DemoWidgetCommand.php';
@@ -83,7 +86,8 @@ final class MakeCodegenCommandsTest extends TestCase
 
     public function testMakeModelScaffoldsFile(): void
     {
-        $cmd = new MakeModelCommand($this->base);
+        $cmd = new MakeModelCommand();
+        $cmd->setBasePath($this->base);
         self::assertSame(0, $cmd->run(Input::fromArgv(['vortex', 'make:model', 'Kitten'])));
 
         $file = $this->base . '/app/Models/Kitten.php';
@@ -96,7 +100,8 @@ final class MakeCodegenCommandsTest extends TestCase
 
     public function testMakeModelWithTableOption(): void
     {
-        $cmd = new MakeModelCommand($this->base);
+        $cmd = new MakeModelCommand();
+        $cmd->setBasePath($this->base);
         self::assertSame(0, $cmd->run(Input::fromArgv(['vortex', 'make:model', 'Puppy', '--table=puppies'])));
 
         $src = (string) file_get_contents($this->base . '/app/Models/Puppy.php');

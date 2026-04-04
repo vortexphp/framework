@@ -27,7 +27,8 @@ final class ReplCommandTest extends TestCase
     {
         $base = $this->makeTempProject(debug: false);
         try {
-            $cmd = new ReplCommand($base);
+            $cmd = new ReplCommand();
+            $cmd->setBasePath($base);
             $rc = $cmd->run(Input::fromArgv(['php', 'repl']));
             self::assertSame(1, $rc);
         } finally {
@@ -50,7 +51,7 @@ final class ReplCommandTest extends TestCase
                  */
                 public function __construct(string $projectBasePath, private readonly array $lines, private readonly object $state)
                 {
-                    parent::__construct($projectBasePath);
+                    $this->setBasePath($projectBasePath);
                 }
 
                 protected function readLine(): string|false

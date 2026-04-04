@@ -16,12 +16,6 @@ use Throwable;
  */
 final class DbCheckCommand extends Command
 {
-    public function __construct(
-        private readonly string $basePath,
-    ) {
-        parent::__construct($basePath);
-    }
-
     public function name(): string
     {
         return 'db-check';
@@ -34,7 +28,7 @@ final class DbCheckCommand extends Command
 
     protected function execute(Input $input): int
     {
-        $base = $this->basePath;
+        $base = $this->basePath();
 
         try {
             $paths = AppPaths::forBase($base);

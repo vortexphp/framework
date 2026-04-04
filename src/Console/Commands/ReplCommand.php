@@ -17,12 +17,6 @@ use Vortex\Container;
  */
 class ReplCommand extends Command
 {
-    public function __construct(
-        private readonly string $projectBasePath,
-    ) {
-        parent::__construct($projectBasePath);
-    }
-
     public function name(): string
     {
         return 'repl';

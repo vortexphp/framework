@@ -14,12 +14,6 @@ use Vortex\Schedule\Schedule;
  */
 final class ScheduleRunCommand extends Command
 {
-    public function __construct(
-        private readonly string $basePath,
-    ) {
-        parent::__construct($basePath);
-    }
-
     public function name(): string
     {
         return 'schedule:run';

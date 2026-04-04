@@ -14,12 +14,6 @@ use Vortex\Support\PathHelp;
 
 final class DoctorCommand extends Command
 {
-    public function __construct(
-        private readonly string $basePath,
-    ) {
-        parent::__construct($basePath);
-    }
-
     public function name(): string
     {
         return 'doctor';
@@ -32,7 +26,7 @@ final class DoctorCommand extends Command
 
     protected function execute(Input $input): int
     {
-        $base = $this->basePath;
+        $base = $this->basePath();
         $failed = false;
         $production = in_array('--production', $input->tokens(), true);
 

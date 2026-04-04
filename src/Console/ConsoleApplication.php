@@ -34,20 +34,20 @@ final class ConsoleApplication
     {
         $basePath = rtrim($basePath, '/');
         $app = new self($basePath);
-        $app->register(new ServeCommand($basePath));
-        $app->register(new DoctorCommand($basePath));
+        $app->register(new ServeCommand());
+        $app->register(new DoctorCommand());
         $app->register(new SmokeCommand());
-        $app->register(new DbCheckCommand($basePath));
-        $app->register(new MigrateCommand($basePath));
-        $app->register(new MigrateDownCommand($basePath));
-        $app->register(new MakeMigrationCommand($basePath));
-        $app->register(new MakeModelCommand($basePath));
-        $app->register(new MakeCommandCommand($basePath));
-        $app->register(new ReplCommand($basePath));
-        $app->register(new QueueWorkCommand($basePath));
-        $app->register(new QueueFailedCommand($basePath));
-        $app->register(new QueueRetryCommand($basePath));
-        $app->register(new ScheduleRunCommand($basePath));
+        $app->register(new DbCheckCommand());
+        $app->register(new MigrateCommand());
+        $app->register(new MigrateDownCommand());
+        $app->register(new MakeMigrationCommand());
+        $app->register(new MakeModelCommand());
+        $app->register(new MakeCommandCommand());
+        $app->register(new ReplCommand());
+        $app->register(new QueueWorkCommand());
+        $app->register(new QueueFailedCommand());
+        $app->register(new QueueRetryCommand());
+        $app->register(new ScheduleRunCommand());
 
         RouteDiscovery::loadConsoleRoutes($app, $basePath);
 
@@ -61,6 +61,7 @@ final class ConsoleApplication
 
     public function register(Command $command): void
     {
+        $command->setBasePath($this->basePath);
         $this->commands[$command->name()] = $command;
     }
 

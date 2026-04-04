@@ -12,12 +12,6 @@ use Vortex\Support\AppPaths;
 
 final class MakeModelCommand extends Command
 {
-    public function __construct(
-        private readonly string $basePath,
-    ) {
-        parent::__construct($basePath);
-    }
-
     public function description(): string
     {
         return 'Scaffold a Model under app/Models (config/paths.php **models**). Optional **--table=** override.';
@@ -54,14 +48,14 @@ final class MakeModelCommand extends Command
         }
 
         try {
-            $paths = AppPaths::forBase($this->basePath);
+            $paths = AppPaths::forBase($this->basePath());
         } catch (InvalidArgumentException $e) {
             $this->error('Invalid config/paths.php: ' . $e->getMessage());
 
             return 1;
         }
 
-        $dir = $paths->modelsDirectory($this->basePath);
+        $dir = $paths->modelsDirectory($this->basePath());
         if (! is_dir($dir) && ! mkdir($dir, 0775, true) && ! is_dir($dir)) {
             $this->error('Cannot create directory: ' . $dir);
 
