@@ -42,6 +42,13 @@ abstract class Model
     private static array $observerRegistry = [];
 
     /**
+     * Global query constraints per concrete model class ({@see addGlobalScope}).
+     *
+     * @var array<class-string, array<string, callable(QueryBuilder): void>>
+     */
+    private static array $globalScopeRegistry = [];
+
+    /**
      * Register an observer instance or class (instantiated with {@code new}) for this model type.
      *
      * Handlers are optional methods on the observer: {@code saving}, {@code creating}, {@code updating},
@@ -70,9 +77,40 @@ abstract class Model
         return AppContext::container()->make(Connection::class);
     }
 
+    /**
+     * @param callable(QueryBuilder): void $callback
+     */
+    public static function addGlobalScope(string $name, callable $callback): void
+    {
+        $modelClass = static::class;
+        self::$globalScopeRegistry[$modelClass] ??= [];
+        self::$globalScopeRegistry[$modelClass][$name] = $callback;
+    }
+
+    /**
+     * @internal Drops global scopes for this concrete model class (tests).
+     */
+    public static function forgetGlobalScopes(): void
+    {
+        unset(self::$globalScopeRegistry[static::class]);
+    }
+
+    /**
+     * @internal
+     */
+    public static function forgetAllGlobalScopesForTesting(): void
+    {
+        self::$globalScopeRegistry = [];
+    }
+
     public static function query(): QueryBuilder
     {
-        return new QueryBuilder(static::class);
+        $q = new QueryBuilder(static::class);
+        foreach (self::$globalScopeRegistry[static::class] ?? [] as $name => $callback) {
+            $q->applyGlobalScope($name, $callback);
+        }
+
+        return $q;
     }
 
     public static function usesSoftDeletes(): bool
@@ -125,31 +163,12 @@ abstract class Model
      */
     public static function all(): array
     {
-        $sql = 'SELECT * FROM ' . static::table();
-        $bindings = [];
-        if (($col = static::softDeleteColumn()) !== null) {
-            $sql .= ' WHERE ' . $col . ' IS NULL';
-        }
-        $rows = static::connection()->select($sql, $bindings);
-        $out = [];
-        foreach ($rows as $row) {
-            $out[] = static::fromRow($row);
-        }
-
-        return $out;
+        return static::query()->get();
     }
 
     public static function find(mixed $id): ?static
     {
-        $sql = 'SELECT * FROM ' . static::table() . ' WHERE id = ?';
-        $bindings = [$id];
-        if (($col = static::softDeleteColumn()) !== null) {
-            $sql .= ' AND ' . $col . ' IS NULL';
-        }
-        $sql .= ' LIMIT 1';
-        $row = static::connection()->selectOne($sql, $bindings);
-
-        return $row === null ? null : static::fromRow($row);
+        return static::query()->where('id', $id)->first();
     }
 
     /**

@@ -13,12 +13,13 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **ORM: observers** — `Model::observe()` with `creating` / `updated` / … hooks on `create()`, `save()`, `delete()`.
 - **ORM: casts** — `$casts` on `Model` for int/float/bool/string/json/datetime.
 - **ORM: soft deletes** — `$softDeletes` / `$deletedAtColumn`, query scopes, `restore` / `forceDelete`.
+- **ORM: global scopes** — `addGlobalScope`, `withoutGlobalScope(s)`; `find` / `all` via `query()`.
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **ORM depth (slice)** — global scopes (next small vertical) or relation/query polish.
+1. **ORM / HTTP** — richer relations (`QueryBuilder::with()` follow-ups) or route model binding / API helpers.
 
 ## Core platform
 
@@ -30,7 +31,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 ## Data & persistence
 
 - **Cache drivers** — **Redis** (phpredis) and **Memcached** (ext-memcached) behind `Cache`; file + null unchanged. PSR-16 optional later.
-- **ORM depth** — Shipped: model observers, attribute casts, soft deletes. Remaining: global scopes; richer relation API beyond `QueryBuilder::with()`.
+- **ORM depth** — Shipped: model observers, attribute casts, soft deletes, global scopes. Remaining: richer relation API beyond `QueryBuilder::with()`.
 - **Schema builder** — Broader column/index/foreign-key coverage and dialect-specific pieces where needed.
 
 ## HTTP & API

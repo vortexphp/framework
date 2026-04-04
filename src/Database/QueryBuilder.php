@@ -16,7 +16,7 @@ final class QueryBuilder
     /** @var class-string<Model> */
     private string $modelClass;
 
-    /** @var list<array{boolean: 'AND'|'OR', sql: string, bindings: list<mixed>}> */
+    /** @var list<array{scope: ?string, boolean: 'AND'|'OR', sql: string, bindings: list<mixed>}> */
     private array $wheres = [];
 
     /** @var list<array{type: 'INNER'|'LEFT', table: string, first: string, operator: string, second: string}> */
@@ -41,6 +41,8 @@ final class QueryBuilder
     /** @var 'default'|'with'|'only' */
     private string $softDeleteScope = 'default';
 
+    private ?string $globalScopeContext = null;
+
     /**
      * @param class-string<Model> $modelClass
      */
@@ -53,6 +55,7 @@ final class QueryBuilder
     {
         $this->wheres = array_values(array_map(
             static fn (array $w): array => [
+                'scope' => $w['scope'] ?? null,
                 'boolean' => $w['boolean'],
                 'sql' => $w['sql'],
                 'bindings' => [...$w['bindings']],
@@ -93,6 +96,41 @@ final class QueryBuilder
         }
         $clone = clone $this;
         $clone->softDeleteScope = 'only';
+
+        return $clone;
+    }
+
+    /**
+     * @param callable(self): void $callback
+     */
+    public function applyGlobalScope(string $name, callable $callback): void
+    {
+        $this->globalScopeContext = $name;
+        try {
+            $callback($this);
+        } finally {
+            $this->globalScopeContext = null;
+        }
+    }
+
+    public function withoutGlobalScope(string $name): self
+    {
+        $clone = clone $this;
+        $clone->wheres = array_values(array_filter(
+            $clone->wheres,
+            static fn (array $w): bool => ($w['scope'] ?? null) !== $name,
+        ));
+
+        return $clone;
+    }
+
+    public function withoutGlobalScopes(): self
+    {
+        $clone = clone $this;
+        $clone->wheres = array_values(array_filter(
+            $clone->wheres,
+            static fn (array $w): bool => ($w['scope'] ?? null) === null,
+        ));
 
         return $clone;
     }
@@ -394,6 +432,7 @@ final class QueryBuilder
     private function addWhere(string $boolean, string $sql, array $bindings): self
     {
         $this->wheres[] = [
+            'scope' => $this->globalScopeContext,
             'boolean' => $boolean === 'OR' ? 'OR' : 'AND',
             'sql' => $sql,
             'bindings' => $bindings,

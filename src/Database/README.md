@@ -66,6 +66,26 @@ Set **`protected static bool $softDeletes = true`** and a **`protected static st
 
 **`QueryBuilder::withTrashed()`** drops that filter; **`onlyTrashed()`** keeps only soft-deleted rows. Builder **`delete()`** performs a mass soft delete; **`onlyTrashed()->delete()`** runs a hard **`DELETE`**. **`Model::deleteId()`** always hard-deletes.
 
+## Global scopes
+
+Register named constraints applied to every **`Model::query()`** (and therefore **`all()`** / **`find()`**):
+
+```php
+<?php
+
+use Vortex\Database\Model;
+use Vortex\Database\QueryBuilder;
+
+final class Article extends Model
+{
+    // boot() in your app: Article::addGlobalScope('active', static function (QueryBuilder $q): void {
+    //     $q->where('status', 'published');
+    // });
+}
+```
+
+Scopes run in **`applyGlobalScope()`**; **`where*`** calls inside the callback are tagged so you can remove them with **`withoutGlobalScope('active')`** or **`withoutGlobalScopes()`** on the builder. Constraints added outside a scope callback are not removed.
+
 ## Migrations
 
 - Migration files return classes extending `Schema\Migration`.
