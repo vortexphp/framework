@@ -21,12 +21,13 @@ Planned and not-yet-built capabilities relative to what Vortex already ships (HT
 - **Testing helpers** — `Vortex\Testing\KernelBrowser` for in-process `Kernel` dispatch + `Container::has()`.
 - **Schema builder** — extra column types (`decimal`, `json`, `date`, `floatType`, `char`, sized integers), `Schema::hasTable`, FK `ON UPDATE`, MySQL `UNSIGNED` on integers.
 - **HTTP controllers** — optional **`Controller`** base + invokable class routes + per-route **`middleware()`** chaining.
+- **CLI codegen** — **`make:migration`**, **`make:command`**.
 
 ## Next chunks (pick in order or parallel)
 
 Concrete follow-ups; each is a shippable vertical slice:
 
-1. **Developer experience** — optional codegen (`make:command`, `make:migration`) or small REPL.
+1. **Data & persistence** — optional PSR-16 **`CacheInterface`** adapter over existing stores.
 
 ## Core platform
 
@@ -49,7 +50,7 @@ Concrete follow-ups; each is a shippable vertical slice:
 ## Developer experience
 
 - **Container** — Method injection, tagged services, or contextual binding only if complexity stays justified for Vortex’s size.
-- **Tooling** — Optional codegen (`make:command`, `make:migration`) and/or a small REPL; debug helpers (without pulling a full debugbar dependency by default).
+- **Tooling** — Shipped: **`make:migration`** / **`make:command`**. Optional: small REPL / debug helpers (no full debugbar by default).
 - **Framework test kit** — Shipped: **`KernelBrowser`** (`Vortex\Testing`) for consuming app PHPUnit tests.
 
 ## Packaging

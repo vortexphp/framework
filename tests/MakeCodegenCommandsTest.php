@@ -1,0 +1,76 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Vortex\Tests;
+
+use PHPUnit\Framework\TestCase;
+use Vortex\Console\Commands\MakeCommandCommand;
+use Vortex\Console\Commands\MakeMigrationCommand;
+use Vortex\Console\Input;
+use Vortex\Database\Schema\Migration;
+
+final class MakeCodegenCommandsTest extends TestCase
+{
+    private string $base = '';
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->base = sys_get_temp_dir() . '/vortex-make-' . bin2hex(random_bytes(4));
+        mkdir($this->base . '/db/migrations', 0700, true);
+        mkdir($this->base . '/config', 0700, true);
+        file_put_contents($this->base . '/config/paths.php', "<?php\nreturn [];\n");
+    }
+
+    protected function tearDown(): void
+    {
+        if ($this->base !== '' && is_dir($this->base)) {
+            foreach (glob($this->base . '/db/migrations/*.php') ?: [] as $f) {
+                unlink($f);
+            }
+            @rmdir($this->base . '/db/migrations');
+            @rmdir($this->base . '/db');
+            foreach (glob($this->base . '/app/Console/Commands/*.php') ?: [] as $f) {
+                unlink($f);
+            }
+            @rmdir($this->base . '/app/Console/Commands');
+            @rmdir($this->base . '/app/Console');
+            @rmdir($this->base . '/app');
+            if (is_file($this->base . '/config/paths.php')) {
+                unlink($this->base . '/config/paths.php');
+            }
+            @rmdir($this->base . '/config');
+            @rmdir($this->base);
+        }
+        parent::tearDown();
+    }
+
+    public function testMakeMigrationWritesRunnableClass(): void
+    {
+        $cmd = new MakeMigrationCommand($this->base);
+        self::assertSame(0, $cmd->run(Input::fromArgv(['vortex', 'make:migration', 'demo_table'])));
+
+        $files = glob($this->base . '/db/migrations/*_demo_table.php') ?: [];
+        self::assertCount(1, $files);
+        $migration = require $files[0];
+        self::assertInstanceOf(Migration::class, $migration);
+    }
+
+    public function testMakeMigrationRequiresName(): void
+    {
+        $cmd = new MakeMigrationCommand($this->base);
+        self::assertSame(1, $cmd->run(Input::fromArgv(['vortex', 'make:migration'])));
+    }
+
+    public function testMakeCommandScaffoldsFile(): void
+    {
+        $cmd = new MakeCommandCommand($this->base);
+        self::assertSame(0, $cmd->run(Input::fromArgv(['vortex', 'make:command', 'demo-widget'])));
+
+        $file = $this->base . '/app/Console/Commands/DemoWidgetCommand.php';
+        self::assertFileExists($file);
+        self::assertStringContainsString('namespace App\\Console\\Commands', (string) file_get_contents($file));
+        self::assertStringContainsString('final class DemoWidgetCommand', (string) file_get_contents($file));
+    }
+}
