@@ -147,7 +147,7 @@ final class Application
         $container->singleton(Factory::class, static function () use ($basePath): Factory {
             $debug = (bool) Repository::get('app.debug', false);
             $factory = new Factory(
-                $basePath . '/assets/views',
+                $basePath . '/ui/views',
                 $debug,
                 $debug ? null : $basePath . '/storage/cache/twig',
             );

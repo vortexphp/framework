@@ -46,7 +46,7 @@ final class RealtimeBroadcastTest extends TestCase
         mkdir($base . '/config', 0777, true);
         mkdir($base . '/app/Routes', 0777, true);
         mkdir($base . '/public', 0777, true);
-        mkdir($base . '/assets/views', 0777, true);
+        mkdir($base . '/ui/views', 0777, true);
         mkdir($base . '/lang', 0777, true);
         mkdir($base . '/storage/cache/twig', 0777, true);
         mkdir($base . '/storage/logs', 0777, true);

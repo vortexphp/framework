@@ -1,6 +1,6 @@
 {
     "name": "vortexphp/framework",
-    "description": "Lightweight PHP application stack (app/, engine/, config, assets)",
+    "description": "Lightweight PHP application stack (app/, engine/, config, ui)",
     "license": "MIT",
     "minimum-stability": "dev",
     "prefer-stable": true,
