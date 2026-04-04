@@ -38,7 +38,7 @@ final class HelloCommand extends Command
 
 Supported forms: **`--name=value`**, **`--name value`**, **`--flag`**, short clusters **`-abc`** (letters only; tokens like **`-1`** stay positional), and **`--`** so the rest are arguments even if they look like options. If the token after a long option does not start with **`-`**, it becomes that option’s value—use **`--`** in between when you mean a boolean flag plus a separate positional.
 
-Built-in commands include **`migrate`**, **`migrate:down`**, **`make:migration`**, **`make:model`**, **`make:controller`**, **`make:command`**, **`repl`** (PHP eval with `$app` / `$c`; requires **`app.debug`** or **`--force`**), **`queue:work`**, **`queue:failed`**, **`queue:retry`** (see `src/Queue/README.md`), **`schedule:run`** (see `src/Schedule/README.md`), **`doctor`**, **`serve`**, and others — run `php your-entrypoint help` for the list.
+Built-in commands include **`key:generate`** (writes **`APP_KEY`** to **`.env`**, or **`--show`** to print a key only), **`migrate`**, **`migrate:down`**, **`make:migration`**, **`make:model`**, **`make:controller`**, **`make:command`**, **`repl`** (PHP eval with `$app` / `$c`; requires **`app.debug`** or **`--force`**), **`queue:work`**, **`queue:failed`**, **`queue:retry`** (see `src/Queue/README.md`), **`schedule:run`** (see `src/Schedule/README.md`), **`doctor`**, **`serve`**, and others — run `php your-entrypoint help` for the list.
 
 Codegen uses **`*.stub`** files under **`src/Console/stubs/`** — e.g. **`command.stub`**, **`controller.stub`**, **`model.stub`**, **`migration.stub`** — with **`{{PLACEHOLDER}}`** substitution via **`Vortex\Console\Stub`**.
 

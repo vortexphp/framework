@@ -11,6 +11,7 @@ use Vortex\Console\Commands\MakeMigrationCommand;
 use Vortex\Console\Commands\MakeModelCommand;
 use Vortex\Console\Commands\MigrateCommand;
 use Vortex\Console\Commands\DoctorCommand;
+use Vortex\Console\Commands\KeyGenerateCommand;
 use Vortex\Console\Commands\MigrateDownCommand;
 use Vortex\Console\Commands\QueueFailedCommand;
 use Vortex\Console\Commands\QueueRetryCommand;
@@ -37,6 +38,7 @@ final class ConsoleApplication
         $app = new self($basePath);
         $app->register(new ServeCommand());
         $app->register(new DoctorCommand());
+        $app->register(new KeyGenerateCommand());
         $app->register(new SmokeCommand());
         $app->register(new DbCheckCommand());
         $app->register(new MigrateCommand());
