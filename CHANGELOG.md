@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-04-04
+
 ### Changed
 
 - **`Command`:** no constructor argument; **`ConsoleApplication::register()`** calls **`setBasePath()`** so custom commands use **`$app->register(new MyCommand())`**. Invoke **`setBasePath()`** yourself when constructing commands outside the console app.
@@ -183,6 +185,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Contracts**: `Cache`, `Mailer`, `Middleware`.
 - PHPUnit test suite under `tests/`.
 
+[0.9.0]: https://github.com/vortexphp/framework/releases/tag/v0.9.0
+[0.8.0]: https://github.com/vortexphp/framework/releases/tag/v0.8.0
 [0.7.0]: https://github.com/vortexphp/framework/releases/tag/v0.7.0
 [0.6.0]: https://github.com/vortexphp/framework/releases/tag/v0.6.0
 [0.5.0]: https://github.com/vortexphp/framework/releases/tag/v0.5.0
