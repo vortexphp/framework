@@ -7,15 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-04-04
+
+### Changed
+
+- **Breaking:** **`app/Routes/*Console.php`** files are **`require`**d like HTTP route files; they must call **`Vortex::command(...)`** instead of returning **`callable(ConsoleApplication): void`**.
+
 ### Added
 
 - **`CommandDiscovery::registerAppCommands()`** — registers concrete **`Command`** classes under **`AppPaths`** **`commands`** (default **`app/Console/Commands`**), recursively. **`ConsoleApplication::boot()`** runs it before **`RouteDiscovery::loadConsoleRoutes()`**.
 - **`AppPaths`:** **`commands`** / **`commandsDirectory()`** / **`commandsRelative()`** (**`config/paths.php`** key **`commands`**).
 - **`Vortex::command()`** on **`Vortex\Vortex`** — application facade for **`app/Routes/*Console.php`** (same role as **`Route`** for HTTP route files). **`bindConsoleApplication()`** is `@internal` for **`RouteDiscovery`**.
-
-### Changed
-
-- **Breaking:** **`app/Routes/*Console.php`** files are **`require`**d like HTTP route files; they must call **`Vortex::command(...)`** instead of returning **`callable(ConsoleApplication): void`**.
 
 ## [0.9.0] - 2026-04-04
 
@@ -195,6 +197,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Contracts**: `Cache`, `Mailer`, `Middleware`.
 - PHPUnit test suite under `tests/`.
 
+[0.10.0]: https://github.com/vortexphp/framework/releases/tag/v0.10.0
 [0.9.0]: https://github.com/vortexphp/framework/releases/tag/v0.9.0
 [0.8.0]: https://github.com/vortexphp/framework/releases/tag/v0.8.0
 [0.7.0]: https://github.com/vortexphp/framework/releases/tag/v0.7.0
