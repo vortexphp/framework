@@ -137,4 +137,33 @@ final class MakeCodegenCommandsTest extends TestCase
         $src = (string) file_get_contents($this->base . '/app/Models/Fish.php');
         self::assertStringContainsString("\$table = 'fish'", $src);
     }
+
+    public function testMakeModelWithMigrationFlagCreatesTableMigration(): void
+    {
+        $cmd = new MakeModelCommand();
+        $cmd->setBasePath($this->base);
+        self::assertSame(0, $cmd->run(Input::fromArgv(['vortex', 'make:model', 'Post', '-m'])));
+
+        self::assertFileExists($this->base . '/app/Models/Post.php');
+        $files = glob($this->base . '/db/migrations/*_create_posts_table.php') ?: [];
+        self::assertCount(1, $files);
+        $migration = require $files[0];
+        self::assertInstanceOf(Migration::class, $migration);
+        $msrc = (string) file_get_contents($files[0]);
+        self::assertStringContainsString("Schema::create('posts'", $msrc);
+        self::assertStringContainsString('->id()', $msrc);
+        self::assertStringContainsString('->timestamps()', $msrc);
+        self::assertStringContainsString("Schema::dropIfExists('posts')", $msrc);
+    }
+
+    public function testMakeModelWithLongMigrationFlagUsesTableOptionForMigration(): void
+    {
+        $cmd = new MakeModelCommand();
+        $cmd->setBasePath($this->base);
+        self::assertSame(0, $cmd->run(Input::fromArgv(['vortex', 'make:model', 'Article', '--table=entries', '--migration'])));
+
+        $files = glob($this->base . '/db/migrations/*_create_entries_table.php') ?: [];
+        self::assertCount(1, $files);
+        self::assertStringContainsString("Schema::create('entries'", (string) file_get_contents($files[0]));
+    }
 }

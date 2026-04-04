@@ -43,7 +43,7 @@ Built-in commands include **`migrate`**, **`migrate:down`**, **`make:migration`*
 Codegen uses **`*.stub`** files under **`src/Console/stubs/`** — e.g. **`command.stub`**, **`controller.stub`**, **`model.stub`**, **`migration.stub`** — with **`{{PLACEHOLDER}}`** substitution via **`Vortex\Console\Stub`**.
 
 - **`make:migration <name>`** — creates `YYYYMMDDHHMMSS_<name>.php` under the migrations directory (from **`config/paths.php`** or default **`db/migrations`**).
-- **`make:model <Name> [--table=…]`** — creates **`app/Models/{Name}.php`** (namespace **`App\Models`**; **`config/paths.php`** key **`models`** overrides the folder). Omit **`--table`** to use **`Model::table()`** inference from the class name.
+- **`make:model <Name> [--table=…] [-m|--migration]`** — creates **`app/Models/{Name}.php`** (namespace **`App\Models`**; **`config/paths.php`** key **`models`** overrides the folder). Omit **`--table`** to match **`Model::table()`** inference. **`-m`** adds **`create_{table}_table`** migration with **`id`** and **`timestamps()`**.
 - **`make:controller <Name>`** — creates an invokable **`App\Http\Controllers\{Name}Controller`** (or preserves a **`Controller`** suffix); folder from **`config/paths.php`** **`controllers`** or default **`app/Http/Controllers`**.
 - **`make:command <name>`** — creates **`app/Console/Commands/{Name}Command.php`**; register the class from **`app/Routes/*Console.php`** as in the example below.
 
