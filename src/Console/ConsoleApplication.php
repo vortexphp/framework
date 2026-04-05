@@ -18,9 +18,11 @@ use Vortex\Console\Commands\QueueRetryCommand;
 use Vortex\Console\Commands\QueueWorkCommand;
 use Vortex\Console\Commands\ReplCommand;
 use Vortex\Console\Commands\ScheduleRunCommand;
+use Vortex\Config\Repository;
 use Vortex\Console\Commands\ServeCommand;
 use Vortex\Console\Commands\SmokeCommand;
 use Vortex\Routing\RouteDiscovery;
+use Vortex\Support\Env;
 
 final class ConsoleApplication
 {
@@ -35,6 +37,9 @@ final class ConsoleApplication
     public static function boot(string $basePath): self
     {
         $basePath = rtrim($basePath, '/');
+        Env::load($basePath . '/.env');
+        Repository::setInstance(new Repository($basePath . '/config'));
+
         $app = new self($basePath);
         $app->register(new ServeCommand());
         $app->register(new DoctorCommand());

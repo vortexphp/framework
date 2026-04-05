@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vortex\Routing;
 
 use Vortex\Console\ConsoleApplication;
+use Vortex\Package\PackageRegistry;
 use Vortex\Vortex;
 
 final class RouteDiscovery
@@ -39,12 +40,12 @@ final class RouteDiscovery
     public static function loadConsoleRoutes(ConsoleApplication $app, string $basePath): void
     {
         $dir = self::httpRouteDirectory($basePath);
-        if (! is_dir($dir)) {
-            return;
-        }
-
         Vortex::bindConsoleApplication($app);
         try {
+            PackageRegistry::dispatchConsole($app, $basePath);
+            if (! is_dir($dir)) {
+                return;
+            }
             foreach (self::consoleRouteFiles($dir) as $file) {
                 require $file;
             }

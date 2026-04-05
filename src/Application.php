@@ -32,6 +32,7 @@ use Vortex\Queue\DatabaseQueue;
 use Vortex\Queue\FailedJobStore;
 use Vortex\Queue\RedisQueue;
 use Vortex\Support\PhpRedisConnect;
+use Vortex\Package\PackageRegistry;
 use Vortex\Routing\RouteDiscovery;
 use Vortex\Routing\Router;
 use Vortex\Schedule\Schedule;
@@ -63,6 +64,7 @@ final class Application
         $container->instance(Container::class, $container);
         $container->singleton(Repository::class, static fn (): Repository => new Repository($basePath . '/config'));
         Repository::setInstance($container->make(Repository::class));
+        PackageRegistry::register($container, $basePath);
         $container->singleton(DatabaseManager::class, static fn (): DatabaseManager => DatabaseManager::fromRepository());
         $container->singleton(Connection::class, static fn (Container $c): Connection => $c->make(DatabaseManager::class)->connection());
         $container->singleton(DatabaseQueue::class, static function (Container $c): DatabaseQueue {
@@ -190,6 +192,7 @@ final class Application
 
         $router = $container->make(Router::class);
         RouteDiscovery::loadHttpRoutes($router, $basePath);
+        PackageRegistry::boot($container, $basePath);
 
         return new self($basePath, $container);
     }
