@@ -10,6 +10,7 @@ use Vortex\Console\Commands\MakeControllerCommand;
 use Vortex\Console\Commands\MakeMigrationCommand;
 use Vortex\Console\Commands\MakeModelCommand;
 use Vortex\Console\Commands\MigrateCommand;
+use Vortex\Console\Commands\PublishAssetsCommand;
 use Vortex\Console\Commands\DoctorCommand;
 use Vortex\Console\Commands\KeyGenerateCommand;
 use Vortex\Console\Commands\MigrateDownCommand;
@@ -52,6 +53,7 @@ final class ConsoleApplication
         $app->register(new MakeModelCommand());
         $app->register(new MakeControllerCommand());
         $app->register(new MakeCommandCommand());
+        $app->register(new PublishAssetsCommand());
         $app->register(new ReplCommand());
         $app->register(new QueueWorkCommand());
         $app->register(new QueueFailedCommand());

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`Package::publicAssets()`** — map package-relative paths to paths under **`public/`**; **`vortex publish:assets`** copies files for all configured packages.
+
+## [0.12.0] - 2026-04-05
+
+### Added
+
 - **`Vortex\Package\Package`** — extend and list FQCNs under **`packages`** in **`config/app.php`** (read as **`app.packages`**). **`register()`** runs right after the config repository is bound (before most core singletons resolve). **`boot()`** runs after **`routes/*.php`** HTTP routes load (use **`Route::`** for extra endpoints). **`console()`** runs while the CLI registers commands (before **`routes/console.php`** / **`routes/*Console.php`**), suitable for **`Vortex::command(...)`**.
 - **`ConsoleApplication::boot()`** loads **`.env`** and initializes **`Repository`** so config-backed CLI behavior and package **`console()`** hooks align with HTTP.
 

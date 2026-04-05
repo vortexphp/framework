@@ -35,4 +35,17 @@ abstract class Package
     public function console(ConsoleApplication $app, string $basePath): void
     {
     }
+
+    /**
+     * Static files to mirror into the app {@code public/} tree (run {@code vortex publish:assets} after {@code composer update}).
+     *
+     * Keys: path relative to the package root (directory that contains {@code composer.json}).
+     * Values: path relative to {@code public/} (e.g. {@code js/live.js}).
+     *
+     * @return array<string, string>
+     */
+    public function publicAssets(): array
+    {
+        return [];
+    }
 }
