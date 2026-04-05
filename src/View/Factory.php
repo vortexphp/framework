@@ -32,11 +32,29 @@ final class Factory
 
     private ?Environment $twig = null;
 
+    /** @var list<string> */
+    private array $extraTemplatePaths = [];
+
     public function __construct(
         private readonly string $templatesPath,
         private readonly bool $debug = false,
         private readonly ?string $twigCachePath = null,
     ) {
+    }
+
+    /**
+     * Extra roots for Twig ({@see FilesystemLoader}) checked after the app {@code resources/views} path.
+     * Call before the first render — not after Twig is initialized.
+     */
+    public function addTemplatePath(string $path): void
+    {
+        if ($this->twig !== null) {
+            throw new \LogicException('Cannot add template paths after Twig has been booted.');
+        }
+        $path = rtrim(str_replace('\\', '/', $path), '/');
+        if ($path !== '') {
+            $this->extraTemplatePaths[] = $path;
+        }
     }
 
     public function share(string $key, mixed $value): void
@@ -83,8 +101,7 @@ final class Factory
     public function render(string $name, array $data = []): string
     {
         $relative = str_replace('.', '/', $name) . '.twig';
-        $path = $this->templatesPath . '/' . $relative;
-        if (! is_file($path)) {
+        if (! $this->templateExists($relative)) {
             throw new InvalidArgumentException("Template [{$name}] not found.");
         }
 
@@ -106,7 +123,7 @@ final class Factory
             return $this->twig;
         }
 
-        $loader = new FilesystemLoader($this->templatesPath);
+        $loader = new FilesystemLoader($this->loaderPathList());
         $cache = false;
         if (! $this->debug && $this->twigCachePath !== null && $this->twigCachePath !== '') {
             if (! is_dir($this->twigCachePath)) {
@@ -137,5 +154,24 @@ final class Factory
         }
 
         return $this->twig;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function loaderPathList(): array
+    {
+        return array_values(array_merge([rtrim(str_replace('\\', '/', $this->templatesPath), '/')], $this->extraTemplatePaths));
+    }
+
+    private function templateExists(string $relative): bool
+    {
+        foreach ($this->loaderPathList() as $root) {
+            if (is_file($root . '/' . $relative)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

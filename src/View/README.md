@@ -22,3 +22,4 @@ $response = View::html('pages.home', ['title' => 'Dashboard']);
 - `addExtension(...)`
 - `addFilter(...)`
 - `addFunction(...)`
+- `addTemplatePath($absolutePath)` — extra filesystem roots for Twig templates (application views path stays first). Use from a `Package::boot()` hook **before** the first render.

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`Vortex\View\Factory::addTemplatePath()`** — additional Twig filesystem roots (after the application views directory) for package templates.
+
 ## [0.12.0] - 2026-04-05
 
 ### Added
