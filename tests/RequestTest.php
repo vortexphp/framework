@@ -16,6 +16,13 @@ final class RequestTest extends TestCase
         parent::tearDown();
     }
 
+    public function testHasCurrent(): void
+    {
+        self::assertFalse(Request::hasCurrent());
+        Request::setCurrent(new Request('GET', '/', [], [], [], []));
+        self::assertTrue(Request::hasCurrent());
+    }
+
     public function testInputPrefersBodyOverQuery(): void
     {
         $r = new Request('POST', '/', ['a' => 'q'], ['a' => 'b'], [], []);

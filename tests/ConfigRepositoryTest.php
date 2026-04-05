@@ -28,6 +28,8 @@ final class ConfigRepositoryTest extends TestCase
             $repo = new Repository($dir);
             Repository::setInstance($repo);
             self::assertSame('t', Repository::get('app.name'));
+            self::assertSame(dirname($dir), Repository::basePath());
+            self::assertSame(rtrim($dir, '/'), Repository::configDirectory());
             self::assertSame('h', Repository::get('app.db.host'));
             self::assertSame('x', Repository::get('app.missing', 'x'));
             self::assertTrue(Repository::has('app.name'));

@@ -43,6 +43,11 @@ final class Request
         self::$current = null;
     }
 
+    public static function hasCurrent(): bool
+    {
+        return self::$current !== null;
+    }
+
     public static function current(): self
     {
         if (self::$current === null) {

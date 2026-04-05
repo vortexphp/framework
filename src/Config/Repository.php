@@ -11,13 +11,19 @@ final class Repository
     /** @var array<string, mixed> */
     private array $items = [];
 
+    private readonly string $configDirectory;
+
+    /**
+     * @param string $configPath Absolute path to the config directory (typically {@code $basePath . '/config'}).
+     */
     public function __construct(string $configPath)
     {
-        if (! is_dir($configPath)) {
+        $this->configDirectory = rtrim($configPath, '/');
+        if (! is_dir($this->configDirectory)) {
             return;
         }
 
-        foreach (glob($configPath . '/*.php') ?: [] as $file) {
+        foreach (glob($this->configDirectory . '/*.php') ?: [] as $file) {
             $name = basename($file, '.php');
             /** @var mixed $data */
             $data = require $file;
@@ -25,6 +31,22 @@ final class Repository
                 $this->items[$name] = $data;
             }
         }
+    }
+
+    /**
+     * Application root (parent of the config directory).
+     */
+    public static function basePath(): string
+    {
+        return dirname(self::resolved()->configDirectory);
+    }
+
+    /**
+     * Absolute path to the loaded config directory.
+     */
+    public static function configDirectory(): string
+    {
+        return self::resolved()->configDirectory;
     }
 
     public static function setInstance(self $repository): void

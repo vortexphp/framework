@@ -136,6 +136,9 @@ final class Factory
             'cache' => $cache,
             'debug' => $this->debug,
             'strict_variables' => $this->debug,
+            // Without this, production (debug false) never re-checks sources and stale .php cache
+            // wins after Twig templates change — e.g. admin package updates under vendor.
+            'auto_reload' => true,
         ]);
 
         if ($this->debug) {
